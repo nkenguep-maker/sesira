@@ -7,6 +7,7 @@ import {
   Mail,
   MessageSquareText,
   Phone,
+  Plus,
   ReceiptText,
 } from "lucide-react";
 import Link from "next/link";
@@ -121,6 +122,13 @@ export default async function CustomerPage({ params, searchParams }: CustomerPag
             {customer.company_name ?? "Client indépendant"} · créé le {formatCustomerDate(customer.created_at)}
           </p>
         </div>
+        <Link
+          href={`/app/requests/new?customerId=${customer.id}`}
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-500"
+        >
+          <Plus className="size-4" />
+          Nouvelle demande
+        </Link>
       </header>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-3">

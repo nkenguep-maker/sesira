@@ -21,9 +21,13 @@ const initialState: RequestActionState = {};
 export function RequestForm({
   customers,
   services,
+  defaultCustomerId = "",
+  cancelHref = "/app/requests",
 }: {
   customers: RequestFormOption[];
   services: RequestFormOption[];
+  defaultCustomerId?: string;
+  cancelHref?: string;
 }) {
   const [state, formAction, pending] = useActionState(createRequestAction, initialState);
 
@@ -37,6 +41,7 @@ export function RequestForm({
           options={customers}
           placeholder="Choisir un client"
           required
+          defaultValue={defaultCustomerId}
         />
         <SelectField
           icon={FileText}
@@ -94,7 +99,7 @@ export function RequestForm({
 
       <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-6 sm:flex-row sm:justify-end">
         <Link
-          href="/app/requests"
+          href={cancelHref}
           className="rounded-xl border border-[var(--border)] px-5 py-3 text-center text-sm font-medium text-slate-200 transition hover:bg-[var(--panel-soft)]"
         >
           Annuler
@@ -149,6 +154,7 @@ function SelectField({
   options,
   placeholder,
   required = false,
+  defaultValue = "",
 }: {
   icon: typeof UserRound;
   label: string;
@@ -156,6 +162,7 @@ function SelectField({
   options: RequestFormOption[];
   placeholder: string;
   required?: boolean;
+  defaultValue?: string;
 }) {
   return (
     <label className="block space-y-2 text-sm">
@@ -166,7 +173,7 @@ function SelectField({
       <select
         name={name}
         required={required}
-        defaultValue=""
+        defaultValue={defaultValue}
         className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15"
       >
         <option value="">{placeholder}</option>

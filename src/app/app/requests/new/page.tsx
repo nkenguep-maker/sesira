@@ -5,8 +5,10 @@ import { RequestForm } from "@/components/requests/request-form";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function NewRequestPage() {
-  const viewer = await getViewerContext();
+type NewRequestSearchParams = Promise<{ customerId?: string }>;
+
+export default async function NewRequestPage({ searchParams }: { searchParams: NewRequestSearchParams }) {
+  const [viewer, params] = await Promise.all([getViewerContext(), searchParams]);
 
   if (!viewer) {
     return null;
@@ -36,11 +38,15 @@ export default async function NewRequestPage() {
 
   const customers = customersResult.data ?? [];
   const services = servicesResult.data ?? [];
+  const defaultCustomerId = customers.some((customer) => customer.id === params.customerId)
+    ? params.customerId
+    : "";
+  const cancelHref = defaultCustomerId ? `/app/customers/${defaultCustomerId}` : "/app/requests";
 
   return (
     <div className="mx-auto max-w-4xl">
       <Link
-        href="/app/requests"
+        href={cancelHref}
         className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-white"
       >
         <ArrowLeft className="size-4" />
@@ -71,6 +77,8 @@ export default async function NewRequestPage() {
                 : customer.display_name,
             }))}
             services={services.map((service) => ({ id: service.id, label: service.name }))}
+            defaultCustomerId={defaultCustomerId}
+            cancelHref={cancelHref}
           />
         </section>
       ) : (

@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
+  CircleAlert,
   Clock3,
   FileText,
   Mail,
@@ -35,7 +36,7 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
 
   const supabase = await createClient();
   const organizationId = viewer.organization.id;
-  const [quoteResult, messagesResult] = await Promise.all([
+  const [quoteResult, messagesResult, attentionResult] = await Promise.all([
     supabase
       .from("quotes")
       .select("id, title, reference, amount, currency, status, owner_user_id, sent_at, expires_at, next_action_at, created_at, updated_at, customers(id, display_name, company_name, email, phone), requests(id, title, status)")
@@ -49,9 +50,18 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
       .eq("quote_id", quoteId)
       .order("created_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("attention_items")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("entity_type", "quote")
+      .eq("entity_id", quoteId)
+      .in("status", ["OPEN", "IN_PROGRESS"])
+      .order("created_at", { ascending: false })
+      .limit(1),
   ]);
 
-  if (quoteResult.error || messagesResult.error) throw new Error("Impossible de charger ce devis.");
+  if (quoteResult.error || messagesResult.error || attentionResult.error) throw new Error("Impossible de charger ce devis.");
   if (!quoteResult.data) notFound();
 
   const quote = quoteResult.data;
@@ -73,6 +83,7 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
   const timeline = await loadBusinessTimeline(supabase, organizationId, timelineScopes);
   const timelineEntities = [{ type: "quote", id: quote.id, label: `Devis · ${quote.title}` }];
   const latestActivity = timeline.events.at(0);
+  const openAttentionId = attentionResult.data?.[0]?.id;
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -102,6 +113,26 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
           </div>
         </div>
       </header>
+
+      <div className="mt-4 flex flex-wrap justify-end gap-3">
+        {quote.customers ? (
+          <Link href={`/app/customers/${quote.customers.id}`} className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4 py-2.5 text-sm font-medium text-white transition hover:border-violet-400/40">
+            <UserRound className="size-4 text-violet-300" />Voir le client
+          </Link>
+        ) : null}
+        {quote.requests ? (
+          <Link href={`/app/requests/${quote.requests.id}`} className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4 py-2.5 text-sm font-medium text-white transition hover:border-violet-400/40">
+            <FileText className="size-4 text-violet-300" />Voir la demande
+          </Link>
+        ) : null}
+        <Link
+          href={openAttentionId ? `/app/attention#attention-${openAttentionId}` : `/app/attention/new?quoteId=${quote.id}`}
+          className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500"
+        >
+          <CircleAlert className="size-4" />
+          {openAttentionId ? "Voir à traiter" : "Ajouter à traiter"}
+        </Link>
+      </div>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric icon={CalendarDays} label="Envoyé le" value={formatQuoteDate(quote.sent_at)} />
