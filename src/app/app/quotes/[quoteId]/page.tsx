@@ -15,9 +15,10 @@ import { z } from "zod";
 
 import { QuoteStatusBadge } from "@/components/quotes/quote-list-screen";
 import { QuoteStatusForm } from "@/components/quotes/quote-status-form";
-import { ActivityTimeline, type ActivityTimelineItem } from "@/components/sesira/activity-timeline";
+import { BusinessTimeline } from "@/components/sesira/business-timeline";
 import { getViewerContext } from "@/lib/auth/viewer";
-import { formatQuoteAmount, formatQuoteDate, formatQuoteDateTime, quoteEventLabel } from "@/lib/quotes/format";
+import { loadBusinessTimeline } from "@/lib/events/load-business-timeline";
+import { formatQuoteAmount, formatQuoteDate, formatQuoteDateTime } from "@/lib/quotes/format";
 import { getAllowedQuoteStatuses, isQuoteStatus } from "@/lib/quotes/schema";
 import { requestStatusLabel } from "@/lib/requests/format";
 import { createClient } from "@/lib/supabase/server";
@@ -29,18 +30,12 @@ type QuotePageProps = {
 
 export default async function QuotePage({ params, searchParams }: QuotePageProps) {
   const [viewer, { quoteId }, query] = await Promise.all([getViewerContext(), params, searchParams]);
-
-  if (!viewer) {
-    return null;
-  }
-
-  if (!z.uuid().safeParse(quoteId).success) {
-    notFound();
-  }
+  if (!viewer) return null;
+  if (!z.uuid().safeParse(quoteId).success) notFound();
 
   const supabase = await createClient();
   const organizationId = viewer.organization.id;
-  const [quoteResult, messagesResult, eventsResult] = await Promise.all([
+  const [quoteResult, messagesResult] = await Promise.all([
     supabase
       .from("quotes")
       .select("id, title, reference, amount, currency, status, owner_user_id, sent_at, expires_at, next_action_at, created_at, updated_at, customers(id, display_name, company_name, email, phone), requests(id, title, status)")
@@ -54,37 +49,19 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
       .eq("quote_id", quoteId)
       .order("created_at", { ascending: false })
       .limit(10),
-    supabase
-      .from("events")
-      .select("id, type, source, payload, created_at")
-      .eq("organization_id", organizationId)
-      .eq("entity_type", "quote")
-      .eq("entity_id", quoteId)
-      .order("created_at", { ascending: false })
-      .limit(20),
   ]);
 
-  if (quoteResult.error || messagesResult.error || eventsResult.error) {
-    throw new Error("Impossible de charger ce devis.");
-  }
-
-  if (!quoteResult.data) {
-    notFound();
-  }
+  if (quoteResult.error || messagesResult.error) throw new Error("Impossible de charger ce devis.");
+  if (!quoteResult.data) notFound();
 
   const quote = quoteResult.data;
   const quoteStatus = quote.status;
+  if (!isQuoteStatus(quoteStatus)) notFound();
 
-  if (!isQuoteStatus(quoteStatus)) {
-    notFound();
-  }
   const ownerResult = quote.owner_user_id
     ? await supabase.from("profiles").select("full_name").eq("id", quote.owner_user_id).maybeSingle()
     : null;
-
-  if (ownerResult?.error) {
-    throw new Error("Impossible de charger le propriétaire du devis.");
-  }
+  if (ownerResult?.error) throw new Error("Impossible de charger le propriétaire du devis.");
 
   const ownerName = quote.owner_user_id
     ? quote.owner_user_id === viewer.userId
@@ -92,37 +69,10 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
       : ownerResult?.data?.full_name ?? "Membre de votre équipe"
     : "Non attribué";
   const messages = messagesResult.data ?? [];
-  const events = eventsResult.data ?? [];
-  const timelineItems: ActivityTimelineItem[] = [
-    ...events.map((event) => ({
-      id: `event-${event.id}`,
-      title: quoteEventLabel(event.type),
-      date: formatQuoteDateTime(event.created_at),
-      sortDate: event.created_at,
-      detail: null,
-      meta: event.source === "APP" ? "Sesira" : event.source,
-      tone: event.type === "quote.won" ? "emerald" as const : event.type === "quote.sent" ? "cyan" as const : event.type === "quote.lost" ? "slate" as const : "violet" as const,
-    })),
-    ...messages.map((message) => ({
-      id: `message-${message.id}`,
-      title: message.subject ?? (message.direction === "INBOUND" ? "Message reçu" : "Message envoyé"),
-      date: formatQuoteDateTime(message.received_at ?? message.sent_at ?? message.created_at),
-      sortDate: message.received_at ?? message.sent_at ?? message.created_at,
-      detail: message.body_text ? truncate(message.body_text, 180) : null,
-      meta: `${message.direction === "INBOUND" ? "Reçu" : "Envoyé"} · ${message.channel}`,
-      tone: message.direction === "INBOUND" ? "amber" as const : "cyan" as const,
-    })),
-  ]
-    .sort((left, right) => Date.parse(right.sortDate) - Date.parse(left.sortDate))
-    .map((item) => ({
-      id: item.id,
-      title: item.title,
-      date: item.date,
-      detail: item.detail,
-      meta: item.meta,
-      tone: item.tone,
-    }));
-  const latestActivity = timelineItems.at(0);
+  const timelineScopes = [{ entityType: "quote", entityIds: [quote.id] }];
+  const timeline = await loadBusinessTimeline(supabase, organizationId, timelineScopes);
+  const timelineEntities = [{ type: "quote", id: quote.id, label: `Devis · ${quote.title}` }];
+  const latestActivity = timeline.events.at(0);
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -157,7 +107,7 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
         <Metric icon={CalendarDays} label="Envoyé le" value={formatQuoteDate(quote.sent_at)} />
         <Metric icon={Clock3} label="Expiration" value={formatQuoteDate(quote.expires_at)} />
         <Metric icon={UserRound} label="Propriétaire" value={ownerName} />
-        <Metric icon={ReceiptText} label="Dernière activité" value={latestActivity?.date ?? "Aucune activité"} />
+        <Metric icon={ReceiptText} label="Dernière activité" value={latestActivity ? formatQuoteDateTime(latestActivity.created_at) : "Aucune activité"} />
       </section>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -190,7 +140,16 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
 
           <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6">
             <h2 className="font-semibold">Historique</h2>
-            <ActivityTimeline items={timelineItems} empty="L’activité de ce devis apparaîtra ici." className="mt-6" />
+            <BusinessTimeline
+              events={timeline.events}
+              organizationId={organizationId}
+              scopes={timelineScopes}
+              entities={timelineEntities}
+              actorNames={timeline.actorNames}
+              viewerUserId={viewer.userId}
+              empty="L’activité de ce devis apparaîtra ici."
+              className="mt-6"
+            />
           </section>
         </div>
 
@@ -225,10 +184,6 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
       </div>
     </div>
   );
-}
-
-function truncate(value: string, length: number): string {
-  return value.length > length ? `${value.slice(0, length - 1)}…` : value;
 }
 
 function Metric({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value: string }) {
