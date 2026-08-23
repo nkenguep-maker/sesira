@@ -10,7 +10,7 @@ Socle technique multi-tenant et multi-secteur de SESIRA OS. Le projet est indép
 - actions externes désactivées par défaut
 - statut commercial : **non commercialisable**
 
-La feuille de route active est [SESIRA_OS_TECH_ROADMAP_8_SEMAINES.md](./SESIRA_OS_TECH_ROADMAP_8_SEMAINES.md). Les décisions d'architecture sont dans [docs/architecture.md](./docs/architecture.md).
+L’état réel de l’implémentation est suivi dans [SESIRA_OS_ETAT_IMPLEMENTATION.md](./SESIRA_OS_ETAT_IMPLEMENTATION.md). La feuille de route active est [SESIRA_OS_TECH_ROADMAP_8_SEMAINES.md](./SESIRA_OS_TECH_ROADMAP_8_SEMAINES.md). Les décisions d'architecture sont dans [docs/architecture.md](./docs/architecture.md).
 
 ## Prérequis
 
