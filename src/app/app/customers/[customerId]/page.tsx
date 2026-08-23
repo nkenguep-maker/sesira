@@ -16,6 +16,7 @@ import { z } from "zod";
 import { CustomerTypeBadge } from "@/components/customers/customer-list-screen";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { customerInitials, formatCustomerDate, formatCustomerDateTime } from "@/lib/customers/format";
+import { requestStatusLabel } from "@/lib/requests/format";
 import { createClient } from "@/lib/supabase/server";
 
 type CustomerPageProps = {
@@ -140,8 +141,9 @@ export default async function CustomerPage({ params, searchParams }: CustomerPag
             items={requests.map((request) => ({
               id: request.id,
               title: request.title,
-              detail: request.status,
+              detail: requestStatusLabel(request.status),
               date: request.created_at,
+              href: `/app/requests/${request.id}`,
             }))}
             title="Demandes récentes"
           />
@@ -226,7 +228,7 @@ function RelatedPanel({
 }: {
   title: string;
   icon: typeof FileText;
-  items: Array<{ id: string; title: string; detail: string; date: string }>;
+  items: Array<{ id: string; title: string; detail: string; date: string; href?: string }>;
   empty: string;
 }) {
   return (
@@ -238,13 +240,7 @@ function RelatedPanel({
       {items.length ? (
         <div className="divide-y divide-[var(--border)]">
           {items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-4 px-5 py-4">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-slate-200">{item.title}</p>
-                <p className="mt-1 text-xs text-[var(--muted)]">{item.detail}</p>
-              </div>
-              <span className="shrink-0 text-xs text-slate-500">{formatCustomerDate(item.date)}</span>
-            </div>
+            <RelatedPanelItem key={item.id} item={item} />
           ))}
         </div>
       ) : (
@@ -254,6 +250,33 @@ function RelatedPanel({
         </div>
       )}
     </section>
+  );
+}
+
+function RelatedPanelItem({
+  item,
+}: {
+  item: { id: string; title: string; detail: string; date: string; href?: string };
+}) {
+  const content = (
+    <>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium text-slate-200">{item.title}</p>
+        <p className="mt-1 text-xs text-[var(--muted)]">{item.detail}</p>
+      </div>
+      <span className="shrink-0 text-xs text-slate-500">{formatCustomerDate(item.date)}</span>
+    </>
+  );
+
+  return item.href ? (
+    <Link
+      href={item.href}
+      className="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-[var(--panel-soft)]"
+    >
+      {content}
+    </Link>
+  ) : (
+    <div className="flex items-center justify-between gap-4 px-5 py-4">{content}</div>
   );
 }
 

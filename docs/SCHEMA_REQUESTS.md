@@ -64,9 +64,18 @@ The normal terminal statuses and `expires_at` remain the source for won/lost/exp
 
 ## P1 — atomic request and quote lifecycle events
 
+### Requests implementation status
+
+The Requests module now resolves the creation half of this gap with the focused migration
+`20260823163433_emit_request_created_event.sql`. It adds security-invoker triggers for
+`request.created` and `request.status_changed`, so the request mutation and its timeline event
+commit or fail together under the authenticated user's existing RLS permissions. No request
+field or authorization policy was changed. Quote lifecycle events remain an open request for
+the future Quotes module.
+
 ### Current gap
 
-Only customer insertion has an atomic domain event trigger (`customer.created`). Requests and quotes currently have no equivalent event creation or controlled transition function. Separate inserts from a Server Action could leave an entity without its required timeline event.
+Customer and request insertion now have atomic domain event triggers. Quotes still have no equivalent event creation or controlled transition function. Separate quote/event inserts from a Server Action could leave an entity without its required timeline event.
 
 ### Requested future change
 

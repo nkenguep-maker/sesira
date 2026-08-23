@@ -1,14 +1,110 @@
-import { Inbox } from "lucide-react";
+import { RequestListScreen } from "@/components/requests/request-list-screen";
+import { getViewerContext } from "@/lib/auth/viewer";
+import { isRequestSource, isRequestStatus } from "@/lib/requests/schema";
+import { createClient } from "@/lib/supabase/server";
 
-import { ModuleEmptyState } from "@/components/sesira/module-empty-state";
+const PAGE_SIZE = 25;
 
-export default function RequestsPage() {
+type RequestSearchParams = Promise<{
+  q?: string;
+  status?: string;
+  source?: string;
+  cursor?: string;
+}>;
+
+export default async function RequestsPage({ searchParams }: { searchParams: RequestSearchParams }) {
+  const [viewer, params] = await Promise.all([getViewerContext(), searchParams]);
+
+  if (!viewer) {
+    return null;
+  }
+
+  const query = params.q?.trim().slice(0, 80) ?? "";
+  const status = params.status && isRequestStatus(params.status) ? params.status : "ALL";
+  const source = params.source && isRequestSource(params.source) ? params.source : "ALL";
+  const cursor = isValidDate(params.cursor) ? params.cursor : undefined;
+  const organizationId = viewer.organization.id;
+  const supabase = await createClient();
+
+  let listQuery = supabase
+    .from("requests")
+    .select(
+      "id, title, source, status, qualification_score, created_at, customers(id, display_name, company_name), service_catalog_items(id, name)",
+    )
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: false })
+    .limit(PAGE_SIZE + 1);
+
+  if (query) {
+    listQuery = listQuery.ilike("title", `%${escapeLikePattern(query)}%`);
+  }
+
+  if (status !== "ALL") {
+    listQuery = listQuery.eq("status", status);
+  }
+
+  if (source !== "ALL") {
+    listQuery = listQuery.eq("source", source);
+  }
+
+  if (cursor) {
+    listQuery = listQuery.lt("created_at", cursor);
+  }
+
+  const [listResult, totalResult, newResult, needsInfoResult, readyResult] = await Promise.all([
+    listQuery,
+    supabase.from("requests").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
+    supabase
+      .from("requests")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .eq("status", "NEW"),
+    supabase
+      .from("requests")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .eq("status", "NEEDS_INFO"),
+    supabase
+      .from("requests")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .in("status", ["QUALIFIED", "READY"]),
+  ]);
+
+  if (
+    listResult.error ||
+    totalResult.error ||
+    newResult.error ||
+    needsInfoResult.error ||
+    readyResult.error
+  ) {
+    throw new Error("Impossible de charger les demandes.");
+  }
+
+  const hasNextPage = (listResult.data?.length ?? 0) > PAGE_SIZE;
+  const requests = (listResult.data ?? []).slice(0, PAGE_SIZE);
+
   return (
-    <ModuleEmptyState
-      icon={Inbox}
-      eyebrow="Flux entrant"
-      title="Demandes"
-      description="Quand Sesira recevra ou importera une nouvelle demande, elle sera normalisée et affichée ici."
+    <RequestListScreen
+      requests={requests}
+      stats={{
+        total: totalResult.count ?? 0,
+        new: newResult.count ?? 0,
+        needsInfo: needsInfoResult.count ?? 0,
+        ready: readyResult.count ?? 0,
+      }}
+      query={query}
+      status={status}
+      source={source}
+      nextCursor={hasNextPage ? requests.at(-1)?.created_at : undefined}
     />
   );
+}
+
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
+function isValidDate(value: string | undefined): value is string {
+  return Boolean(value && !Number.isNaN(Date.parse(value)));
 }
