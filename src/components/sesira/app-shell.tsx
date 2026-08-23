@@ -1,30 +1,10 @@
-import {
-  Activity,
-  AlertCircle,
-  Bot,
-  Building2,
-  FileText,
-  LayoutDashboard,
-  LogOut,
-  Settings,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
+import { Building2, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 
 import type { ViewerContext } from "@/lib/auth/viewer";
 
 import { logoutAction } from "@/app/app/logout-action";
-
-const navigation = [
-  { href: "/app", label: "Accueil", icon: LayoutDashboard },
-  { href: "/app/attention", label: "À traiter", icon: AlertCircle },
-  { href: "/app/requests", label: "Demandes", icon: FileText },
-  { href: "/app/quotes", label: "Devis", icon: Activity },
-  { href: "/app/customers", label: "Clients", icon: Users },
-  { href: "/app/automations", label: "Automatisations", icon: Bot },
-  { href: "/app/settings", label: "Réglages", icon: Settings },
-];
+import { AppNavigation } from "@/components/sesira/app-navigation";
 
 export function AppShell({
   viewer,
@@ -55,18 +35,7 @@ export function AppShell({
             </div>
           </div>
 
-          <nav className="mt-6 grid gap-1 sm:grid-cols-2 lg:grid-cols-1" aria-label="Navigation principale">
-            {navigation.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[var(--muted)] transition hover:bg-[var(--panel-soft)] hover:text-white"
-              >
-                <Icon className="size-4" />
-                {label}
-              </Link>
-            ))}
-          </nav>
+          <AppNavigation />
 
           <div className="mt-auto hidden border-t border-[var(--border)] pt-5 lg:block">
             <p className="truncate px-2 text-xs text-[var(--muted)]">{viewer.email}</p>

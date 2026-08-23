@@ -18,6 +18,9 @@
 # testing
 /coverage
 
+# supabase local metadata
+/supabase/.temp/
+
 # misc
 .DS_Store
 *.pem
