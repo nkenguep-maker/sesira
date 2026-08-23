@@ -15,6 +15,7 @@ import { z } from "zod";
 
 import { RequestStatusBadge } from "@/components/requests/request-list-screen";
 import { RequestStatusForm } from "@/components/requests/request-status-form";
+import { ActivityTimeline } from "@/components/sesira/activity-timeline";
 import { getViewerContext } from "@/lib/auth/viewer";
 import {
   eventLabel,
@@ -156,6 +157,15 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
         </div>
       </header>
 
+      <div className="mt-4 flex justify-end">
+        <Link
+          href={`/app/quotes/new?requestId=${request.id}`}
+          className="inline-flex items-center gap-2 rounded-xl border border-violet-400/25 bg-violet-400/10 px-4 py-2.5 text-sm font-medium text-violet-100 transition hover:border-violet-400/50"
+        >
+          Créer un devis lié
+        </Link>
+      </div>
+
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
         <Metric
           icon={ClipboardCheck}
@@ -238,21 +248,16 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
 
           <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
             <h2 className="font-semibold">Journal d’activité</h2>
-            {events.length ? (
-              <div className="mt-5 space-y-5">
-                {events.map((event) => (
-                  <div key={event.id} className="flex gap-3">
-                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-violet-400" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-200">{eventLabel(event.type)}</p>
-                      <p className="mt-1 text-xs text-[var(--muted)]">{formatRequestDateTime(event.created_at)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-4 text-sm leading-6 text-[var(--muted)]">L’activité de cette demande apparaîtra ici.</p>
-            )}
+            <ActivityTimeline
+              className="mt-5"
+              empty="L’activité de cette demande apparaîtra ici."
+              items={events.map((event) => ({
+                id: event.id,
+                title: eventLabel(event.type),
+                date: formatRequestDateTime(event.created_at),
+                meta: event.source === "APP" ? "Sesira" : event.source,
+              }))}
+            />
           </section>
         </aside>
       </div>

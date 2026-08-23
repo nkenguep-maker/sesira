@@ -14,8 +14,10 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { CustomerTypeBadge } from "@/components/customers/customer-list-screen";
+import { ActivityTimeline } from "@/components/sesira/activity-timeline";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { customerInitials, formatCustomerDate, formatCustomerDateTime } from "@/lib/customers/format";
+import { formatQuoteAmount, quoteStatusLabel } from "@/lib/quotes/format";
 import { requestStatusLabel } from "@/lib/requests/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -153,8 +155,9 @@ export default async function CustomerPage({ params, searchParams }: CustomerPag
             items={quotes.map((quote) => ({
               id: quote.id,
               title: quote.title,
-              detail: `${quote.status}${quote.amount === null ? "" : ` · ${quote.amount} ${quote.currency}`}`,
+              detail: `${quoteStatusLabel(quote.status)} · ${formatQuoteAmount(quote.amount, quote.currency)}`,
               date: quote.created_at,
+              href: `/app/quotes/${quote.id}`,
             }))}
             title="Devis récents"
           />
@@ -172,23 +175,16 @@ export default async function CustomerPage({ params, searchParams }: CustomerPag
 
           <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
             <h2 className="font-semibold">Journal d’activité</h2>
-            {events.length ? (
-              <div className="mt-5 space-y-5">
-                {events.map((event) => (
-                  <div key={event.id} className="flex gap-3">
-                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-violet-400" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-200">{eventLabel(event.type)}</p>
-                      <p className="mt-1 text-xs text-[var(--muted)]">
-                        {formatCustomerDateTime(event.created_at)} · {event.source}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-4 text-sm leading-6 text-[var(--muted)]">L’activité métier apparaîtra ici.</p>
-            )}
+            <ActivityTimeline
+              className="mt-5"
+              empty="L’activité métier apparaîtra ici."
+              items={events.map((event) => ({
+                id: event.id,
+                title: eventLabel(event.type),
+                date: formatCustomerDateTime(event.created_at),
+                meta: event.source === "APP" ? "Sesira" : event.source,
+              }))}
+            />
           </section>
         </aside>
       </div>

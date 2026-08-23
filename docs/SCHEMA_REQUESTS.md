@@ -1,8 +1,8 @@
 # SESIRA Product Workflow Schema Requests
 
-> Status: proposal only
+> Status: living backend requirements
 > Prepared: 23 August 2026
-> This document does not authorize or include a database migration.
+> Implemented items are recorded alongside the remaining schema gaps.
 
 ## Decision rule
 
@@ -66,16 +66,24 @@ The normal terminal statuses and `expires_at` remain the source for won/lost/exp
 
 ### Requests implementation status
 
-The Requests module now resolves the creation half of this gap with the focused migration
-`20260823163433_emit_request_created_event.sql`. It adds security-invoker triggers for
+The Requests module resolves the request half of this gap with the focused migration
+`20260823165256_emit_request_created_event.sql`. It adds security-invoker triggers for
 `request.created` and `request.status_changed`, so the request mutation and its timeline event
-commit or fail together under the authenticated user's existing RLS permissions. No request
-field or authorization policy was changed. Quote lifecycle events remain an open request for
-the future Quotes module.
+commit or fail together under the authenticated user's existing RLS permissions.
+
+The Quotes module resolves the quote creation and status-event gap with
+`20260823180507_emit_quote_events.sql`. It emits `quote.created` after a successful insert and
+emits `quote.sent` only when the stored status actually transitions to `SENT`. Other meaningful
+outcomes use the existing event vocabulary, while remaining status changes use
+`quote.status_changed`. These triggers are security-invoker functions and do not change quote
+fields, grants or authorization policies.
 
 ### Current gap
 
-Customer and request insertion now have atomic domain event triggers. Quotes still have no equivalent event creation or controlled transition function. Separate quote/event inserts from a Server Action could leave an entity without its required timeline event.
+Customer, request and quote insertion now have atomic domain event triggers. Request and quote
+status transitions performed by the product also write their timeline event in the same database
+transaction. A future external integration still needs an idempotent transition boundary before
+provider callbacks are accepted.
 
 ### Requested future change
 
