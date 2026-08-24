@@ -1,207 +1,245 @@
 # SESIRA Product Workflow Schema Requests
 
-> Status: living backend requirements
+> Status: prioritized backend requirements
 > Prepared: 23 August 2026
-> Implemented items are recorded alongside the remaining schema gaps.
+> Reprioritized: 24 August 2026
 
 ## Decision rule
 
-The existing schema should be used as-is unless a gap affects tenant isolation, deterministic workflow safety, idempotency or a field explicitly required for operational filtering/reporting. Flexible or derivable values stay in existing JSON/events until a proven query requires a column.
+Use the existing schema unless a gap affects tenant isolation, transition integrity, deterministic
+workflow safety, idempotency or an operational query required by Core Workflow. Do not duplicate
+derivable state. Do not weaken RLS. Flexible metadata stays in JSONB only when it does not need an
+index, constraint, join or durable invariant.
+
+Priority means:
+
+- **P0** — required before Core Workflow can safely progress beyond local Shadow Mode;
+- **P1** — required for traceability or operational quality before controlled production actions;
+- **P2** — useful later and deliberately deferred until a measured query/reporting need exists.
+
+## P0 — canonical and enforceable Request/Quote state machines
+
+### Current gap
+
+The database constrains status values but not status transitions. Current transition maps live in
+`src/lib/requests/schema.ts` and `src/lib/quotes/schema.ts`; a tenant member with direct Data API
+access can bypass those maps because authenticated members currently have table update grants.
+Triggers would record that invalid transition rather than reject it.
+
+`ASSIGNED` is a valid Request status but no current application transition enters it.
+`quote.sent_at` is set by the manual Server Action, but a direct update can store `SENT` without the
+same invariant.
+
+### Required outcome
+
+- Define one canonical transition graph per entity and explicitly decide the intended path into
+  `ASSIGNED`.
+- Enforce transitions and required side effects atomically at the database boundary using the
+  smallest mechanism compatible with existing Server Actions and RLS.
+- Preserve existing status names unless an explicit migration decision says otherwise.
+- Use compare-and-set semantics so concurrent transitions cannot both succeed.
+- Keep creation/status events atomic and emit an event only for a real stored transition.
+- Add tests for every legal edge, illegal edge, terminal status, stale expected status and direct
+  tenant API attempt.
 
 ## P0 — tenant-safe assignments
 
 ### Current gap
 
-- `requests.assigned_user_id`, `quotes.owner_user_id` and `attention_items.assigned_user_id` reference `auth.users(id)` only.
-- A tenant member with update permission could technically assign a known user UUID that is not a member of the same organization.
-- Application validation will reduce the risk but cannot replace database-enforced tenant integrity.
+`requests.assigned_user_id`, `quotes.owner_user_id` and `attention_items.assigned_user_id` reference
+`auth.users(id)` only. Application validation checks active membership in some flows, but the
+database can still accept a known user UUID from another tenant.
 
-### Requested future change
+### Required outcome
 
-Enforce each non-null assignment against `(organization_id, user_id)` in `organization_members`, and decide whether an inactive membership should invalidate an existing assignment or only block new assignments. The implementation should retain the existing nullable fields and generic roles.
+- Enforce every non-null assignment against `(organization_id, user_id)` in
+  `organization_members`.
+- Decide and document whether suspension prevents only new assignments or also invalidates stored
+  assignments.
+- Retain the existing nullable assignment columns and generic organization roles.
+- Add offensive tests proving tenant A cannot assign a tenant B user by UUID.
+
+## P0 — explicit follow-up safety state
+
+### Current gap
+
+Quote status alone cannot distinguish temporary pause, explicit opt-out, complaint hold or manual
+review. These conditions must be queryable and must not depend only on mutable JSON metadata.
+
+### Candidate fields
+
+| Field | Type | Purpose |
+|---|---|---|
+| `quotes.automation_paused_at` | nullable `timestamptz` | Explicit workflow pause |
+| `quotes.automation_pause_reason` | nullable constrained `text` | Stable reason such as `MANUAL`, `COMPLAINT`, `REVIEW` |
+| `quotes.opted_out_at` | nullable `timestamptz` | Durable communication opt-out |
+
+### Required invariants
+
+- No follow-up decision is due when a quote is paused, opted out, replied, won, lost or expired.
+- Complaint handling pauses external follow-up and creates a human decision.
+- Clearing a pause is explicit and audited; routine status changes cannot clear opt-out.
+- Shadow Mode evaluates the same guards as future production execution.
+
+## P0 — deterministic scheduling, worker claims and retries
+
+### Current gap
+
+`quotes.next_action_at` can represent a business date and `automation_runs` stores status,
+`attempt_count`, start/completion timestamps and a unique run idempotency key. It does not yet expose
+a queryable due/retry time or a worker lease. Multiple workers need a safe claim boundary, and
+transient retries need a deterministic next-attempt time.
+
+### Candidate extension to `automation_runs`
+
+- `scheduled_for timestamptz` or an equivalently explicit due timestamp;
+- `next_attempt_at timestamptz` for bounded transient retries;
+- `locked_at timestamptz` and `lock_expires_at timestamptz` (or an equivalent lease token);
+- supporting organization/status/due index.
+
+The implementation may use a smaller equivalent design if it proves concurrent safety with SQL
+tests. Do not introduce a second jobs/runs table without demonstrating that the existing table
+cannot satisfy the invariant.
 
 ### Acceptance criteria
 
-- A user from organization A cannot be assigned to a request, quote or attention item in organization B.
-- Server Actions query active organization members before mutation and do not accept organization IDs from FormData.
-- The relevant composite keys and supporting indexes are verified in the migration and tests.
+- Two workers cannot claim the same due decision.
+- Crashed work becomes recoverable after a bounded lease.
+- Permanent errors are not retried.
+- Transient retries use bounded backoff and preserve the original idempotency identity.
+- Exhaustion creates one incident, not one incident per retry poll.
+
+## P0 — durable idempotency and duplicate prevention
+
+### Existing support
+
+`automation_runs` already has unique `(organization_id, idempotency_key)`. Preserve and use it for
+workflow execution identity.
+
+### Remaining gaps
+
+- `events` has no provider/delivery idempotency key.
+- Customer, Request, Quote and manual Attention creation disable repeated browser submission while
+  pending but cannot prevent a replay after a timeout or proxy/browser retry.
+- Workflow-generated attention items have no durable decision/deduplication key.
+
+### Required outcome
+
+- External/provider events use a stable provider delivery ID with uniqueness scoped by
+  organization and source.
+- Product creation uses an opaque bounded replay key scoped by organization and operation; failed
+  validation does not consume it.
+- Workflow decisions derive deterministic run/effect keys from stable inputs and workflow version.
+- Generated attention items have one stable deduplication key per decision/entity.
+- A replay returns or observes the original result and emits no duplicate event, attention item,
+  retry or future external effect.
+- Never deduplicate on mutable customer data such as email, title or amount.
+
+## P1 — workflow provenance for attention items
+
+### Current gap
+
+`attention_items.entity_type/entity_id` links the business subject but there is no tenant-safe link
+to the workflow run that requested human judgment.
+
+### Requested future change
+
+Add an optional tenant-safe relation from a generated attention item to its `automation_run`, or an
+equivalent constrained provenance mechanism. Manual attention items remain valid with a null run.
+The same design should carry the P0 deduplication key without creating a second attention system.
+
+## P1 — incident deduplication and recurrence
+
+### Current gap
+
+`incidents` can represent severity, state and an entity, but repeated workflow failures can create
+many equivalent open incidents and there is no queryable recurrence/last-seen signal.
+
+### Candidate extension
+
+- nullable `deduplication_key`/`fingerprint`, unique for active incidents within an organization;
+- `first_seen_at`, `last_seen_at` and/or `occurrence_count` if operational UI requires them;
+- optional tenant-safe `automation_run_id` only if entity linkage cannot provide enough provenance.
+
+Prefer the smallest version that proves one repeated failure family produces one actionable open
+incident and preserves audit history.
 
 ## P1 — first-class quote source
 
 ### Current gap
 
-The product specification requires quote source in quote details and operational analysis. `quotes` has `external_provider` and `external_id`, but no generic `source`. Those values answer integration identity, not whether the quote originated from manual entry, CRM, import or request conversion.
+`quotes.external_provider` and `external_id` identify an integration but do not describe whether a
+quote came from manual entry, CRM, import or request conversion.
 
-### Requested future field
+| Field | Proposed type | Proposed default |
+|---|---|---|
+| `quotes.source` | constrained `text not null` | `MANUAL` |
 
-| Field | Proposed type | Proposed default | Notes |
-|---|---|---|---|
-| `quotes.source` | `text not null` | `MANUAL` | Constrain to the smallest source set shared with the product; keep provider identity separate |
+Define the values once in application code and mirror them in a database check constraint. Keep
+provider identity separate.
 
-The exact allowed values should be defined once in the application and mirrored by a PostgreSQL check constraint. Existing rows can safely backfill to `MANUAL` because there is no production customer data.
+## P1 — external transition/event boundary
 
-## P1 — explicit follow-up safety state
-
-### Current gap
-
-The specification requires follow-ups to stop on reply, won, lost, expired, opt-out, complaint and manual pause. Quote status represents the commercial lifecycle but does not safely preserve every automation stop reason. Encoding these only in `metadata` would make queue filters, guards and audits fragile.
-
-### Requested future fields
-
-| Field | Proposed type | Nullability | Purpose |
-|---|---|---|---|
-| `quotes.automation_paused_at` | `timestamptz` | nullable | Explicit human/system pause timestamp |
-| `quotes.automation_pause_reason` | `text` | nullable | Stable reason code such as `MANUAL`, `COMPLAINT` or `REVIEW` |
-| `quotes.opted_out_at` | `timestamptz` | nullable | Irreversible customer communication opt-out signal for workflow guards |
-
-The normal terminal statuses and `expires_at` remain the source for won/lost/expired stops. Reply detection remains traceable through messages/events; a separate `replied_at` field should only be added if performance measurements prove it necessary.
-
-### Required invariants
-
-- No due follow-up may be emitted when the quote is paused, opted out, replied, won, lost or expired.
-- Clearing a manual pause must be an explicit audited action; opt-out must not be cleared by a routine status change.
-- The guard is enforced in the deterministic workflow service, not only by hiding UI controls.
-
-## P1 — atomic request and quote lifecycle events
-
-### Requests implementation status
-
-The Requests module resolves the request half of this gap with the focused migration
-`20260823165256_emit_request_created_event.sql`. It adds security-invoker triggers for
-`request.created` and `request.status_changed`, so the request mutation and its timeline event
-commit or fail together under the authenticated user's existing RLS permissions.
-
-The Quotes module resolves the quote creation and status-event gap with
-`20260823180507_emit_quote_events.sql`. It emits `quote.created` after a successful insert and
-emits `quote.sent` only when the stored status actually transitions to `SENT`. Other meaningful
-outcomes use the existing event vocabulary, while remaining status changes use
-`quote.status_changed`. These triggers are security-invoker functions and do not change quote
-fields, grants or authorization policies.
-
-### Current gap
-
-Customer, request and quote insertion now have atomic domain event triggers. Request and quote
-status transitions performed by the product also write their timeline event in the same database
-transaction. A future external integration still needs an idempotent transition boundary before
-provider callbacks are accepted.
-
-### Requested future change
-
-Reuse the existing security-invoker trigger pattern for creation events and use a constrained database function or equally atomic database mechanism for important status transitions. Initial events should remain within the existing vocabulary:
-
-- `request.received`
-- `request.processed`
-- `request.qualified`
-- `request.needs_info`
-- `request.ready`
-- `quote.created`
-- `quote.sent`
-- `quote.replied`
-- `quote.won`
-- `quote.lost`
-
-No generic trigger should emit an event for every update. Events must represent meaningful domain transitions and include only non-sensitive structured context.
-
-## P1 — event idempotency before external integrations
-
-### Current gap
-
-`events` is append-only but has no provider event identifier or idempotency key. Email and CRM providers retry deliveries; duplicate events could schedule duplicate follow-ups or attention items.
-
-### Requested future option
-
-Add a nullable idempotency key scoped by organization and event source, with a partial unique constraint for non-null values. The final names can follow the integration adapter vocabulary, for example:
-
-- `events.idempotency_key text null`
-- unique `(organization_id, source, idempotency_key)` where the key is not null
-
-Internal user actions may omit the key. Provider webhook handlers must supply a stable provider delivery/event ID.
-
-## P1 — durable idempotency for product creation forms
-
-### Current gap
-
-The product disables submit buttons while a Server Action is pending, which prevents ordinary
-double-clicks in one browser session. It does not provide a durable guarantee when a request is
-replayed after a network timeout, browser retry or reverse-proxy retry. Replaying customer,
-request, quote or manual attention creation can therefore create two rows and two valid creation
-events.
-
-This is not an authorization flaw and must not be addressed by weakening RLS or by deduplicating
-business rows on mutable fields such as title, email or amount.
-
-### Requested future change
-
-Add an opaque creation idempotency key supplied by the form and stored transactionally with the
-created resource. Enforce uniqueness at least on `(organization_id, operation, idempotency_key)`.
-The authenticated membership remains the only source of `organization_id`; the key is only a
-replay token and never grants authority. The first successful mutation and its existing domain
-event must commit together, while a replay returns the original result without emitting another
-event.
-
-### Acceptance criteria
-
-- Two submissions with the same key in one organization create exactly one resource and one
-  creation event.
-- The same opaque key may be used independently by another organization.
-- Failed validation does not consume a key.
-- Keys have a bounded length and retention policy, and never contain customer data.
-- Existing optimistic status-transition guards remain unchanged.
+Core customer/request/quote events are now atomic through security-invoker triggers. Before provider
+callbacks are accepted, add one idempotent organization-aware boundary that validates the referenced
+entity, applies a permitted transition, records the provider identity and emits the existing event
+in one transaction. Do not implement a generic trigger that emits an event for every update.
 
 ## P2 — typed and versioned request data
 
-### Current gap
+`requests.data` currently stores `{ schema_version: 1, description? }` and tolerates extra keys. Keep
+sector-neutral flexibility, but define a richer Zod-discriminated envelope before automated intake:
 
-`requests.data` correctly provides sector-neutral flexibility, but there is no declared canonical shape. Unversioned JSON can accumulate incompatible keys across forms, imports and future extraction pipelines.
+- `schema_version`;
+- `summary`;
+- `contact_preference`;
+- `location`;
+- `answers`;
+- `missing_fields`;
+- `raw_input` only when retention/privacy rules allow it.
 
-### Requested application contract first
+Add a database version field only when multiple active versions or indexed JSON queries make it
+necessary.
 
-Do not add sector-specific columns. Define a Zod-discriminated application payload with a small stable envelope, for example:
+## P2 — lifecycle timestamps and reporting fields
 
-- `schema_version`
-- `summary`
-- `contact_preference`
-- `location`
-- `answers`
-- `missing_fields`
-- `raw_input` only when retention and privacy rules permit it
-
-Validate writes and tolerate older versions on reads. Consider a database-level version field only after multiple schema versions coexist or JSON filtering becomes operationally important.
-
-## P2 — lifecycle timestamps and reasons
-
-The following fields may become useful but are not requested for the first implementation migration:
-
-| Candidate | Initial source | Add a column only when |
+| Candidate | Derive from today | Add a column only when |
 |---|---|---|
-| `requests.received_at` | `created_at` or inbound event time | imported requests need a source timestamp distinct from ingestion |
-| `requests.closed_at` | transition event | SLA/reporting queries cannot efficiently derive it |
-| `requests.lost_reason` | event payload or typed `data` | loss-reason filtering becomes a core report |
-| `quotes.last_interaction_at` | messages/events | quote queues require it at measured scale |
-| `quotes.followup_count` | automation runs/events | aggregate query cost is proven material |
-| `quotes.lost_reason` | transition event/metadata | structured pipeline reporting is implemented |
-| `quotes.crm_url` | provider adapter derived from external identity | a provider cannot produce a stable URL |
+| `requests.received_at` | `created_at`/event time | imports need source time distinct from ingestion |
+| `requests.closed_at` | transition event | SLA queries cannot derive it efficiently |
+| `requests.lost_reason` | event payload/typed `data` | loss filtering becomes a core report |
+| `quotes.last_interaction_at` | messages/events | operational queues require measured performance |
+| `quotes.followup_count` | automation runs/events | aggregate cost is proven material |
+| `quotes.lost_reason` | transition event/metadata | structured reporting is implemented |
+| `quotes.crm_url` | external provider identity | an adapter cannot derive a stable URL |
 
-These are deliberately deferred to avoid duplicated state and update drift.
+Do not add these speculatively.
 
-## Existing schema that should remain unchanged
+## Implemented foundations — do not reopen without evidence
 
-- Request statuses and quote statuses already match the specification.
-- `requests.data` and `quotes.metadata` remain JSONB extension points, not substitutes for query-critical fields.
-- Tenant-safe composite relations from requests/quotes to customers, catalog items and originating requests are already correct.
-- Existing list and foreign-key indexes cover the first product screens.
-- RLS remains the authorization boundary; Server Actions continue to add explicit organization filters.
-- `events.entity_type`/`entity_id` remains a deliberate polymorphic reference. Application writes must validate that the referenced entity belongs to the same organization.
-- Organization roles remain `OWNER`, `ADMIN`, `MANAGER` and `MEMBER` for this workflow. Sector job titles are configuration/display concerns, not a reason to redesign authorization.
+- Request statuses and Quote statuses already match the product specification.
+- `customer.created`, `request.created`, `request.status_changed`, `quote.created` and quote status
+  events commit atomically through the existing security-invoker trigger pattern.
+- `quote.sent` occurs only on a real transition to `SENT`.
+- `automation_runs` already provides organization-scoped run idempotency.
+- Tenant-safe composite relations protect request/quote/message links to customer/request/catalog
+  entities.
+- Existing list and foreign-key indexes support current product screens.
+- RLS is the authorization boundary; Server Actions also use explicit organization filters.
+- `events.entity_type/entity_id` is deliberately polymorphic. Do not replace it with a second event
+  model.
+- `events`, `ai_runs` and `audit_logs` are append-oriented through select/insert-only grants.
+- Organization roles remain `OWNER`, `ADMIN`, `MANAGER`, `MEMBER` for this phase.
 
-## Migration gate for the next phase
+## Migration gate
 
 Before creating any migration:
 
-1. map each accepted item to a concrete workflow invariant or required query;
-2. inspect current live constraints and indexes again;
-3. write forward-only SQL using the repository migration convention;
-4. preserve RLS and grants and avoid privileged application secrets;
+1. map the change to one P0/P1 invariant above;
+2. inspect live constraints, policies, grants and indexes;
+3. create focused forward-only SQL using the repository migration convention;
+4. preserve RLS, avoid `service_role` and prefer security-invoker code;
 5. regenerate `src/types/database.ts` from the applied schema;
-6. add tests for cross-tenant assignment rejection, quote stop guards, atomic events and webhook idempotency;
-7. run the full `npm run verify` gate before commit and preview deployment.
+6. extend `supabase/tests/core_product_rls.sql` with rollback-safe offensive assertions;
+7. test direct Data API attempts, concurrency, replay and cross-tenant UUIDs;
+8. run Supabase security advisors and `npm run verify` before commit.
