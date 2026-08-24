@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { getAuthRedirect, isProtectedRoute } from "./route-policy";
 
 describe("product route policy", () => {
-  it.each(["/app", "/app/customers", "/app/requests/known-id", "/control"])(
+  it.each(["/app", "/app/customers", "/app/requests/known-id", "/control", "/control/runs"])(
     "protects %s for logged-out visitors",
     (pathname) => {
       expect(isProtectedRoute(pathname)).toBe(true);

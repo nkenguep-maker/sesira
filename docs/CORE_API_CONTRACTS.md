@@ -267,3 +267,106 @@ Security and operating requirements:
 
 Product status: the contact fields are visible after results, but submission is disabled and the UI
 states that no data is sent or stored.
+
+## Internal Control Center contracts
+
+The Product foundation owns the read-only routes `/control`, `/control/organizations`,
+`/control/runs`, `/control/ai-runs`, `/control/incidents` and `/control/integrations`. It defines a
+strict read boundary in `src/lib/control-center/contracts.ts`, but it does not query tenant tables
+directly. The production adapter intentionally returns `CORE_DATA_NOT_CONFIGURED` for every method.
+
+All Control Center routes currently behave as not found, including for authenticated organization
+owners and administrators. Organization membership is tenant authority only and must never grant
+cross-organization operator access.
+
+### `getInternalControlAccess()` — P0 — REQUESTED
+
+Owner: Claude Core / Security.
+
+Purpose: establish a server-verified Sesira operator identity before any Control Center data is read.
+
+Requirements:
+
+- use a Core-owned internal identity and permission model distinct from `organization_members`;
+- deny by default and verify authorization on every server request;
+- require MFA and recent authentication for sensitive operational scopes;
+- define session freshness, revocation, offboarding and emergency access procedures;
+- audit successful and denied access with operator identity, purpose and request correlation;
+- never trust browser input, `user_metadata`, an email allowlist or a tenant role;
+- never expose a privileged database credential or `service_role` to Product/browser code;
+- grant read scopes separately from any future operational action scope.
+
+Expected Product-compatible result:
+
+```text
+AUTHORIZED { operatorId }
+UNAVAILABLE { reason: CORE_ACCESS_NOT_CONFIGURED }
+DENIED
+```
+
+Product status: `getControlAccess()` always returns `UNAVAILABLE`. The layout calls `notFound()` and
+every page obtains its repository through `getAuthorizedControlCenterRepository()`. This explicit
+page-level gate prevents a repository read even if Next.js renders a layout and its page
+concurrently.
+
+### Control Center read repository — P0 — REQUESTED
+
+Owner: Claude Core.
+
+Methods expected by Product:
+
+```text
+getOverview()
+listOrganizations()
+listRuns()
+listAiRuns()
+listIncidents()
+listIntegrations()
+```
+
+The TypeScript boundary is `ControlCenterRepository` in
+`src/lib/control-center/contracts.ts`. Every result must include a generated-at timestamp or an
+explicit unavailable state.
+
+Cross-cutting requirements:
+
+- require a valid internal operator scope before querying any organization;
+- perform cross-tenant reads only in a dedicated trusted server boundary, never in the browser;
+- paginate list results and bound all time windows;
+- provide stable identifiers, deterministic ordering and client-safe status enums;
+- redact secrets, credentials, tokens, provider payloads, prompts, model input/output and raw errors;
+- return only client-safe incident and integration explanations;
+- audit operator, query scope, filters, result count and correlation identifier;
+- rate-limit bulk reads and prevent unrestricted exports;
+- preserve tenant RLS for ordinary application traffic; do not weaken existing policies;
+- provide partial/unavailable field semantics instead of fabricated values.
+
+Required data by method:
+
+- `getOverview`: organization count, aggregate automation health, deduplicated success rate, open
+  incident count, AI cost and infrastructure cost with period and currency;
+- `listOrganizations`: organization name, sector, enabled module labels, aggregate health,
+  integration summary and open incident count;
+- `listRuns`: organization label, automation label, normalized status, start time and duration;
+- `listAiRuns`: organization label, feature, model label, normalized confidence, latency, cost,
+  status and date — never raw inputs or outputs;
+- `listIncidents`: organization label, severity, category, normalized status, client-safe title and
+  timestamps;
+- `listIntegrations`: organization label, provider, health, last sync, expiry and a client-safe
+  problem — never `credentials_reference`, raw configuration or provider errors.
+
+### Metric definitions and cost provenance — P1 — REQUESTED
+
+Owner: Claude Core / FinOps.
+
+Before overview values become available, define:
+
+- which terminal automation statuses enter the success-rate denominator;
+- retry and idempotency rules so duplicate attempts do not distort the rate;
+- treatment of running, cancelled and Shadow Mode runs;
+- AI cost source, currency, tax treatment and model-price effective date;
+- infrastructure cost source, allocation method, currency and time period;
+- freshness and reconciliation rules for late-arriving data.
+
+Product status: no percentage or cost is shown while these definitions and adapters are missing.
+The UI contains no secret viewer, impersonation control or production override.
