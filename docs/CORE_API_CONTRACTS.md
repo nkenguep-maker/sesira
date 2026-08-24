@@ -370,3 +370,157 @@ Before overview values become available, define:
 
 Product status: no percentage or cost is shown while these definitions and adapters are missing.
 The UI contains no secret viewer, impersonation control or production override.
+
+## SESIRA Growth contracts
+
+The Product foundation owns `/app/marketing`, `/app/marketing/ideas`,
+`/app/marketing/content` and `/app/marketing/publications`. Its read boundary is
+`GrowthRepository` in `src/lib/growth/contracts.ts`.
+
+The current adapter is deliberately `DEMO` only. It uses the authenticated server-side viewer to
+label “Votre entreprise”, performs no Growth database read or write and exposes no method capable
+of generating, scheduling or publishing content. Every example is presented as fictional demo
+content, including items whose example status is `Planifié` or `Publié`.
+
+### Growth tenant data model and read repository — P0 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: persist organization knowledge, ideas, content and publication records behind the existing
+Product contracts.
+
+Expected read methods:
+
+```text
+getSummary()
+getOrganizationKnowledge()
+listIdeas()
+listContent()
+listPublications()
+```
+
+Requirements:
+
+- derive `organization_id` from authenticated membership, never browser input;
+- preserve RLS and enforce organization scope for every record and relationship;
+- use stable identifiers and cursor pagination for lists;
+- record source, creator, timestamps and current lifecycle status;
+- distinguish demo, manually authored and genuinely generated content;
+- support the canonical content states `IDEA`, `DRAFT`, `REVIEW`, `APPROVED`, `SCHEDULED`,
+  `PUBLISHED` without allowing arbitrary transitions;
+- store channels as canonical values (`LINKEDIN`, `FACEBOOK`, `INSTAGRAM`,
+  `GOOGLE_BUSINESS`, `EMAIL`) rather than client-facing labels;
+- return explicit empty, partial and unavailable states;
+- never expose provider credentials, access tokens or raw webhook payloads.
+
+No schema migration was created by Product. Core should propose the smallest tenant-safe schema and
+offensive RLS tests before replacing the demo adapter.
+
+### `getOrganizationKnowledge()` / `updateOrganizationKnowledge(input)` — P0 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: manage the approved context displayed as “Votre entreprise”.
+
+Required fields may include services, locations, tone, certifications, differentiators, approved
+claims, prohibited claims, common questions and common objections.
+
+Requirements:
+
+- field-level validation and bounded text/list sizes;
+- explicit verification state for certifications and commercial claims;
+- role-compatible edit permission, versioning and audit logging;
+- no unverified claim may become approved merely because it appears in generated text;
+- deterministic snapshot/version reference on any future content generation run.
+
+Product status: organization knowledge is read-only demo content. Certifications explicitly say
+“À confirmer par votre équipe”.
+
+### Content lifecycle mutations — P0 — REQUESTED
+
+Owner: Claude Core.
+
+Expected capabilities:
+
+```text
+createIdea(input)
+createDraft(input)
+submitContentForReview(contentId)
+approveContent(contentId, version)
+requestContentChanges(contentId, version, reason)
+```
+
+Requirements:
+
+- server-side validation and authorization for every transition;
+- immutable or versioned approved content;
+- optimistic concurrency protection so stale reviews cannot overwrite newer edits;
+- actor, previous/new status and content-version audit records;
+- idempotency for repeated submissions;
+- approval remains human and cannot be inferred from AI confidence or draft creation.
+
+Product status: no create, edit or approval control is connected.
+
+### `generateGrowthDraft(input)` — P1 — REQUESTED
+
+Owner: Claude Core AI layer.
+
+Purpose: generate an optional draft only after the real AI execution architecture is available.
+
+Requirements:
+
+- create a real `ai_runs` record with model, prompt version, latency, cost and status;
+- reference an immutable organization-knowledge version;
+- validate output and keep it in `DRAFT` until explicit human review;
+- retain provenance and distinguish generated text from manual text;
+- never claim generation occurred when no successful run exists.
+
+Product status: there is no AI generation action or generated output in Growth.
+
+### `scheduleGrowthPublication(input)` — P0 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: place an approved, versioned content item into a deterministic publication schedule.
+
+Requirements:
+
+- require `APPROVED` content and an enabled, healthy tenant integration;
+- validate organization timezone, channel capability and publication time server-side;
+- use a stable idempotency key and prevent duplicate channel/date/content schedules;
+- preserve the exact approved content version;
+- support cancellation and rescheduling with audit history;
+- report scheduling separately from actual provider delivery.
+
+Product status: calendar entries are demo records only; no scheduler or background job exists.
+
+### `publishGrowthContent(scheduleId)` and provider callbacks — P0 — REQUESTED
+
+Owner: Claude Core / Integrations.
+
+Purpose: perform and reconcile a real publication only after explicit product scheduling.
+
+Requirements:
+
+- respect the global external-action kill switch and tenant capability policy;
+- execute server-side with encrypted provider credentials that never reach Product code;
+- use idempotency, bounded retries, duplicate prevention, incidents and audit logging;
+- verify provider callbacks/webhooks and retain client-safe delivery status;
+- mark content `PUBLISHED` only after a confirmed provider result;
+- never convert Shadow Mode, a queued job or a failed attempt into a published result.
+
+Product status: no social API, webhook, worker, scheduler or real publication is implemented.
+
+### Growth conversation and attribution link — P1 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: later connect real publication conversations to the existing
+Customer → Request → Quote → Result journey without creating a second CRM.
+
+Requirements include deterministic source attribution, tenant-safe customer/request linkage,
+consent and retention rules, duplicate prevention, human attention for ambiguous matches and clear
+separation between observed and estimated results.
+
+Product status: conversations and Growth results are outside this foundation and no marketing
+attribution is fabricated.

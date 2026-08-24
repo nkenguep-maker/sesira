@@ -7,6 +7,7 @@ import {
   FileText,
   ChartNoAxesCombined,
   LayoutDashboard,
+  Megaphone,
   Settings,
   Users,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const navigation = [
   { href: "/app/requests", label: "Demandes", icon: FileText },
   { href: "/app/quotes", label: "Devis", icon: Activity },
   { href: "/app/customers", label: "Clients", icon: Users },
+  { href: "/app/marketing", label: "Marketing", icon: Megaphone },
   { href: "/app/results", label: "Résultats", icon: ChartNoAxesCombined },
   { href: "/app/automations", label: "Automatisations", icon: Bot },
   { href: "/app/settings", label: "Réglages", icon: Settings },
