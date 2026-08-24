@@ -49,6 +49,13 @@ Cette commande exécute lint, typecheck, tests unitaires et build de production.
 
 Les migrations sont dans `supabase/migrations`. La base distante contient deux organisations de démonstration appartenant à des secteurs différents. Elles valident le caractère configurable du noyau ; elles ne représentent aucun client réel.
 
+Le seed de développement fournit deux espaces entièrement fictifs et isolés. Après l’avoir chargé dans une base locale ou de démonstration, les comptes suivants utilisent le mot de passe `Sesira-Demo-2026!` :
+
+- `claire.morel@clima-rhone.example` pour **Clima Rhône — Démo** ;
+- `nadia.petit@studio-nova.example` pour **Studio Nova — Démo**.
+
+Le scénario Clima Rhône relie Sophie Lefèvre, sa demande de pompe à chaleur, le devis de 18 450 €, une réponse fictive et une décision à traiter. Cette décision est explicitement marquée comme donnée créée manuellement : aucun classement IA ni envoi externe n’est simulé.
+
 ## Déploiement
 
 Le projet local est lié à Vercel. Les previews restent protégées et `EXTERNAL_ACTIONS_ENABLED` reste à `false` dans tous les environnements actuels. Aucun déploiement production ne doit être considéré comme une autorisation d'envoyer des emails ou de déclencher une intégration externe.
