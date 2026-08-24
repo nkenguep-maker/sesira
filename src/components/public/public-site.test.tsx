@@ -9,7 +9,7 @@ describe("PublicSite", () => {
 
     expect(html).toContain("Moins de tâches administratives");
     expect(html).toContain("Plus de demandes et de devis suivis");
-    expect(html).toContain("Sesira aide votre équipe à faire trois choses, simplement");
+    expect(html).toContain("Trois améliorations simples pour votre équipe");
     expect(html).toContain("Ne plus perdre une demande");
     expect(html).toContain("Toujours savoir quel devis suivre");
     expect(html).toContain("Garder les décisions importantes");
@@ -40,10 +40,10 @@ describe("PublicSite", () => {
     expect(diagnosticLinks).toHaveLength(3);
     expect(html).toContain("Calculer mon potentiel");
     expect(html).toContain("Calculer avec mes chiffres");
-    expect(html).toContain("Le résultat du diagnostic apparaît avant le formulaire de contact");
+    expect(html).toContain("Le résultat apparaît avant le formulaire de contact");
   });
 
-  it("conserve l’identité papier sans langage SaaS générique", () => {
+  it("utilise Midnight Papyrus sans effets visuels IA génériques", () => {
     const html = renderToStaticMarkup(<PublicSite />).toLowerCase();
     const forbiddenTerms = [
       "ai agent",
@@ -56,11 +56,17 @@ describe("PublicSite", () => {
       "ils nous font confiance",
     ];
 
-    expect(html).toContain("#f3f4ef");
-    expect(html).toContain("#153d30");
-    expect(html).toContain("#a34a2c");
-    expect(html).not.toContain("rounded-");
+    expect(html).toContain("var(--background)");
+    expect(html).toContain("var(--panel)");
+    expect(html).toContain("var(--brand)");
+    expect(html).toContain("var(--accent)");
+    expect(html).toContain("var(--warning)");
+    expect(html).toContain("var(--font-geist-sans)");
+    expect(html).not.toContain("font-family:georgia");
+    expect(html).not.toContain("bg-gradient");
     expect(html).not.toContain("blur-");
+    expect(html).not.toContain("rounded-3xl");
+    expect(html).not.toContain("shadow-[0_0");
     forbiddenTerms.forEach((term) => expect(html).not.toContain(term));
   });
 });
