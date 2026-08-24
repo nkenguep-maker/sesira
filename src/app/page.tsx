@@ -5,7 +5,7 @@ import { PublicSite } from "@/components/public/public-site";
 export const metadata: Metadata = {
   title: "Sesira — Votre entreprise, mieux organisée.",
   description:
-    "De la demande reçue au devis signé, Sesira garde chaque dossier, chaque date et chaque décision sous contrôle.",
+    "Sesira aide les PME à gagner du temps, mieux suivre leurs demandes et leurs devis, et estimer leur gain potentiel.",
 };
 
 export default function HomePage() {
