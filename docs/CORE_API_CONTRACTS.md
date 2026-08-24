@@ -86,3 +86,79 @@ The current Results UI owns these TypeScript contracts in `src/lib/results/contr
 They are a Product read boundary, not a workflow engine. Core should provide adapters compatible
 with that boundary and must not rewrite Customers, Requests, Quotes, Attention, Events or the
 application shell to satisfy it.
+
+## Automations product contracts
+
+The current `/app/automations` page reads only enabled `automation_configs` and existing,
+organization-scoped `automation_runs`. It does not schedule, execute, retry or approve anything.
+Until the contracts below are implemented, health is a cautious presentation of the latest stored
+runs and Shadow Mode contains explanatory copy only.
+
+### `getAutomationProductSummary()` — P0 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: provide one tenant-safe, deduplicated status summary for every enabled automation.
+
+Required output:
+
+- canonical template key and template version;
+- enabled state and effective level;
+- runtime health with a client-safe explanation;
+- latest real activity, latest success and latest problem;
+- data freshness and explicit unavailable fields;
+- stable run identifiers and duplicate-safe aggregation rules;
+- pause/kill-switch state when Core supports it.
+
+Requirements:
+
+- retries and duplicate attempts must not inflate recent activity;
+- technical errors, secrets and raw provider payloads must not reach the client;
+- Shadow decisions must never be reported as real external actions;
+- organization authority must come from authenticated membership.
+
+### `getShadowDecisions(automationId)` — P0 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: return real proposed actions created by the future Shadow Mode engine.
+
+Required output:
+
+- proposal identifier, automation and source event/run provenance;
+- proposed action and client-safe rationale;
+- creation time and deterministic decision version;
+- explicit confirmation that no external effect occurred;
+- links to the relevant Customer, Request, Quote or Attention item when applicable.
+
+Product status: the UI currently shows only the explanatory sentence “Sesira aurait effectué cette
+action.” It does not fabricate a proposal or a run.
+
+### `getAutomationCapabilityPolicy(automationId)` — P1 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: expose the effective actions permitted at the current trust level and the actions that
+always require human judgment.
+
+Required output:
+
+- effective level (`OBSERVATION`, `SHADOW`, `APPROVAL`, `AUTOMATIC`);
+- allowed deterministic actions;
+- approval-required actions;
+- prohibited/sensitive actions;
+- effective organization, integration and global kill-switch state;
+- policy version and effective date.
+
+The initial Product catalog recognizes these canonical template keys:
+
+```text
+quote_follow_up
+request_intake
+email_triage
+report_creation
+invoice_follow_up
+```
+
+Core should preserve stable template identity or provide an explicit mapping. Product copy must not
+be used as a workflow identifier.
