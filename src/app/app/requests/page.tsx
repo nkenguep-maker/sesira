@@ -1,5 +1,10 @@
 import { RequestListScreen } from "@/components/requests/request-list-screen";
 import { getViewerContext } from "@/lib/auth/viewer";
+import {
+  buildDescendingProductCursorFilter,
+  decodeProductCursor,
+  encodeProductCursor,
+} from "@/lib/pagination/product-cursor";
 import { isRequestSource, isRequestStatus } from "@/lib/requests/schema";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,7 +27,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Req
   const query = params.q?.trim().slice(0, 80) ?? "";
   const status = params.status && isRequestStatus(params.status) ? params.status : "ALL";
   const source = params.source && isRequestSource(params.source) ? params.source : "ALL";
-  const cursor = isValidDate(params.cursor) ? params.cursor : undefined;
+  const cursor = decodeProductCursor(params.cursor);
   const organizationId = viewer.organization.id;
   const supabase = await createClient();
 
@@ -33,6 +38,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Req
     )
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(PAGE_SIZE + 1);
 
   if (query) {
@@ -48,7 +54,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Req
   }
 
   if (cursor) {
-    listQuery = listQuery.lt("created_at", cursor);
+    listQuery = listQuery.or(buildDescendingProductCursorFilter(cursor));
   }
 
   const [listResult, totalResult, newResult, needsInfoResult, readyResult] = await Promise.all([
@@ -96,15 +102,18 @@ export default async function RequestsPage({ searchParams }: { searchParams: Req
       query={query}
       status={status}
       source={source}
-      nextCursor={hasNextPage ? requests.at(-1)?.created_at : undefined}
+      nextCursor={
+        hasNextPage && requests.at(-1)
+          ? encodeProductCursor({
+              createdAt: requests.at(-1)!.created_at,
+              id: requests.at(-1)!.id,
+            })
+          : undefined
+      }
     />
   );
 }
 
 function escapeLikePattern(value: string): string {
   return value.replace(/[\\%_]/g, "\\$&");
-}
-
-function isValidDate(value: string | undefined): value is string {
-  return Boolean(value && !Number.isNaN(Date.parse(value)));
 }

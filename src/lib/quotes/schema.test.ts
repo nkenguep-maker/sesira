@@ -5,6 +5,7 @@ import {
   getAllowedQuoteStatuses,
   quoteDateToTimestamp,
   quoteInputSchema,
+  quoteStatusInputSchema,
 } from "./schema";
 
 const customerId = "10000000-0000-4000-8000-000000000001";
@@ -34,6 +35,14 @@ describe("quote input", () => {
     expect(quoteInputSchema.safeParse({ customerId, title: "PAC", amount: "12.999" }).success).toBe(false);
   });
 
+  it("rejects a missing customer, non-finite amount and database overflow", () => {
+    expect(quoteInputSchema.safeParse({ customerId: "", title: "PAC", amount: "100" }).success).toBe(false);
+    expect(quoteInputSchema.safeParse({ customerId, title: "PAC", amount: "Infinity" }).success).toBe(false);
+    expect(
+      quoteInputSchema.safeParse({ customerId, title: "PAC", amount: "1000000000000" }).success,
+    ).toBe(false);
+  });
+
   it("rejects a next date after expiration", () => {
     const result = quoteInputSchema.safeParse({
       customerId,
@@ -59,6 +68,11 @@ describe("quote input", () => {
 });
 
 describe("quote status transitions", () => {
+  it("rejects malformed IDs and statuses before mutation", () => {
+    expect(quoteStatusInputSchema.safeParse({ quoteId: "known-but-invalid", status: "SENT" }).success).toBe(false);
+    expect(quoteStatusInputSchema.safeParse({ quoteId: customerId, status: "APPROVED" }).success).toBe(false);
+  });
+
   it("allows a real send and commercial outcomes", () => {
     expect(canChangeQuoteStatus("DRAFT", "SENT")).toBe(true);
     expect(getAllowedQuoteStatuses("SENT")).toContain("WON");

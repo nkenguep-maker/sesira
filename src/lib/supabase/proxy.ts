@@ -1,11 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getAuthRedirect } from "@/lib/auth/route-policy";
 import { publicEnv } from "@/lib/env";
 import type { Database } from "@/types/database";
-
-const protectedPrefixes = ["/app", "/control"];
-const authPrefixes = ["/login", "/auth"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -33,17 +31,16 @@ export async function updateSession(request: NextRequest) {
   );
 
   const { data } = await supabase.auth.getClaims();
-  const isProtected = protectedPrefixes.some((prefix) => request.nextUrl.pathname.startsWith(prefix));
-  const isAuthRoute = authPrefixes.some((prefix) => request.nextUrl.pathname.startsWith(prefix));
+  const redirectPath = getAuthRedirect(request.nextUrl.pathname, Boolean(data?.claims));
 
-  if (!data?.claims && isProtected) {
+  if (redirectPath === "/login") {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (data?.claims && isAuthRoute && request.nextUrl.pathname === "/login") {
+  if (redirectPath === "/app") {
     const appUrl = request.nextUrl.clone();
     appUrl.pathname = "/app";
     appUrl.search = "";

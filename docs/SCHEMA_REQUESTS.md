@@ -117,6 +117,37 @@ Add a nullable idempotency key scoped by organization and event source, with a p
 
 Internal user actions may omit the key. Provider webhook handlers must supply a stable provider delivery/event ID.
 
+## P1 — durable idempotency for product creation forms
+
+### Current gap
+
+The product disables submit buttons while a Server Action is pending, which prevents ordinary
+double-clicks in one browser session. It does not provide a durable guarantee when a request is
+replayed after a network timeout, browser retry or reverse-proxy retry. Replaying customer,
+request, quote or manual attention creation can therefore create two rows and two valid creation
+events.
+
+This is not an authorization flaw and must not be addressed by weakening RLS or by deduplicating
+business rows on mutable fields such as title, email or amount.
+
+### Requested future change
+
+Add an opaque creation idempotency key supplied by the form and stored transactionally with the
+created resource. Enforce uniqueness at least on `(organization_id, operation, idempotency_key)`.
+The authenticated membership remains the only source of `organization_id`; the key is only a
+replay token and never grants authority. The first successful mutation and its existing domain
+event must commit together, while a replay returns the original result without emitting another
+event.
+
+### Acceptance criteria
+
+- Two submissions with the same key in one organization create exactly one resource and one
+  creation event.
+- The same opaque key may be used independently by another organization.
+- Failed validation does not consume a key.
+- Keys have a bounded length and retention policy, and never contain customer data.
+- Existing optimistic status-transition guards remain unchanged.
+
 ## P2 — typed and versioned request data
 
 ### Current gap

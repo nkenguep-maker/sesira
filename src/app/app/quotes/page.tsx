@@ -1,5 +1,10 @@
 import { QuoteListScreen } from "@/components/quotes/quote-list-screen";
 import { getViewerContext } from "@/lib/auth/viewer";
+import {
+  buildDescendingProductCursorFilter,
+  decodeProductCursor,
+  encodeProductCursor,
+} from "@/lib/pagination/product-cursor";
 import { isQuoteDateFilter, isQuoteStatus } from "@/lib/quotes/schema";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,7 +27,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Quote
   const query = params.q?.trim().slice(0, 80) ?? "";
   const status = params.status && isQuoteStatus(params.status) ? params.status : "ALL";
   const date = params.date && isQuoteDateFilter(params.date) ? params.date : "ALL";
-  const cursor = isValidDate(params.cursor) ? params.cursor : undefined;
+  const cursor = decodeProductCursor(params.cursor);
   const organizationId = viewer.organization.id;
   const supabase = await createClient();
   let customerIds: string[] = [];
@@ -50,6 +55,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Quote
     )
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(PAGE_SIZE + 1);
 
   if (query) {
@@ -95,7 +101,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Quote
   }
 
   if (cursor) {
-    listQuery = listQuery.lt("created_at", cursor);
+    listQuery = listQuery.or(buildDescendingProductCursorFilter(cursor));
   }
 
   const [listResult, totalResult, draftResult, followingResult, wonResult] = await Promise.all([
@@ -138,7 +144,14 @@ export default async function QuotesPage({ searchParams }: { searchParams: Quote
       query={query}
       status={status}
       date={date}
-      nextCursor={hasNextPage ? quotes.at(-1)?.created_at : undefined}
+      nextCursor={
+        hasNextPage && quotes.at(-1)
+          ? encodeProductCursor({
+              createdAt: quotes.at(-1)!.created_at,
+              id: quotes.at(-1)!.id,
+            })
+          : undefined
+      }
     />
   );
 }
@@ -149,8 +162,4 @@ function escapeLikePattern(value: string): string {
 
 function quoteFilterValue(value: string): string {
   return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-}
-
-function isValidDate(value: string | undefined): value is string {
-  return Boolean(value && !Number.isNaN(Date.parse(value)));
 }

@@ -5,6 +5,7 @@ import {
   createRequestData,
   readRequestDescription,
   requestInputSchema,
+  requestStatusInputSchema,
 } from "./schema";
 
 describe("request input", () => {
@@ -35,9 +36,25 @@ describe("request input", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects a missing customer", () => {
+    expect(
+      requestInputSchema.safeParse({ customerId: "", title: "Projet", source: "MANUAL" }).success,
+    ).toBe(false);
+  });
 });
 
 describe("request status transitions", () => {
+  it("rejects malformed IDs and statuses before mutation", () => {
+    expect(requestStatusInputSchema.safeParse({ requestId: "not-a-uuid", status: "READY" }).success).toBe(false);
+    expect(
+      requestStatusInputSchema.safeParse({
+        requestId: "10000000-0000-4000-8000-000000000001",
+        status: "APPROVED",
+      }).success,
+    ).toBe(false);
+  });
+
   it("allows the narrow qualification path", () => {
     expect(canChangeRequestStatus("NEW", "PROCESSING")).toBe(true);
     expect(canChangeRequestStatus("QUALIFIED", "READY")).toBe(true);

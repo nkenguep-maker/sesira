@@ -1,5 +1,10 @@
 import { CustomerListScreen } from "@/components/customers/customer-list-screen";
 import { getViewerContext } from "@/lib/auth/viewer";
+import {
+  buildDescendingProductCursorFilter,
+  decodeProductCursor,
+  encodeProductCursor,
+} from "@/lib/pagination/product-cursor";
 import { createClient } from "@/lib/supabase/server";
 
 const PAGE_SIZE = 25;
@@ -19,7 +24,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Cu
 
   const query = params.q?.trim().slice(0, 80) ?? "";
   const type = params.type === "PERSON" || params.type === "COMPANY" ? params.type : "ALL";
-  const cursor = isValidDate(params.cursor) ? params.cursor : undefined;
+  const cursor = decodeProductCursor(params.cursor);
   const organizationId = viewer.organization.id;
   const monthStart = new Date();
   monthStart.setUTCDate(1);
@@ -31,6 +36,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Cu
     .select("id, type, display_name, company_name, email, phone, created_at")
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(PAGE_SIZE + 1);
 
   if (query) {
@@ -42,7 +48,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Cu
   }
 
   if (cursor) {
-    listQuery = listQuery.lt("created_at", cursor);
+    listQuery = listQuery.or(buildDescendingProductCursorFilter(cursor));
   }
 
   const [listResult, totalResult, companyResult, recentResult] = await Promise.all([
@@ -77,15 +83,18 @@ export default async function CustomersPage({ searchParams }: { searchParams: Cu
       }}
       query={query}
       type={type}
-      nextCursor={hasNextPage ? customers.at(-1)?.created_at : undefined}
+      nextCursor={
+        hasNextPage && customers.at(-1)
+          ? encodeProductCursor({
+              createdAt: customers.at(-1)!.created_at,
+              id: customers.at(-1)!.id,
+            })
+          : undefined
+      }
     />
   );
 }
 
 function escapeLikePattern(value: string): string {
   return value.replace(/[\\%_]/g, "\\$&");
-}
-
-function isValidDate(value: string | undefined): value is string {
-  return Boolean(value && !Number.isNaN(Date.parse(value)));
 }
