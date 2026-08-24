@@ -6,11 +6,15 @@ import {
   ContactRound,
   Mail,
   Plus,
-  Search,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 
+import { EmptyState } from "@/components/sesira/empty-state";
+import { FilterBar, filterSelectClassName, SearchField } from "@/components/sesira/filter-bar";
+import { MetricCard } from "@/components/sesira/metric-card";
+import { PageHeader } from "@/components/sesira/page-header";
+import { StatusBadge } from "@/components/sesira/status-badge";
 import { customerInitials, formatCustomerDate } from "@/lib/customers/format";
 
 export type CustomerListItem = {
@@ -53,57 +57,43 @@ export function CustomerListScreen({
 
   return (
     <div className="mx-auto max-w-7xl">
-      <header className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-        <div>
-          <p className="text-sm font-medium text-[var(--accent)]">Relation client</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Clients</h1>
-          <p className="mt-3 max-w-2xl text-[var(--muted)]">
-            Une vue fiable de chaque client, de ses demandes et de son activité commerciale.
-          </p>
-        </div>
-        <Link
-          href="/app/customers/new"
-          className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 lg:self-auto"
-        >
-          <Plus className="size-4" />
-          Nouveau client
-        </Link>
-      </header>
+      <PageHeader
+        eyebrow="Relation client"
+        title="Clients"
+        description="Une vue fiable de chaque client, de ses demandes et de son activité commerciale."
+        actions={
+          <Link href="/app/customers/new" className="sesira-primary-action px-5">
+            <Plus className="size-4" />
+            Nouveau client
+          </Link>
+        }
+      />
 
       <section className="mt-8 grid gap-4 sm:grid-cols-3">
-        <StatCard icon={Users} label="Clients" value={stats.total} tone="violet" />
-        <StatCard icon={Building2} label="Entreprises" value={stats.companies} tone="cyan" />
-        <StatCard icon={CalendarPlus} label="Nouveaux ce mois" value={stats.recent} tone="emerald" />
+        <MetricCard icon={Users} label="Clients" value={stats.total} tone="violet" />
+        <MetricCard icon={Building2} label="Entreprises" value={stats.companies} tone="cyan" />
+        <MetricCard icon={CalendarPlus} label="Nouveaux ce mois" value={stats.recent} tone="emerald" />
       </section>
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]">
-        <form className="flex flex-col gap-3 border-b border-[var(--border)] p-4 md:flex-row" action="/app/customers">
-          <label className="relative min-w-0 flex-1">
-            <span className="sr-only">Rechercher un client</span>
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
-            <input
-              name="q"
-              defaultValue={query}
-              placeholder="Rechercher par nom…"
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] py-2.5 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400"
-            />
-          </label>
+        <FilterBar action="/app/customers" layoutClassName="md:grid-cols-[minmax(220px,1fr)_176px_auto]">
+          <SearchField label="Rechercher un client" defaultValue={query} placeholder="Rechercher par nom…" />
           <label>
             <span className="sr-only">Filtrer par type</span>
             <select
               name="type"
               defaultValue={type}
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-2.5 text-sm text-slate-200 outline-none focus:border-violet-400 md:w-44"
+              className={filterSelectClassName}
             >
               <option value="ALL">Tous les types</option>
               <option value="PERSON">Particuliers</option>
               <option value="COMPANY">Entreprises</option>
             </select>
           </label>
-          <button className="rounded-xl border border-[var(--border)] bg-[var(--panel-soft)] px-5 py-2.5 text-sm font-medium text-white transition hover:border-slate-500">
+          <button className="sesira-secondary-action bg-[var(--panel-soft)] px-5">
             Filtrer
           </button>
-        </form>
+        </FilterBar>
 
         {customers.length ? (
           <div>
@@ -148,24 +138,22 @@ export function CustomerListScreen({
             </div>
           </div>
         ) : (
-          <div className="px-6 py-16 text-center">
-            <ContactRound className="mx-auto size-9 text-violet-300" />
-            <p className="mt-5 font-medium">
-              {hasFilters ? "Aucun client ne correspond à ces filtres." : "Votre portefeuille client est vide."}
-            </p>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">
-              {hasFilters
+          <EmptyState
+            contained={false}
+            icon={ContactRound}
+            title={hasFilters ? "Aucun client ne correspond à ces filtres." : "Votre portefeuille client est vide."}
+            description={
+              hasFilters
                 ? "Modifiez la recherche ou réinitialisez les filtres."
-                : "Ajoutez votre premier client pour centraliser ses demandes, devis et échanges."}
-            </p>
-            <Link
-              href={hasFilters ? "/app/customers" : "/app/customers/new"}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--panel-soft)]"
-            >
-              {hasFilters ? "Réinitialiser" : "Créer un client"}
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
+                : "Ajoutez votre premier client pour centraliser ses demandes, devis et échanges."
+            }
+            action={
+              <Link href={hasFilters ? "/app/customers" : "/app/customers/new"} className="sesira-secondary-action">
+                {hasFilters ? "Réinitialiser" : "Créer un client"}
+                <ArrowRight className="size-4" />
+              </Link>
+            }
+          />
         )}
 
         {customers.length ? (
@@ -190,44 +178,8 @@ export function CustomerListScreen({
 export function CustomerTypeBadge({ type }: { type: string }) {
   const company = type === "COMPANY";
   return (
-    <span
-      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${
-        company
-          ? "border-cyan-400/20 bg-cyan-400/10 text-cyan-200"
-          : "border-violet-400/20 bg-violet-400/10 text-violet-200"
-      }`}
-    >
+    <StatusBadge tone={company ? "cyan" : "violet"}>
       {company ? "Entreprise" : "Particulier"}
-    </span>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: typeof Users;
-  label: string;
-  value: number;
-  tone: "violet" | "cyan" | "emerald";
-}) {
-  const tones = {
-    violet: "bg-violet-400/10 text-violet-200",
-    cyan: "bg-cyan-400/10 text-cyan-200",
-    emerald: "bg-emerald-400/10 text-emerald-200",
-  };
-
-  return (
-    <article className="flex items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
-      <span className={`grid size-11 place-items-center rounded-xl ${tones[tone]}`}>
-        <Icon className="size-5" />
-      </span>
-      <span>
-        <span className="block text-2xl font-semibold tracking-tight">{value}</span>
-        <span className="mt-0.5 block text-xs text-[var(--muted)]">{label}</span>
-      </span>
-    </article>
+    </StatusBadge>
   );
 }

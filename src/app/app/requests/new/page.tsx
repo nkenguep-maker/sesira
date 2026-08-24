@@ -2,6 +2,8 @@ import { ArrowLeft, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 import { RequestForm } from "@/components/requests/request-form";
+import { EmptyState } from "@/components/sesira/empty-state";
+import { PageHeader } from "@/components/sesira/page-header";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { createClient } from "@/lib/supabase/server";
 
@@ -53,13 +55,13 @@ export default async function NewRequestPage({ searchParams }: { searchParams: N
         Retour aux demandes
       </Link>
 
-      <header className="mt-8">
-        <p className="text-sm font-medium text-[var(--accent)]">Nouvelle demande</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Ajouter une demande</h1>
-        <p className="mt-3 max-w-2xl text-[var(--muted)]">
-          Reliez le besoin à un client existant et notez uniquement les informations utiles pour commencer.
-        </p>
-      </header>
+      <div className="mt-8">
+        <PageHeader
+          eyebrow="Nouvelle demande"
+          title="Ajouter une demande"
+          description="Reliez le besoin à un client existant et notez uniquement les informations utiles pour commencer."
+        />
+      </div>
 
       {customers.length ? (
         <section className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
@@ -82,18 +84,13 @@ export default async function NewRequestPage({ searchParams }: { searchParams: N
           />
         </section>
       ) : (
-        <section className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--panel)] px-6 py-14 text-center">
-          <Plus className="mx-auto size-9 text-violet-300" />
-          <h2 className="mt-5 text-lg font-semibold">Ajoutez d’abord un client</h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">
-            Chaque nouvelle demande doit être reliée à un client existant.
-          </p>
-          <Link
-            href="/app/customers/new"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500"
-          >
-            Créer un client
-          </Link>
+        <section className="mt-8">
+          <EmptyState
+            icon={Plus}
+            title="Ajoutez d’abord un client"
+            description="Chaque nouvelle demande doit être reliée à un client existant."
+            action={<Link href="/app/customers/new" className="sesira-primary-action px-5">Créer un client</Link>}
+          />
         </section>
       )}
     </div>

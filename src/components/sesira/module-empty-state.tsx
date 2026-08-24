@@ -1,5 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 
+import { EmptyState } from "@/components/sesira/empty-state";
+import { PageHeader } from "@/components/sesira/page-header";
+
 export function ModuleEmptyState({
   icon: Icon,
   eyebrow,
@@ -13,12 +16,9 @@ export function ModuleEmptyState({
 }) {
   return (
     <div className="mx-auto max-w-7xl">
-      <p className="text-sm font-medium text-[var(--accent)]">{eyebrow}</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">{title}</h1>
-      <section className="mt-10 rounded-2xl border border-[var(--border)] bg-[var(--panel)] px-6 py-16 text-center">
-        <Icon className="mx-auto size-9 text-violet-300" />
-        <p className="mt-5 font-medium">Aucune donnée pour le moment.</p>
-        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[var(--muted)]">{description}</p>
+      <PageHeader eyebrow={eyebrow} title={title} />
+      <section className="mt-10">
+        <EmptyState icon={Icon} title="Aucune donnée pour le moment." description={description} />
       </section>
     </div>
   );

@@ -66,7 +66,7 @@ export function ActivityTimeline({
             {item.metadata?.length ? (
               <ul className="mt-3 flex flex-wrap gap-2" aria-label="Informations liées">
                 {item.metadata.map((metadata) => (
-                  <li key={metadata} className="rounded-full border border-[var(--border)] bg-[#0a0e18] px-2.5 py-1 text-xs text-[var(--muted)]">
+                  <li key={metadata} className="rounded-full border border-[var(--border)] bg-[var(--background)] px-2.5 py-1 text-xs text-[var(--muted)]">
                     {metadata}
                   </li>
                 ))}

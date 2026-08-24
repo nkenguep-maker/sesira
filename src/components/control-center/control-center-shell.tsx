@@ -21,7 +21,7 @@ const navigation = [
 export function ControlCenterShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[var(--background)] text-white lg:grid lg:grid-cols-[288px_1fr]">
-      <aside className="border-b border-[var(--border)] bg-[#090d17] lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
+      <aside className="border-b border-[var(--border)] bg-[var(--background)] lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
         <div className="flex h-full flex-col p-5">
           <Link href="/control" className="flex items-center gap-3 px-2 py-3">
             <span className="grid size-9 place-items-center rounded-xl bg-[var(--brand)] font-bold">S</span>

@@ -253,7 +253,7 @@ function ActivityStep({ draft, update }: StepProps) {
         {SECTORS.map(({ value, title, description, icon: Icon }) => {
           const selected = draft.sector === value;
           return (
-            <label key={value} className={`cursor-pointer rounded-2xl border p-5 transition ${selected ? "border-violet-300/60 bg-violet-400/10" : "border-[var(--border)] bg-[#0a0e18] hover:border-slate-500"}`}>
+            <label key={value} className={`cursor-pointer rounded-2xl border p-5 transition ${selected ? "border-violet-300/60 bg-violet-400/10" : "border-[var(--border)] bg-[var(--background)] hover:border-slate-500"}`}>
               <input type="radio" name="sector" value={value} checked={selected} onChange={() => update("sector", value)} className="sr-only" />
               <div className="flex items-start gap-4">
                 <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${selected ? "bg-violet-400/20 text-violet-200" : "bg-[var(--panel-soft)] text-slate-400"}`}><Icon className="size-5" /></span>
@@ -312,7 +312,7 @@ function NumberField({ icon: Icon, label, hint, name, value, min, max, step = "1
   onChange: (value: string) => void;
 }) {
   return (
-    <label className={`block rounded-2xl border border-[var(--border)] bg-[#0a0e18] p-4 focus-within:border-violet-300/50 ${className}`}>
+    <label className={`block rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 transition focus-within:border-[var(--brand-soft)] focus-within:ring-2 focus-within:ring-violet-400/15 ${className}`}>
       <span className="flex items-start gap-3">
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--panel-soft)] text-violet-300"><Icon className="size-4" /></span>
         <span>
@@ -320,7 +320,7 @@ function NumberField({ icon: Icon, label, hint, name, value, min, max, step = "1
           <span className="mt-1 block text-xs text-[var(--muted)]">{hint}</span>
         </span>
       </span>
-      <span className="mt-4 flex items-center rounded-xl border border-[var(--border)] bg-[#070a12] px-4 focus-within:border-violet-400">
+      <span className="mt-4 flex items-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 focus-within:border-[var(--brand-soft)]">
         <input required aria-label={label} inputMode="decimal" min={min} max={max} name={name} step={step} type="number" value={value} onInput={(event) => onChange(event.currentTarget.value)} className="min-w-0 flex-1 bg-transparent py-3 text-lg font-medium text-white outline-none" />
         {suffix ? <span className="text-sm text-[var(--muted)]">{suffix}</span> : null}
       </span>

@@ -6,11 +6,15 @@ import {
   FilePenLine,
   Plus,
   ReceiptText,
-  Search,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
+import { EmptyState } from "@/components/sesira/empty-state";
+import { FilterBar, filterSelectClassName, SearchField } from "@/components/sesira/filter-bar";
+import { MetricCard } from "@/components/sesira/metric-card";
+import { PageHeader } from "@/components/sesira/page-header";
+import { StatusBadge, type StatusTone } from "@/components/sesira/status-badge";
 import { formatQuoteAmount, formatQuoteDate, quoteStatusLabel, quoteStatusLabels } from "@/lib/quotes/format";
 import { QUOTE_STATUSES, type QuoteDateFilter, type QuoteStatus } from "@/lib/quotes/schema";
 
@@ -67,51 +71,34 @@ export function QuoteListScreen({
 
   return (
     <div className="mx-auto max-w-7xl">
-      <header className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-        <div>
-          <p className="text-sm font-medium text-[var(--accent)]">Suivi commercial</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Devis</h1>
-          <p className="mt-3 max-w-2xl text-[var(--muted)]">
-            Retrouvez les montants, les réponses reçues et les prochaines dates importantes.
-          </p>
-        </div>
-        <Link
-          href="/app/quotes/new"
-          className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 lg:self-auto"
-        >
-          <Plus className="size-4" />
-          Nouveau devis
-        </Link>
-      </header>
+      <PageHeader
+        eyebrow="Suivi commercial"
+        title="Devis"
+        description="Retrouvez les montants, les réponses reçues et les prochaines dates importantes."
+        actions={
+          <Link href="/app/quotes/new" className="sesira-primary-action px-5">
+            <Plus className="size-4" />
+            Nouveau devis
+          </Link>
+        }
+      />
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={ReceiptText} label="Devis" value={stats.total} tone="violet" />
-        <StatCard icon={FilePenLine} label="Brouillons" value={stats.drafts} tone="cyan" />
-        <StatCard icon={Clock3} label="À suivre" value={stats.following} tone="amber" />
-        <StatCard icon={CheckCircle2} label="Gagnés" value={stats.won} tone="emerald" />
+        <MetricCard icon={ReceiptText} label="Devis" value={stats.total} tone="violet" />
+        <MetricCard icon={FilePenLine} label="Brouillons" value={stats.drafts} tone="cyan" />
+        <MetricCard icon={Clock3} label="À suivre" value={stats.following} tone="amber" />
+        <MetricCard icon={CheckCircle2} label="Gagnés" value={stats.won} tone="emerald" />
       </section>
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]">
-        <form
-          className="grid gap-3 border-b border-[var(--border)] p-4 md:grid-cols-[minmax(220px,1fr)_190px_210px_auto]"
-          action="/app/quotes"
-        >
-          <label className="relative min-w-0">
-            <span className="sr-only">Rechercher un devis ou un client</span>
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
-            <input
-              name="q"
-              defaultValue={query}
-              placeholder="Devis, référence ou client…"
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] py-2.5 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400"
-            />
-          </label>
+        <FilterBar action="/app/quotes" layoutClassName="md:grid-cols-[minmax(220px,1fr)_190px_210px_auto]">
+          <SearchField label="Rechercher un devis ou un client" defaultValue={query} placeholder="Devis, référence ou client…" />
           <label>
             <span className="sr-only">Filtrer par statut</span>
             <select
               name="status"
               defaultValue={status}
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-2.5 text-sm text-slate-200 outline-none focus:border-violet-400"
+              className={filterSelectClassName}
             >
               <option value="ALL">Tous les statuts</option>
               {QUOTE_STATUSES.map((quoteStatus) => (
@@ -124,15 +111,15 @@ export function QuoteListScreen({
             <select
               name="date"
               defaultValue={date}
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-2.5 text-sm text-slate-200 outline-none focus:border-violet-400"
+              className={filterSelectClassName}
             >
               {Object.entries(dateFilterLabels).map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
               ))}
             </select>
           </label>
-          <button className="rounded-xl border border-[var(--border)] bg-[var(--panel-soft)] px-5 py-2.5 text-sm font-medium text-white transition hover:border-slate-500">Filtrer</button>
-        </form>
+          <button className="sesira-secondary-action bg-[var(--panel-soft)] px-5">Filtrer</button>
+        </FilterBar>
 
         {quotes.length ? (
           <div>
@@ -180,19 +167,22 @@ export function QuoteListScreen({
             </div>
           </div>
         ) : (
-          <div className="px-6 py-16 text-center">
-            <Sparkles className="mx-auto size-9 text-violet-300" />
-            <p className="mt-5 font-medium">{hasFilters ? "Aucun devis ne correspond à ces filtres." : "Aucun devis pour le moment."}</p>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">
-              {hasFilters ? "Modifiez la recherche ou réinitialisez les filtres." : "Créez un premier devis pour suivre son montant et son avancement."}
-            </p>
-            <Link
-              href={hasFilters ? "/app/quotes" : "/app/quotes/new"}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--panel-soft)]"
-            >
-              {hasFilters ? "Réinitialiser" : "Créer un devis"}<ArrowRight className="size-4" />
-            </Link>
-          </div>
+          <EmptyState
+            contained={false}
+            icon={Sparkles}
+            title={hasFilters ? "Aucun devis ne correspond à ces filtres." : "Aucun devis pour le moment."}
+            description={
+              hasFilters
+                ? "Modifiez la recherche ou réinitialisez les filtres."
+                : "Créez un premier devis pour suivre son montant et son avancement."
+            }
+            action={
+              <Link href={hasFilters ? "/app/quotes" : "/app/quotes/new"} className="sesira-secondary-action">
+                {hasFilters ? "Réinitialiser" : "Créer un devis"}
+                <ArrowRight className="size-4" />
+              </Link>
+            }
+          />
         )}
 
         {quotes.length ? (
@@ -209,18 +199,18 @@ export function QuoteListScreen({
 }
 
 export function QuoteStatusBadge({ status }: { status: string }) {
-  const tones: Record<string, string> = {
-    DRAFT: "border-slate-400/20 bg-slate-400/10 text-slate-300",
-    SENT: "border-cyan-400/20 bg-cyan-400/10 text-cyan-200",
-    FOLLOWING_UP: "border-amber-400/20 bg-amber-400/10 text-amber-200",
-    REPLIED: "border-blue-400/20 bg-blue-400/10 text-blue-200",
-    NEEDS_HUMAN: "border-violet-400/20 bg-violet-400/10 text-violet-200",
-    WON: "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
-    LOST: "border-rose-400/20 bg-rose-400/10 text-rose-200",
-    EXPIRED: "border-slate-400/20 bg-slate-400/10 text-slate-400",
+  const tones: Record<string, StatusTone> = {
+    DRAFT: "neutral",
+    SENT: "cyan",
+    FOLLOWING_UP: "amber",
+    REPLIED: "blue",
+    NEEDS_HUMAN: "violet",
+    WON: "emerald",
+    LOST: "rose",
+    EXPIRED: "neutral",
   };
 
-  return <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${tones[status] ?? tones.EXPIRED}`}>{quoteStatusLabel(status)}</span>;
+  return <StatusBadge tone={tones[status] ?? "neutral"}>{quoteStatusLabel(status)}</StatusBadge>;
 }
 
 function MobileLabel({ children }: { children: string }) {
@@ -229,14 +219,4 @@ function MobileLabel({ children }: { children: string }) {
 
 function ListValue({ label, value }: { label: string; value: string }) {
   return <span className="min-w-0 text-sm text-slate-200"><MobileLabel>{label}</MobileLabel><span className="block truncate">{value}</span></span>;
-}
-
-function StatCard({ icon: Icon, label, value, tone }: { icon: typeof ReceiptText; label: string; value: number; tone: "violet" | "cyan" | "amber" | "emerald" }) {
-  const tones = { violet: "bg-violet-400/10 text-violet-200", cyan: "bg-cyan-400/10 text-cyan-200", amber: "bg-amber-400/10 text-amber-200", emerald: "bg-emerald-400/10 text-emerald-200" };
-  return (
-    <article className="flex items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
-      <span className={`grid size-11 place-items-center rounded-xl ${tones[tone]}`}><Icon className="size-5" /></span>
-      <span><span className="block text-2xl font-semibold tracking-tight">{value}</span><span className="mt-0.5 block text-xs text-[var(--muted)]">{label}</span></span>
-    </article>
-  );
 }

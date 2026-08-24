@@ -65,7 +65,7 @@ export function RequestForm({
             name="source"
             defaultValue="MANUAL"
             required
-            className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15"
+            className="sesira-field px-4 py-3"
           >
             {REQUEST_SOURCES.map((source) => (
               <option key={source} value={source}>
@@ -83,7 +83,7 @@ export function RequestForm({
           rows={6}
           maxLength={5_000}
           placeholder="Décrivez simplement le besoin, les délais ou les informations déjà reçues."
-          className="w-full resize-y rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15"
+          className="sesira-field resize-y px-4 py-3 leading-6"
         />
         <span className="block text-xs text-[var(--muted)]">Les informations pourront être complétées ensuite.</span>
       </label>
@@ -100,14 +100,14 @@ export function RequestForm({
       <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-6 sm:flex-row sm:justify-end">
         <Link
           href={cancelHref}
-          className="rounded-xl border border-[var(--border)] px-5 py-3 text-center text-sm font-medium text-slate-200 transition hover:bg-[var(--panel-soft)]"
+          className="sesira-secondary-action px-5"
         >
           Annuler
         </Link>
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-wait disabled:opacity-60"
+          className="sesira-primary-action px-5 disabled:cursor-wait disabled:opacity-60"
         >
           {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
           {pending ? "Création…" : "Créer la demande"}
@@ -141,7 +141,7 @@ function Field({
         placeholder={placeholder}
         autoComplete={autoComplete}
         maxLength={200}
-        className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15"
+        className="sesira-field px-4 py-3"
       />
     </label>
   );
@@ -174,7 +174,7 @@ function SelectField({
         name={name}
         required={required}
         defaultValue={defaultValue}
-        className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15"
+        className="sesira-field px-4 py-3"
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (

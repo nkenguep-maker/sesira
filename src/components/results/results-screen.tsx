@@ -1,6 +1,7 @@
 import { ArrowRight, CircleHelp, Clock3, Info, Sparkles } from "lucide-react";
 import Link from "next/link";
 
+import { PageHeader } from "@/components/sesira/page-header";
 import type {
   ObservedMetric,
   ResultsPeriodKey,
@@ -34,42 +35,33 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <header className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-        <div className="max-w-2xl">
-          <p className="text-sm font-medium text-[var(--accent)]">Résultats</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
-            Ce que Sesira rend visible.
-          </h1>
-          <p className="mt-3 leading-7 text-[var(--muted)]">
-            Les faits observés restent séparés des projections. Aucun montant estimé n’est présenté
-            comme un revenu généré.
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="Résultats"
+        title="Ce que Sesira rend visible."
+        description="Les faits observés restent séparés des projections. Aucun montant estimé n’est présenté comme un revenu généré."
+        actions={
+          <nav aria-label="Période des résultats" className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--panel)] p-1">
+            {PERIODS.map((period) => {
+              const active = period.key === summary.period.key;
 
-        <nav
-          aria-label="Période des résultats"
-          className="inline-flex self-start rounded-xl border border-[var(--border)] bg-[var(--panel)] p-1"
-        >
-          {PERIODS.map((period) => {
-            const active = period.key === summary.period.key;
-
-            return (
-              <Link
-                key={period.key}
-                href={`/app/results?period=${period.key}`}
-                aria-current={active ? "page" : undefined}
-                className={`rounded-lg px-3 py-2 text-sm transition sm:px-4 ${
-                  active
-                    ? "bg-violet-400/15 font-medium text-violet-100"
-                    : "text-[var(--muted)] hover:text-white"
-                }`}
-              >
-                {period.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </header>
+              return (
+                <Link
+                  key={period.key}
+                  href={`/app/results?period=${period.key}`}
+                  aria-current={active ? "page" : undefined}
+                  className={`rounded-lg px-3 py-2 text-sm transition sm:px-4 ${
+                    active
+                      ? "bg-violet-400/15 font-medium text-violet-100"
+                      : "text-[var(--muted)] hover:text-white"
+                  }`}
+                >
+                  {period.label}
+                </Link>
+              );
+            })}
+          </nav>
+        }
+      />
 
       {stateMessage ? (
         <section

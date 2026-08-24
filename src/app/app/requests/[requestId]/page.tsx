@@ -119,7 +119,7 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
             </p>
           </div>
           {request.customers ? (
-            <Link href={`/app/customers/${request.customers.id}`} className="flex min-w-0 items-center gap-3 rounded-2xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 transition hover:border-violet-400/50">
+            <Link href={`/app/customers/${request.customers.id}`} className="flex min-w-0 items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 transition hover:border-violet-400/50">
               <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-400/10 text-violet-200">
                 <UserRound className="size-4" />
               </span>

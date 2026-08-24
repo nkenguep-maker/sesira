@@ -146,7 +146,7 @@ function Field({
         name={name}
         onInput={onDirty}
         required={required}
-        className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition disabled:cursor-not-allowed disabled:opacity-65 placeholder:text-slate-600 focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15 aria-invalid:border-rose-400"
+        className="sesira-field px-4 py-3 disabled:cursor-not-allowed disabled:opacity-65 aria-invalid:border-rose-400"
       />
       {error ? <span id={`${name}-error`} className="block text-xs text-rose-300">{error}</span> : null}
     </label>

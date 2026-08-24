@@ -15,8 +15,8 @@ export function AppShell({
 }) {
   return (
     <div className="min-h-screen bg-[var(--background)] text-white lg:grid lg:grid-cols-[272px_1fr]">
-      <aside className="border-b border-[var(--border)] bg-[#090d17] lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
-        <div className="flex h-full flex-col p-5">
+      <aside className="border-b border-[var(--border)] bg-[var(--background)] lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
+        <div className="flex h-full flex-col p-4 lg:p-5">
           <div className="flex items-center gap-3 px-2 py-3">
             <span className="grid size-9 place-items-center rounded-xl bg-[var(--brand)] font-bold">S</span>
             <div>
@@ -25,7 +25,7 @@ export function AppShell({
             </div>
           </div>
 
-          <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4">
+          <div className="mt-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 lg:mt-6">
             <div className="flex items-start gap-3">
               <Building2 className="mt-0.5 size-4 text-[var(--accent)]" />
               <div className="min-w-0">

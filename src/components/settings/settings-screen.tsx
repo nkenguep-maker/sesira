@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { PageHeader } from "@/components/sesira/page-header";
+import { StatusBadge, type StatusTone } from "@/components/sesira/status-badge";
 import { CompanySettingsForm } from "@/components/settings/company-settings-form";
 import {
   formatMemberRole,
@@ -42,10 +44,10 @@ const SECTION_LINKS = [
   ["facturation", "Facturation", CircleDollarSign],
 ] as const;
 
-const CONNECTION_TONES: Record<SettingsConnection["tone"], string> = {
-  emerald: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200",
-  amber: "border-amber-300/20 bg-amber-300/10 text-amber-200",
-  slate: "border-slate-300/15 bg-slate-300/5 text-slate-300",
+const CONNECTION_TONES: Record<SettingsConnection["tone"], StatusTone> = {
+  emerald: "emerald",
+  amber: "amber",
+  slate: "neutral",
 };
 
 export function SettingsScreen({
@@ -61,16 +63,11 @@ export function SettingsScreen({
 }) {
   return (
     <div className="mx-auto max-w-7xl">
-      <header className="max-w-3xl">
-        <p className="text-sm font-medium text-[var(--accent)]">Réglages</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
-          Votre organisation, au même endroit.
-        </h1>
-        <p className="mt-3 leading-7 text-[var(--muted)]">
-          Consultez les accès, les connexions et les données de votre entreprise. Les fonctions
-          encore indisponibles sont clairement signalées.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Réglages"
+        title="Votre organisation, au même endroit."
+        description="Consultez les accès, les connexions et les données de votre entreprise. Les fonctions encore indisponibles sont clairement signalées."
+      />
 
       <nav aria-label="Sections des réglages" className="mt-8 overflow-x-auto pb-2">
         <ul className="flex min-w-max gap-2">
@@ -110,7 +107,7 @@ export function SettingsScreen({
             {members.length ? (
               <ul className="divide-y divide-[var(--border)]">
                 {members.map((member) => (
-                  <li key={member.id} className="flex flex-col gap-4 bg-[#0a0e18] p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <li key={member.id} className="flex flex-col gap-4 bg-[var(--background)] p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-violet-400/10 text-sm font-semibold text-violet-200">
                         {initials(member.name)}
@@ -125,18 +122,14 @@ export function SettingsScreen({
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                      <span className="rounded-full border border-violet-300/20 bg-violet-300/10 px-3 py-1 text-xs text-violet-200">
-                        {formatMemberRole(member.role)}
-                      </span>
-                      <span className="rounded-full border border-slate-300/15 bg-slate-300/5 px-3 py-1 text-xs text-slate-300">
-                        {formatMemberStatus(member.status)}
-                      </span>
+                      <StatusBadge tone="violet">{formatMemberRole(member.role)}</StatusBadge>
+                      <StatusBadge tone="neutral">{formatMemberStatus(member.status)}</StatusBadge>
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="bg-[#0a0e18] p-6 text-sm text-[var(--muted)]">Aucun membre disponible.</p>
+              <p className="bg-[var(--background)] p-6 text-sm text-[var(--muted)]">Aucun membre disponible.</p>
             )}
           </div>
           {!canManage ? <PermissionNote text="La gestion de l’équipe est réservée au propriétaire et aux administrateurs." /> : (
@@ -155,7 +148,7 @@ export function SettingsScreen({
         >
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {connections.map((connection) => (
-              <article key={connection.key} className="rounded-xl border border-[var(--border)] bg-[#0a0e18] p-5">
+              <article key={connection.key} className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--panel-soft)] text-violet-300">
@@ -166,9 +159,7 @@ export function SettingsScreen({
                       <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{connection.description}</p>
                     </div>
                   </div>
-                  <span className={`shrink-0 rounded-full border px-3 py-1 text-xs ${CONNECTION_TONES[connection.tone]}`}>
-                    {connection.status}
-                  </span>
+                  <StatusBadge tone={CONNECTION_TONES[connection.tone]}>{connection.status}</StatusBadge>
                 </div>
                 <div className="mt-5 flex flex-col gap-3 border-t border-[var(--border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs text-[var(--muted)]">
@@ -197,7 +188,7 @@ export function SettingsScreen({
               ["Objection prix", "Lorsqu’une discussion commerciale porte sur le prix."],
               ["Incident d’automatisation", "Lorsqu’un processus activé rencontre un problème."],
             ].map(([title, description]) => (
-              <div key={title} className="flex items-start justify-between gap-4 rounded-xl border border-[var(--border)] bg-[#0a0e18] p-4">
+              <div key={title} className="flex items-start justify-between gap-4 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
                 <div>
                   <h3 className="text-sm font-medium">{title}</h3>
                   <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{description}</p>
@@ -249,7 +240,7 @@ export function SettingsScreen({
           title="Plan et facturation"
           description="Aucun moyen de paiement ni abonnement n’est simulé."
         >
-          <div className="mt-6 rounded-xl border border-[var(--border)] bg-[#0a0e18] p-5 md:p-6">
+          <div className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--background)] p-5 md:p-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-xs font-semibold tracking-[0.16em] text-violet-300">PLAN</p>
@@ -259,9 +250,7 @@ export function SettingsScreen({
                   Aucun plan commercial, prix ou renouvellement n’est encore connecté.
                 </p>
               </div>
-              <span className="self-start rounded-full border border-slate-300/15 bg-slate-300/5 px-3 py-1 text-xs text-slate-300">
-                Pas de facturation active
-              </span>
+              <StatusBadge tone="neutral">Pas de facturation active</StatusBadge>
             </div>
             <button disabled className="mt-6 rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm text-slate-500 disabled:cursor-not-allowed">
               Gérer la facturation
@@ -306,7 +295,7 @@ function DataCard({ icon: Icon, title, description, action, danger = false }: {
   danger?: boolean;
 }) {
   return (
-    <article className={`rounded-xl border p-5 ${danger ? "border-rose-300/15 bg-rose-300/5" : "border-[var(--border)] bg-[#0a0e18]"}`}>
+    <article className={`rounded-xl border p-5 ${danger ? "border-rose-300/15 bg-rose-300/5" : "border-[var(--border)] bg-[var(--background)]"}`}>
       <Icon className={`size-5 ${danger ? "text-rose-300" : "text-violet-300"}`} />
       <h3 className="mt-4 font-medium">{title}</h3>
       <p className="mt-2 min-h-16 text-xs leading-5 text-[var(--muted)]">{description}</p>

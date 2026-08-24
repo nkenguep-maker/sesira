@@ -15,6 +15,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { GrowthNavigation } from "@/components/growth/growth-navigation";
+import { EmptyState } from "@/components/sesira/empty-state";
+import { LoadingHeader, LoadingPage, LoadingSkeleton } from "@/components/sesira/loading-skeleton";
+import { PageHeader } from "@/components/sesira/page-header";
+import { StatusBadge, type StatusTone } from "@/components/sesira/status-badge";
 import type {
   GrowthChannel,
   GrowthContent,
@@ -43,13 +47,13 @@ export const CHANNEL_LABELS: Record<GrowthChannel, string> = {
   EMAIL: "Email",
 };
 
-const STATUS_CLASSES: Record<GrowthContentStatus, string> = {
-  IDEA: "border-slate-300/15 bg-slate-300/5 text-slate-300",
-  DRAFT: "border-cyan-300/20 bg-cyan-300/10 text-cyan-200",
-  REVIEW: "border-amber-300/20 bg-amber-300/10 text-amber-200",
-  APPROVED: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200",
-  SCHEDULED: "border-violet-300/20 bg-violet-300/10 text-violet-200",
-  PUBLISHED: "border-blue-300/20 bg-blue-300/10 text-blue-200",
+const STATUS_TONES: Record<GrowthContentStatus, StatusTone> = {
+  IDEA: "neutral",
+  DRAFT: "cyan",
+  REVIEW: "amber",
+  APPROVED: "emerald",
+  SCHEDULED: "violet",
+  PUBLISHED: "blue",
 };
 
 const dateTimeFormatter = new Intl.DateTimeFormat("fr-FR", {
@@ -84,11 +88,7 @@ function GrowthPage({
 }) {
   return (
     <div className="mx-auto max-w-7xl">
-      <header className="max-w-3xl">
-        <p className="text-xs font-semibold tracking-[0.18em] text-[var(--accent)]">{eyebrow}</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">{title}</h1>
-        <p className="mt-3 leading-7 text-[var(--muted)]">{description}</p>
-      </header>
+      <PageHeader eyebrow={eyebrow} title={title} description={description} eyebrowStyle="section" />
       <GrowthNavigation />
       {source === "DEMO" ? <DemoBanner /> : null}
       {children}
@@ -112,12 +112,8 @@ function DemoBanner() {
   );
 }
 
-function StatusBadge({ status }: { status: GrowthContentStatus }) {
-  return (
-    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${STATUS_CLASSES[status]}`}>
-      {CONTENT_STATUS_LABELS[status]}
-    </span>
-  );
+function GrowthStatusBadge({ status }: { status: GrowthContentStatus }) {
+  return <StatusBadge tone={STATUS_TONES[status]}>{CONTENT_STATUS_LABELS[status]}</StatusBadge>;
 }
 
 function ChannelBadges({ channels }: { channels: GrowthChannel[] }) {
@@ -264,7 +260,7 @@ export function MarketingIdeasScreen({ result }: { result: GrowthResult<GrowthId
             <article key={idea.id} className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 md:p-6">
               <div className="flex items-start justify-between gap-4">
                 <span className="grid size-10 place-items-center rounded-xl bg-amber-300/10 text-amber-200"><Lightbulb className="size-5" /></span>
-                <span className={`rounded-full border px-2.5 py-1 text-xs ${idea.priority === "HIGH" ? "border-amber-300/20 bg-amber-300/10 text-amber-200" : "border-slate-300/15 text-slate-300"}`}>{idea.priority === "HIGH" ? "Prioritaire" : "À préparer"}</span>
+                <StatusBadge tone={idea.priority === "HIGH" ? "amber" : "neutral"}>{idea.priority === "HIGH" ? "Prioritaire" : "À préparer"}</StatusBadge>
               </div>
               <h2 className="mt-5 text-lg font-semibold">{idea.title}</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{idea.angle}</p>
@@ -298,7 +294,7 @@ export function MarketingContentScreen({ result }: { result: GrowthResult<Growth
             <article key={item.id} className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 md:p-6">
               <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
                 <div className="max-w-3xl">
-                  <div className="flex flex-wrap items-center gap-3"><StatusBadge status={item.status} /><span className="text-xs text-[var(--muted)]">Mis à jour le {formatDate(item.updatedAt)}</span></div>
+                  <div className="flex flex-wrap items-center gap-3"><GrowthStatusBadge status={item.status} /><span className="text-xs text-[var(--muted)]">Mis à jour le {formatDate(item.updatedAt)}</span></div>
                   <h2 className="mt-4 text-lg font-semibold">{item.title}</h2>
                   <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{item.excerpt}</p>
                 </div>
@@ -341,7 +337,7 @@ export function MarketingPublicationsScreen({ result }: { result: GrowthResult<G
                   <li key={item.id} className="grid gap-4 p-5 md:grid-cols-[minmax(0,1fr)_180px_160px] md:items-center">
                     <div className="min-w-0"><p className="font-medium">{item.contentTitle}</p><p className="mt-1 text-xs text-[var(--muted)]">{formatDate(item.publicationAt)}</p></div>
                     <ChannelBadges channels={[item.channel]} />
-                    <StatusBadge status={item.status} />
+                    <GrowthStatusBadge status={item.status} />
                   </li>
                 ))}
               </ul>
@@ -360,23 +356,21 @@ export function MarketingPublicationsScreen({ result }: { result: GrowthResult<G
 
 function GrowthEmptyState({ icon: Icon, title, description }: { icon: LucideIcon; title: string; description: string }) {
   return (
-    <section className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--panel)] px-6 py-14 text-center">
-      <Icon className="mx-auto size-9 text-violet-300" />
-      <h2 className="mt-4 text-xl font-semibold">{title}</h2>
-      <p className="mt-2 text-sm text-[var(--muted)]">{description}</p>
+    <section className="mt-8">
+      <EmptyState icon={Icon} title={title} description={description} />
     </section>
   );
 }
 
 export function MarketingLoadingScreen() {
   return (
-    <div className="mx-auto max-w-7xl animate-pulse" aria-label="Chargement du Marketing">
-      <div className="h-3 w-36 rounded bg-[var(--panel-soft)]" />
-      <div className="mt-4 h-10 max-w-2xl rounded bg-[var(--panel-soft)]" />
-      <div className="mt-4 h-5 max-w-3xl rounded bg-[var(--panel-soft)]" />
-      <div className="mt-8 h-16 rounded-2xl bg-[var(--panel)]" />
-      <div className="mt-6 grid gap-4 md:grid-cols-3">{Array.from({ length: 3 }, (_, index) => <div key={index} className="h-36 rounded-2xl bg-[var(--panel)]" />)}</div>
-      <div className="mt-8 h-80 rounded-2xl bg-[var(--panel)]" />
-    </div>
+    <LoadingPage label="Chargement du Marketing">
+      <LoadingHeader />
+      <LoadingSkeleton className="mt-8 h-16" />
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        {Array.from({ length: 3 }, (_, index) => <LoadingSkeleton key={index} className="h-36" />)}
+      </div>
+      <LoadingSkeleton className="mt-8 h-80" />
+    </LoadingPage>
   );
 }

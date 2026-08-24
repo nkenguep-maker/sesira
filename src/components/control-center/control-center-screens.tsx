@@ -7,9 +7,13 @@ import {
   CircleGauge,
   ShieldAlert,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { EmptyState } from "@/components/sesira/empty-state";
+import { LoadingHeader, LoadingMetricGrid, LoadingPage } from "@/components/sesira/loading-skeleton";
+import { MetricCard } from "@/components/sesira/metric-card";
+import { PageHeader } from "@/components/sesira/page-header";
+import { StatusBadge, type StatusTone } from "@/components/sesira/status-badge";
 import type {
   ControlAiRun,
   ControlData,
@@ -46,21 +50,21 @@ const severityLabels: Record<ControlIncidentSeverity, string> = {
   UNKNOWN: "Inconnue",
 };
 
-const statusClasses: Record<string, string> = {
-  HEALTHY: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200",
-  SUCCEEDED: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200",
-  RESOLVED: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200",
-  RUNNING: "border-cyan-300/20 bg-cyan-300/10 text-cyan-200",
-  OPEN: "border-cyan-300/20 bg-cyan-300/10 text-cyan-200",
-  INVESTIGATING: "border-violet-300/20 bg-violet-300/10 text-violet-200",
-  DEGRADED: "border-amber-300/20 bg-amber-300/10 text-amber-200",
-  MEDIUM: "border-amber-300/20 bg-amber-300/10 text-amber-200",
-  HIGH: "border-orange-300/20 bg-orange-300/10 text-orange-200",
-  CRITICAL: "border-red-300/20 bg-red-300/10 text-red-200",
-  FAILED: "border-red-300/20 bg-red-300/10 text-red-200",
-  LOW: "border-slate-300/15 bg-slate-300/5 text-slate-300",
-  UNKNOWN: "border-slate-300/15 bg-slate-300/5 text-slate-300",
-  CANCELLED: "border-slate-300/15 bg-slate-300/5 text-slate-300",
+const statusTones: Record<string, StatusTone> = {
+  HEALTHY: "emerald",
+  SUCCEEDED: "emerald",
+  RESOLVED: "emerald",
+  RUNNING: "cyan",
+  OPEN: "cyan",
+  INVESTIGATING: "violet",
+  DEGRADED: "amber",
+  MEDIUM: "amber",
+  HIGH: "amber",
+  CRITICAL: "rose",
+  FAILED: "rose",
+  LOW: "neutral",
+  UNKNOWN: "neutral",
+  CANCELLED: "neutral",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
@@ -101,22 +105,8 @@ function formatDuration(durationMs: number | null): string {
   return `${Math.floor(durationMs / 60_000)} min ${Math.round((durationMs % 60_000) / 1_000)} s`;
 }
 
-function PageHeader({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
-  return (
-    <header className="max-w-3xl">
-      <p className="text-xs font-semibold tracking-[0.18em] text-[var(--accent)]">{eyebrow}</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">{title}</h1>
-      <p className="mt-3 leading-7 text-[var(--muted)]">{description}</p>
-    </header>
-  );
-}
-
 function Badge({ value, label }: { value: string; label: string }) {
-  return (
-    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${statusClasses[value] ?? statusClasses.UNKNOWN}`}>
-      {label}
-    </span>
-  );
+  return <StatusBadge tone={statusTones[value] ?? "neutral"}>{label}</StatusBadge>;
 }
 
 function UnavailableState({ noun }: { noun: string }) {
@@ -129,15 +119,6 @@ function UnavailableState({ noun }: { noun: string }) {
         expurgée et auditée. Aucune donnée locataire n’est interrogée en attendant.
       </p>
     </section>
-  );
-}
-
-function EmptyState({ label }: { label: string }) {
-  return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] px-6 py-14 text-center">
-      <p className="font-medium">Aucun élément</p>
-      <p className="mt-2 text-sm text-[var(--muted)]">{label}</p>
-    </div>
   );
 }
 
@@ -207,7 +188,7 @@ function ListPage<T>({
 }) {
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader eyebrow={eyebrow} title={title} description={description} />
+      <PageHeader eyebrow={eyebrow} title={title} description={description} eyebrowStyle="section" />
       {result.status === "unavailable" ? (
         <UnavailableState noun={unavailableNoun} />
       ) : (
@@ -215,7 +196,7 @@ function ListPage<T>({
           <p className="mb-4 text-xs text-[var(--muted)]">
             Données générées le {formatDate(result.generatedAt)} · lecture seule
           </p>
-          {result.data.length ? children(result.data) : <EmptyState label={emptyLabel} />}
+          {result.data.length ? children(result.data) : <EmptyState icon={ShieldAlert} title="Aucun élément" description={emptyLabel} tone="neutral" />}
         </section>
       )}
     </div>
@@ -229,6 +210,7 @@ export function ControlOverviewScreen({ result }: { result: ControlData<ControlO
         eyebrow="CONTROL CENTER"
         title="Piloter les opérations par exception."
         description="Une vue interne, calme et en lecture seule de la santé des organisations et de l’infrastructure Sesira."
+        eyebrowStyle="section"
       />
       {result.status === "unavailable" ? (
         <UnavailableState noun="Les indicateurs globaux" />
@@ -238,26 +220,16 @@ export function ControlOverviewScreen({ result }: { result: ControlData<ControlO
             {result.data.periodLabel} · généré le {formatDate(result.generatedAt)}
           </p>
           <section className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Indicateurs opérationnels">
-            <MetricCard icon={Building2} label="Organisations" value={result.data.organizationCount.toLocaleString("fr-FR")} />
-            <MetricCard icon={CircleGauge} label="Santé des automatisations" value={healthLabels[result.data.automationHealth]} />
-            <MetricCard icon={Activity} label="Taux de réussite" value={result.data.automationSuccessRate === null ? "Non disponible" : percentFormatter.format(result.data.automationSuccessRate)} />
-            <MetricCard icon={ShieldAlert} label="Incidents ouverts" value={result.data.openIncidentCount.toLocaleString("fr-FR")} />
-            <MetricCard icon={Bot} label="Coût IA" value={formatMoney(result.data.aiCost)} />
-            <MetricCard icon={CircleDollarSign} label="Coût infrastructure" value={formatMoney(result.data.infrastructureCost)} />
+            <MetricCard icon={Building2} label="Organisations" value={result.data.organizationCount.toLocaleString("fr-FR")} tone="cyan" layout="stacked" />
+            <MetricCard icon={CircleGauge} label="Santé des automatisations" value={healthLabels[result.data.automationHealth]} tone="cyan" layout="stacked" />
+            <MetricCard icon={Activity} label="Taux de réussite" value={result.data.automationSuccessRate === null ? "Non disponible" : percentFormatter.format(result.data.automationSuccessRate)} tone="cyan" layout="stacked" />
+            <MetricCard icon={ShieldAlert} label="Incidents ouverts" value={result.data.openIncidentCount.toLocaleString("fr-FR")} tone="cyan" layout="stacked" />
+            <MetricCard icon={Bot} label="Coût IA" value={formatMoney(result.data.aiCost)} tone="cyan" layout="stacked" />
+            <MetricCard icon={CircleDollarSign} label="Coût infrastructure" value={formatMoney(result.data.infrastructureCost)} tone="cyan" layout="stacked" />
           </section>
         </>
       )}
     </div>
-  );
-}
-
-function MetricCard({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
-  return (
-    <article className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 md:p-6">
-      <Icon className="size-5 text-[var(--accent)]" />
-      <p className="mt-5 text-xs uppercase tracking-[0.12em] text-[var(--muted)]">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
-    </article>
   );
 }
 
@@ -337,14 +309,10 @@ export function ControlIntegrationsScreen({ result }: { result: ControlData<Cont
 
 export function ControlLoadingScreen() {
   return (
-    <div className="mx-auto max-w-7xl animate-pulse" aria-label="Chargement du Control Center">
-      <div className="h-3 w-32 rounded bg-[var(--panel-soft)]" />
-      <div className="mt-4 h-10 max-w-xl rounded bg-[var(--panel-soft)]" />
-      <div className="mt-4 h-5 max-w-2xl rounded bg-[var(--panel-soft)]" />
-      <div className="mt-9 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-36 rounded-2xl bg-[var(--panel)]" />)}
-      </div>
-    </div>
+    <LoadingPage label="Chargement du Control Center">
+      <LoadingHeader />
+      <LoadingMetricGrid count={6} columns="three" />
+    </LoadingPage>
   );
 }
 

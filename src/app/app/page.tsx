@@ -1,5 +1,9 @@
 import { AlertTriangle, ArrowUpRight, CheckCircle2, Clock3, FileText, Users } from "lucide-react";
 
+import { EmptyState } from "@/components/sesira/empty-state";
+import { MetricCard, type MetricTone } from "@/components/sesira/metric-card";
+import { PageHeader } from "@/components/sesira/page-header";
+import { StatusBadge } from "@/components/sesira/status-badge";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { areExternalActionsEnabled } from "@/lib/automation/external-actions";
 import { serverEnv } from "@/lib/env";
@@ -44,37 +48,29 @@ export default async function DashboardPage() {
   ]);
 
   const metrics = [
-    { label: "Clients", value: customers.count ?? 0, icon: Users, accent: "text-violet-300" },
-    { label: "Demandes", value: requests.count ?? 0, icon: FileText, accent: "text-cyan-300" },
-    { label: "Devis surveillés", value: quotes.count ?? 0, icon: Clock3, accent: "text-blue-300" },
-    { label: "À traiter", value: attention.count ?? 0, icon: AlertTriangle, accent: "text-amber-300" },
-  ];
+    { label: "Clients", value: customers.count ?? 0, icon: Users, tone: "violet" },
+    { label: "Demandes", value: requests.count ?? 0, icon: FileText, tone: "cyan" },
+    { label: "Devis surveillés", value: quotes.count ?? 0, icon: Clock3, tone: "blue" },
+    { label: "À traiter", value: attention.count ?? 0, icon: AlertTriangle, tone: "amber" },
+  ] satisfies Array<{ label: string; value: number; icon: typeof Users; tone: MetricTone }>;
 
   return (
     <div className="mx-auto max-w-7xl">
-      <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-sm font-medium text-[var(--accent)]">Aujourd’hui</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
-            Bonjour{viewer.email ? `, ${viewer.email.split("@")[0]}` : ""}.
-          </h1>
-          <p className="mt-3 text-[var(--muted)]">Voici ce qui se passe dans votre entreprise.</p>
-        </div>
-        <div className="inline-flex items-center gap-2 self-start rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-200 sm:self-auto">
-          <CheckCircle2 className="size-3.5" />
-          Actions externes {externalActionsEnabled ? "activées" : "désactivées"}
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Aujourd’hui"
+        title={`Bonjour${viewer.email ? `, ${viewer.email.split("@")[0]}` : ""}.`}
+        description="Voici ce qui se passe dans votre entreprise."
+        actions={
+          <StatusBadge tone={externalActionsEnabled ? "emerald" : "neutral"}>
+            <CheckCircle2 className="mr-1.5 size-3.5" />
+            Actions externes {externalActionsEnabled ? "activées" : "désactivées"}
+          </StatusBadge>
+        }
+      />
 
       <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map(({ label, value, icon: Icon, accent }) => (
-          <article key={label} className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-[var(--muted)]">{label}</p>
-              <Icon className={`size-4 ${accent}`} />
-            </div>
-            <p className="mt-6 text-3xl font-semibold tracking-tight">{value}</p>
-          </article>
+        {metrics.map(({ label, value, icon, tone }) => (
+          <MetricCard key={label} icon={icon} label={label} value={value} tone={tone} layout="stacked" />
         ))}
       </section>
 
@@ -103,13 +99,13 @@ export default async function DashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="px-6 py-14 text-center">
-            <CheckCircle2 className="mx-auto size-8 text-emerald-300" />
-            <p className="mt-4 font-medium">Rien ne nécessite votre attention.</p>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              Les exceptions détectées par Sesira apparaîtront ici.
-            </p>
-          </div>
+          <EmptyState
+            contained={false}
+            icon={CheckCircle2}
+            tone="emerald"
+            title="Rien ne nécessite votre attention."
+            description="Les exceptions détectées par Sesira apparaîtront ici."
+          />
         )}
       </section>
     </div>

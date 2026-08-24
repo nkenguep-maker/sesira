@@ -54,7 +54,7 @@ export function QuoteForm({
               setRequestId("");
             }}
             disabled={pending}
-            className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15 disabled:opacity-60"
+            className="sesira-field px-4 py-3 disabled:opacity-60"
           >
             <option value="">Choisir un client</option>
             {customers.map((customer) => (
@@ -73,7 +73,7 @@ export function QuoteForm({
             value={requestId}
             onChange={(event) => setRequestId(event.target.value)}
             disabled={pending || !customerId}
-            className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15 disabled:opacity-60"
+            className="sesira-field px-4 py-3 disabled:opacity-60"
           >
             <option value="">Aucune demande liée</option>
             {availableRequests.map((request) => (
@@ -99,7 +99,7 @@ export function QuoteForm({
               step="0.01"
               placeholder="18 450,00"
               disabled={pending}
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 pr-12 text-lg font-semibold text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15 disabled:opacity-60"
+              className="sesira-field px-4 py-3 pr-12 text-lg font-semibold disabled:opacity-60"
             />
             <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500">€</span>
           </div>
@@ -114,7 +114,7 @@ export function QuoteForm({
             name="ownerUserId"
             defaultValue={defaultOwnerId}
             disabled={pending}
-            className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15 disabled:opacity-60"
+            className="sesira-field px-4 py-3 disabled:opacity-60"
           >
             <option value="">Non attribué</option>
             {owners.map((owner) => (
@@ -124,7 +124,7 @@ export function QuoteForm({
         </label>
       </div>
 
-      <div className="grid gap-5 rounded-2xl border border-[var(--border)] bg-[#0a0e18] p-5 md:grid-cols-2">
+      <div className="grid gap-5 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 md:grid-cols-2">
         <DateField label="Date d’expiration" name="expiresOn" />
         <DateField label="Prochaine date utile" name="nextActionOn" />
       </div>
@@ -142,14 +142,14 @@ export function QuoteForm({
       <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-6 sm:flex-row sm:justify-end">
         <Link
           href="/app/quotes"
-          className="rounded-xl border border-[var(--border)] px-5 py-3 text-center text-sm font-medium text-slate-200 transition hover:bg-[var(--panel-soft)]"
+          className="sesira-secondary-action px-5"
         >
           Annuler
         </Link>
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-wait disabled:opacity-60"
+          className="sesira-primary-action px-5 disabled:cursor-wait disabled:opacity-60"
         >
           {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
           {pending ? "Création…" : "Créer le devis"}
@@ -183,7 +183,7 @@ function Field({
         maxLength={maxLength}
         placeholder={placeholder}
         autoComplete="off"
-        className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15"
+        className="sesira-field px-4 py-3"
       />
     </label>
   );
@@ -199,7 +199,7 @@ function DateField({ label, name }: { label: string; name: string }) {
       <input
         type="date"
         name={name}
-        className="w-full rounded-xl border border-[var(--border)] bg-[#070a12] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15"
+        className="sesira-field px-4 py-3"
       />
     </label>
   );

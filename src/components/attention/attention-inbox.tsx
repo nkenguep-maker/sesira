@@ -12,6 +12,10 @@ import {
 import Link from "next/link";
 
 import { AttentionItemActions } from "@/components/attention/attention-item-actions";
+import { EmptyState } from "@/components/sesira/empty-state";
+import { MetricCard } from "@/components/sesira/metric-card";
+import { PageHeader } from "@/components/sesira/page-header";
+import { StatusBadge, type StatusTone } from "@/components/sesira/status-badge";
 import {
   attentionCategoryLabel,
   attentionPriorityLabels,
@@ -36,29 +40,27 @@ export function AttentionInbox({
 }) {
   return (
     <div className="mx-auto max-w-7xl">
-      <header className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-        <div>
-          <p className="text-sm font-medium text-[var(--accent)]">Décisions humaines</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">À traiter</h1>
-          <p className="mt-3 max-w-2xl text-[var(--muted)]">
-            Voyez ce qui s’est passé, pourquoi votre attention est nécessaire et quelle décision prendre.
-          </p>
-        </div>
-        <div className="inline-flex self-start rounded-xl border border-[var(--border)] bg-[var(--panel)] p-1 lg:self-auto">
-          <ViewLink href="/app/attention" active={view === "open"} count={stats.open}>
-            Ouverts
-          </ViewLink>
-          <ViewLink href="/app/attention?view=resolved" active={view === "resolved"} count={stats.resolved}>
-            Terminés
-          </ViewLink>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Décisions humaines"
+        title="À traiter"
+        description="Voyez ce qui s’est passé, pourquoi votre attention est nécessaire et quelle décision prendre."
+        actions={
+          <div className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--panel)] p-1">
+            <ViewLink href="/app/attention" active={view === "open"} count={stats.open}>
+              Ouverts
+            </ViewLink>
+            <ViewLink href="/app/attention?view=resolved" active={view === "resolved"} count={stats.resolved}>
+              Terminés
+            </ViewLink>
+          </div>
+        }
+      />
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={Inbox} label="À traiter" value={stats.open} tone="violet" />
-        <StatCard icon={CircleAlert} label="Urgents" value={stats.urgent} tone="rose" />
-        <StatCard icon={CalendarClock} label="Échus" value={stats.due} tone="amber" />
-        <StatCard icon={CheckCircle2} label="Terminés" value={stats.resolved} tone="emerald" />
+        <MetricCard icon={Inbox} label="À traiter" value={stats.open} tone="violet" />
+        <MetricCard icon={CircleAlert} label="Urgents" value={stats.urgent} tone="rose" />
+        <MetricCard icon={CalendarClock} label="Échus" value={stats.due} tone="amber" />
+        <MetricCard icon={CheckCircle2} label="Terminés" value={stats.resolved} tone="emerald" />
       </section>
 
       <section className="mt-6">
@@ -97,10 +99,8 @@ function AttentionCard({ item, open }: { item: AttentionInboxItem; open: boolean
         <div className="p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-2">
             <PriorityBadge priority={item.priority} />
-            <span className="rounded-full border border-[var(--border)] bg-[var(--panel-soft)] px-2.5 py-1 text-xs font-medium text-slate-300">
-              {attentionCategoryLabel(item.category)}
-            </span>
-            <StatusBadge status={item.status} />
+            <StatusBadge tone="neutral">{attentionCategoryLabel(item.category)}</StatusBadge>
+            <AttentionStatusBadge status={item.status} />
           </div>
 
           <h3 className="mt-5 text-xl font-semibold leading-snug text-white">{item.title}</h3>
@@ -143,7 +143,7 @@ function AttentionCard({ item, open }: { item: AttentionInboxItem; open: boolean
           </div>
         </div>
 
-        <aside className="flex flex-col justify-between border-t border-[var(--border)] bg-[#0a0e18]/70 p-5 sm:p-6 xl:border-l xl:border-t-0">
+        <aside className="flex flex-col justify-between border-t border-[var(--border)] bg-[var(--background)]/70 p-5 sm:p-6 xl:border-l xl:border-t-0">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Élément concerné</p>
             {item.entity ? (
@@ -213,17 +213,16 @@ function DecisionBlock({
 
 function AttentionEmptyState({ view }: { view: AttentionView }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] px-6 py-16 text-center">
-      <CheckCircle2 className="mx-auto size-10 text-emerald-300" />
-      <p className="mt-5 font-medium">
-        {view === "open" ? "Rien ne demande votre décision." : "Aucune décision terminée pour le moment."}
-      </p>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">
-        {view === "open"
+    <EmptyState
+      icon={CheckCircle2}
+      tone="emerald"
+      title={view === "open" ? "Rien ne demande votre décision." : "Aucune décision terminée pour le moment."}
+      description={
+        view === "open"
           ? "Les situations qui nécessitent votre jugement apparaîtront ici avec leur contexte."
-          : "Les éléments résolus et ignorés apparaîtront ici."}
-      </p>
-    </div>
+          : "Les éléments résolus et ignorés apparaîtront ici."
+      }
+    />
   );
 }
 
@@ -243,67 +242,36 @@ function ViewLink({ href, active, count, children }: { href: string; active: boo
 }
 
 function PriorityBadge({ priority }: { priority: string }) {
-  const tones: Record<string, string> = {
-    URGENT: "border-rose-400/30 bg-rose-400/10 text-rose-200",
-    HIGH: "border-amber-400/30 bg-amber-400/10 text-amber-200",
-    NORMAL: "border-cyan-400/20 bg-cyan-400/10 text-cyan-200",
-    LOW: "border-slate-400/20 bg-slate-400/10 text-slate-300",
+  const tones: Record<string, StatusTone> = {
+    URGENT: "rose",
+    HIGH: "amber",
+    NORMAL: "cyan",
+    LOW: "neutral",
   };
   const label = priority in attentionPriorityLabels
     ? attentionPriorityLabels[priority as AttentionPriority]
     : "À vérifier";
 
   return (
-    <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${tones[priority] ?? tones.NORMAL}`}>
+    <StatusBadge tone={tones[priority] ?? "cyan"} emphasis="strong">
       Priorité {label.toLowerCase()}
-    </span>
+    </StatusBadge>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function AttentionStatusBadge({ status }: { status: string }) {
   const label = status in attentionStatusLabels
     ? attentionStatusLabels[status as AttentionStatus]
     : "Terminé";
 
-  const tones: Record<string, string> = {
-    OPEN: "border-violet-400/20 bg-violet-400/10 text-violet-200",
-    IN_PROGRESS: "border-cyan-400/20 bg-cyan-400/10 text-cyan-200",
-    RESOLVED: "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
-    DISMISSED: "border-slate-400/20 bg-slate-400/10 text-slate-300",
+  const tones: Record<string, StatusTone> = {
+    OPEN: "violet",
+    IN_PROGRESS: "cyan",
+    RESOLVED: "emerald",
+    DISMISSED: "neutral",
   };
 
-  return <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${tones[status] ?? tones.RESOLVED}`}>{label}</span>;
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: typeof Inbox;
-  label: string;
-  value: number;
-  tone: "violet" | "rose" | "amber" | "emerald";
-}) {
-  const tones = {
-    violet: "bg-violet-400/10 text-violet-200",
-    rose: "bg-rose-400/10 text-rose-200",
-    amber: "bg-amber-400/10 text-amber-200",
-    emerald: "bg-emerald-400/10 text-emerald-200",
-  };
-
-  return (
-    <article className="flex items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
-      <span className={`grid size-11 place-items-center rounded-xl ${tones[tone]}`}>
-        <Icon className="size-5" />
-      </span>
-      <span>
-        <span className="block text-2xl font-semibold tracking-tight">{value}</span>
-        <span className="mt-0.5 block text-xs text-[var(--muted)]">{label}</span>
-      </span>
-    </article>
-  );
+  return <StatusBadge tone={tones[status] ?? "emerald"}>{label}</StatusBadge>;
 }
 
 function entityTypeLabel(type: "customer" | "request" | "quote"): string {

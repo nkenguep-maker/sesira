@@ -28,7 +28,7 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
           maxLength={200}
           defaultValue="Décision à prendre sur ce devis"
           disabled={pending}
-          className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition focus:border-violet-400 disabled:opacity-60"
+          className="sesira-field px-4 py-3 disabled:opacity-60"
         />
       </label>
 
@@ -40,7 +40,7 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
           maxLength={2_000}
           placeholder="Ex. Le client demande un geste sur le prix."
           disabled={pending}
-          className="w-full resize-y rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400 disabled:opacity-60"
+          className="sesira-field resize-y px-4 py-3 leading-6 disabled:opacity-60"
         />
       </label>
 
@@ -51,7 +51,7 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
           maxLength={500}
           placeholder="Ex. Appeler le client avant vendredi."
           disabled={pending}
-          className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400 disabled:opacity-60"
+          className="sesira-field px-4 py-3 disabled:opacity-60"
         />
       </label>
 
@@ -62,7 +62,7 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
             name="priority"
             defaultValue="NORMAL"
             disabled={pending}
-            className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition focus:border-violet-400 disabled:opacity-60"
+            className="sesira-field px-4 py-3 disabled:opacity-60"
           >
             {ATTENTION_PRIORITIES.map((priority) => (
               <option key={priority} value={priority}>{attentionPriorityLabels[priority]}</option>
@@ -76,7 +76,7 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
             type="date"
             name="dueOn"
             disabled={pending}
-            className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition focus:border-violet-400 disabled:opacity-60"
+            className="sesira-field px-4 py-3 disabled:opacity-60"
           />
         </label>
       </div>
@@ -84,10 +84,10 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
       {state.error ? <p role="alert" className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">{state.error}</p> : null}
 
       <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-6 sm:flex-row sm:justify-end">
-        <Link href={`/app/quotes/${quoteId}`} className="rounded-xl border border-[var(--border)] px-5 py-3 text-center text-sm font-medium text-slate-200 transition hover:bg-[var(--panel-soft)]">
+        <Link href={`/app/quotes/${quoteId}`} className="sesira-secondary-action px-5">
           Annuler
         </Link>
-        <button type="submit" disabled={pending} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-wait disabled:opacity-60">
+        <button type="submit" disabled={pending} className="sesira-primary-action px-5 disabled:cursor-wait disabled:opacity-60">
           {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
           {pending ? "Ajout…" : "Ajouter à traiter"}
         </button>

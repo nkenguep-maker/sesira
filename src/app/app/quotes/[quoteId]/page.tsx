@@ -205,7 +205,7 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
           <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
             <h2 className="font-semibold">Demande liée</h2>
             {quote.requests ? (
-              <Link href={`/app/requests/${quote.requests.id}`} className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--border)] bg-[#0a0e18] p-4 transition hover:border-violet-400/40">
+              <Link href={`/app/requests/${quote.requests.id}`} className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 transition hover:border-violet-400/40">
                 <FileText className="mt-0.5 size-4 shrink-0 text-violet-300" />
                 <span className="min-w-0"><span className="block truncate text-sm font-medium">{quote.requests.title}</span><span className="mt-1 block text-xs text-[var(--muted)]">{requestStatusLabel(quote.requests.status)}</span></span>
               </Link>

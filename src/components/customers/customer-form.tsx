@@ -82,14 +82,14 @@ export function CustomerForm() {
       <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-6 sm:flex-row sm:justify-end">
         <Link
           href="/app/customers"
-          className="rounded-xl border border-[var(--border)] px-5 py-3 text-center text-sm font-medium text-slate-200 transition hover:bg-[var(--panel-soft)]"
+          className="sesira-secondary-action px-5"
         >
           Annuler
         </Link>
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-wait disabled:opacity-60"
+          className="sesira-primary-action px-5 disabled:cursor-wait disabled:opacity-60"
         >
           {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
           {pending ? "Création…" : "Créer le client"}
@@ -125,7 +125,7 @@ function Field({
         type={type}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15"
+        className="sesira-field px-4 py-3"
       />
     </label>
   );
@@ -151,7 +151,7 @@ function TypeOption({
       className={`flex cursor-pointer gap-3 rounded-2xl border p-4 transition ${
         checked
           ? "border-violet-400/50 bg-violet-400/10"
-          : "border-[var(--border)] bg-[#0a0e18] hover:border-slate-500"
+          : "border-[var(--border)] bg-[var(--background)] hover:border-slate-500"
       }`}
     >
       <input

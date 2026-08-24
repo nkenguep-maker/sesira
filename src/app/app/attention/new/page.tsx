@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { AttentionForm } from "@/components/attention/attention-form";
+import { PageHeader } from "@/components/sesira/page-header";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { formatQuoteAmount } from "@/lib/quotes/format";
 import { createClient } from "@/lib/supabase/server";
@@ -32,11 +33,13 @@ export default async function NewAttentionPage({ searchParams }: { searchParams:
         <ArrowLeft className="size-4" />Retour au devis
       </Link>
 
-      <header className="mt-8">
-        <p className="text-sm font-medium text-[var(--accent)]">Décision manuelle</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Ajouter à traiter</h1>
-        <p className="mt-3 max-w-2xl text-[var(--muted)]">Ajoutez uniquement le contexte nécessaire pour que votre équipe puisse décider.</p>
-      </header>
+      <div className="mt-8">
+        <PageHeader
+          eyebrow="Décision manuelle"
+          title="Ajouter à traiter"
+          description="Ajoutez uniquement le contexte nécessaire pour que votre équipe puisse décider."
+        />
+      </div>
 
       <section className="mt-8 rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
         <div className="mb-8 flex gap-4 rounded-2xl border border-violet-400/20 bg-violet-400/10 p-4">

@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { EmptyState } from "@/components/sesira/empty-state";
+import { PageHeader } from "@/components/sesira/page-header";
+import { StatusBadge, type StatusTone } from "@/components/sesira/status-badge";
 import type { AutomationCard, AutomationModuleKey } from "@/lib/automations/contracts";
 import { AUTOMATION_LEVEL_LABELS } from "@/lib/automations/view-model";
 
@@ -25,11 +28,11 @@ const MODULE_ICONS: Record<AutomationModuleKey, LucideIcon> = {
   INVOICE_FOLLOW_UP: ReceiptText,
 };
 
-const HEALTH_CLASSES: Record<AutomationCard["health"]["tone"], string> = {
-  emerald: "border-emerald-300/20 bg-emerald-300/10 text-emerald-200",
-  amber: "border-amber-300/20 bg-amber-300/10 text-amber-200",
-  cyan: "border-cyan-300/20 bg-cyan-300/10 text-cyan-200",
-  slate: "border-slate-300/15 bg-slate-300/5 text-slate-300",
+const HEALTH_TONES: Record<AutomationCard["health"]["tone"], StatusTone> = {
+  emerald: "emerald",
+  amber: "amber",
+  cyan: "cyan",
+  slate: "neutral",
 };
 
 const ACTIVITY_DOTS: Record<AutomationCard["recentActivity"][number]["tone"], string> = {
@@ -42,16 +45,11 @@ const ACTIVITY_DOTS: Record<AutomationCard["recentActivity"][number]["tone"], st
 export function AutomationsScreen({ cards }: { cards: AutomationCard[] }) {
   return (
     <div className="mx-auto max-w-7xl">
-      <header className="max-w-3xl">
-        <p className="text-sm font-medium text-[var(--accent)]">Automatisations</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
-          Un niveau de confiance clair pour chaque processus.
-        </h1>
-        <p className="mt-3 leading-7 text-[var(--muted)]">
-          Sesira commence par observer. Votre équipe garde la main sur tout ce qui demande du
-          jugement, une décision commerciale ou une action sensible.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Automatisations"
+        title="Un niveau de confiance clair pour chaque processus."
+        description="Sesira commence par observer. Votre équipe garde la main sur tout ce qui demande du jugement, une décision commerciale ou une action sensible."
+      />
 
       <section className="mt-8 rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-5 md:p-6">
         <div className="flex items-start gap-3">
@@ -87,14 +85,13 @@ export function AutomationsScreen({ cards }: { cards: AutomationCard[] }) {
           </div>
         </section>
       ) : (
-        <section className="mt-10 rounded-2xl border border-[var(--border)] bg-[var(--panel)] px-6 py-16 text-center">
-          <Bot className="mx-auto size-10 text-violet-300" />
-          <h2 className="mt-5 text-xl font-semibold">Aucune automatisation activée.</h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--muted)]">
-            Seuls les modules activés pour votre entreprise apparaissent ici. Aucun processus n’est
-            exécuté depuis cette page.
-          </p>
-        </section>
+        <div className="mt-10">
+          <EmptyState
+            icon={Bot}
+            title="Aucune automatisation activée."
+            description="Seuls les modules activés pour votre entreprise apparaissent ici. Aucun processus n’est exécuté depuis cette page."
+          />
+        </div>
       )}
     </div>
   );
@@ -144,18 +141,12 @@ function AutomationCardView({ card }: { card: AutomationCard }) {
             <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{card.description}</p>
           </div>
         </div>
-        <span className={`self-start rounded-full border px-3 py-1 text-xs font-medium ${HEALTH_CLASSES[card.health.tone]}`}>
-          {card.health.label}
-        </span>
+        <StatusBadge tone={HEALTH_TONES[card.health.tone]}>{card.health.label}</StatusBadge>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
-        <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs font-medium text-emerald-200">
-          Activée
-        </span>
-        <span className="rounded-full border border-violet-300/20 bg-violet-300/10 px-3 py-1 text-xs font-medium text-violet-200">
-          {AUTOMATION_LEVEL_LABELS[card.level]}
-        </span>
+        <StatusBadge tone="emerald">Activée</StatusBadge>
+        <StatusBadge tone="violet">{AUTOMATION_LEVEL_LABELS[card.level]}</StatusBadge>
       </div>
 
       {card.level === "SHADOW" ? (

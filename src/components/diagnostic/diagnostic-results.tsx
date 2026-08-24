@@ -39,7 +39,7 @@ export function DiagnosticResults({
             <button
               type="button"
               onClick={onEdit}
-              className="self-start rounded-xl border border-[var(--border)] bg-[#0a0e18]/70 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-violet-300/40"
+              className="sesira-secondary-action self-start"
             >
               Modifier mes réponses
             </button>
@@ -65,7 +65,7 @@ export function DiagnosticResults({
 
           <ol className="mt-6 grid gap-4 lg:grid-cols-3">
             {result.priorities.map((priority, index) => (
-              <li key={priority.key} className="rounded-2xl border border-[var(--border)] bg-[#0a0e18] p-5">
+              <li key={priority.key} className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5">
                 <div className="flex items-center justify-between">
                   <span className="grid size-8 place-items-center rounded-full bg-violet-400/15 text-sm font-semibold text-violet-200">
                     {index + 1}
@@ -100,7 +100,7 @@ export function DiagnosticResults({
               className={`relative rounded-2xl border p-5 md:p-6 ${
                 scenario.key === "PROBABLE"
                   ? "border-violet-300/40 bg-violet-400/10"
-                  : "border-[var(--border)] bg-[#0a0e18]"
+                  : "border-[var(--border)] bg-[var(--background)]"
               }`}
             >
               {scenario.key === "PROBABLE" ? (
@@ -222,7 +222,7 @@ function LeadField({ label, name, autoComplete, type = "text", required = false,
         name={name}
         required={required}
         type={type}
-        className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15"
+        className="sesira-field px-4 py-3"
       />
     </label>
   );

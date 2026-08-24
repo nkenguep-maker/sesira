@@ -12,5 +12,7 @@ describe("AppNavigation", () => {
     expect(html).toContain('href="/app/marketing"');
     expect(html).toContain("Marketing");
     expect(html).toContain('aria-current="page"');
+    expect(html).toContain("overflow-x-auto");
+    expect(html).toContain("lg:grid-cols-1");
   });
 });

@@ -2,6 +2,7 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 import { CustomerForm } from "@/components/customers/customer-form";
+import { PageHeader } from "@/components/sesira/page-header";
 
 export default function NewCustomerPage() {
   return (
@@ -14,13 +15,13 @@ export default function NewCustomerPage() {
         Retour aux clients
       </Link>
 
-      <header className="mt-8">
-        <p className="text-sm font-medium text-[var(--accent)]">Nouveau dossier</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Créer un client</h1>
-        <p className="mt-3 max-w-2xl text-[var(--muted)]">
-          Commencez par l’identité et les coordonnées essentielles. Les demandes et devis seront reliés ensuite.
-        </p>
-      </header>
+      <div className="mt-8">
+        <PageHeader
+          eyebrow="Nouveau dossier"
+          title="Créer un client"
+          description="Commencez par l’identité et les coordonnées essentielles. Les demandes et devis seront reliés ensuite."
+        />
+      </div>
 
       <section className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
         <div className="mb-8 flex gap-3 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 p-4 text-sm text-cyan-100">

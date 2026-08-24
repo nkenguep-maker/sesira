@@ -209,7 +209,7 @@ export default async function CustomerPage({ params, searchParams }: CustomerPag
 
 function JourneyStep({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl bg-[#0a0e18] px-3 py-2.5 sm:block">
+    <div className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl bg-[var(--background)] px-3 py-2.5 sm:block">
       <span className="text-[var(--muted)]">{label}</span>
       <span className="truncate font-medium text-slate-200 sm:mt-1 sm:block">{value}</span>
     </div>

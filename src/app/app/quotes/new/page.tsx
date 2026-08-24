@@ -2,6 +2,8 @@ import { ArrowLeft, ReceiptText, UserPlus } from "lucide-react";
 import Link from "next/link";
 
 import { QuoteForm } from "@/components/quotes/quote-form";
+import { EmptyState } from "@/components/sesira/empty-state";
+import { PageHeader } from "@/components/sesira/page-header";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { createClient } from "@/lib/supabase/server";
 
@@ -64,11 +66,13 @@ export default async function NewQuotePage({ searchParams }: { searchParams: New
         Tous les devis
       </Link>
 
-      <header className="mt-8">
-        <p className="text-sm font-medium text-[var(--accent)]">Suivi commercial</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Nouveau devis</h1>
-        <p className="mt-3 max-w-2xl text-[var(--muted)]">Reliez le devis à un client, puis ajoutez les informations utiles à son suivi.</p>
-      </header>
+      <div className="mt-8">
+        <PageHeader
+          eyebrow="Suivi commercial"
+          title="Nouveau devis"
+          description="Reliez le devis à un client, puis ajoutez les informations utiles à son suivi."
+        />
+      </div>
 
       <section className="mt-8 rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
         {customers.length ? (
@@ -93,14 +97,17 @@ export default async function NewQuotePage({ searchParams }: { searchParams: New
             defaultOwnerId={viewer.userId}
           />
         ) : (
-          <div className="py-8 text-center">
-            <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-violet-400/10 text-violet-200"><ReceiptText className="size-6" /></span>
-            <h2 className="mt-5 text-lg font-semibold">Ajoutez d’abord un client</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">Chaque devis doit être rattaché à un client de votre organisation.</p>
-            <Link href="/app/customers/new" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white">
-              <UserPlus className="size-4" />Créer un client
-            </Link>
-          </div>
+          <EmptyState
+            contained={false}
+            icon={ReceiptText}
+            title="Ajoutez d’abord un client"
+            description="Chaque devis doit être rattaché à un client de votre organisation."
+            action={
+              <Link href="/app/customers/new" className="sesira-primary-action px-5">
+                <UserPlus className="size-4" />Créer un client
+              </Link>
+            }
+          />
         )}
       </section>
     </div>

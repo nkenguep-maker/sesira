@@ -6,11 +6,15 @@ import {
   ClipboardList,
   Inbox,
   Plus,
-  Search,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
+import { EmptyState } from "@/components/sesira/empty-state";
+import { FilterBar, filterSelectClassName, SearchField } from "@/components/sesira/filter-bar";
+import { MetricCard } from "@/components/sesira/metric-card";
+import { PageHeader } from "@/components/sesira/page-header";
+import { StatusBadge, type StatusTone } from "@/components/sesira/status-badge";
 import {
   formatRequestDate,
   requestSourceLabel,
@@ -77,51 +81,34 @@ export function RequestListScreen({
 
   return (
     <div className="mx-auto max-w-7xl">
-      <header className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-        <div>
-          <p className="text-sm font-medium text-[var(--accent)]">Demandes clients</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Nouvelles demandes</h1>
-          <p className="mt-3 max-w-2xl text-[var(--muted)]">
-            Retrouvez les besoins reçus, les informations à compléter et les demandes prêtes pour votre équipe.
-          </p>
-        </div>
-        <Link
-          href="/app/requests/new"
-          className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 lg:self-auto"
-        >
-          <Plus className="size-4" />
-          Nouvelle demande
-        </Link>
-      </header>
+      <PageHeader
+        eyebrow="Demandes clients"
+        title="Nouvelles demandes"
+        description="Retrouvez les besoins reçus, les informations à compléter et les demandes prêtes pour votre équipe."
+        actions={
+          <Link href="/app/requests/new" className="sesira-primary-action px-5">
+            <Plus className="size-4" />
+            Nouvelle demande
+          </Link>
+        }
+      />
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={ClipboardList} label="Demandes" value={stats.total} tone="violet" />
-        <StatCard icon={Inbox} label="Nouvelles demandes" value={stats.new} tone="cyan" />
-        <StatCard icon={CircleHelp} label="Informations manquantes" value={stats.needsInfo} tone="amber" />
-        <StatCard icon={CheckCircle2} label="Prêt pour votre équipe" value={stats.ready} tone="emerald" />
+        <MetricCard icon={ClipboardList} label="Demandes" value={stats.total} tone="violet" />
+        <MetricCard icon={Inbox} label="Nouvelles demandes" value={stats.new} tone="cyan" />
+        <MetricCard icon={CircleHelp} label="Informations manquantes" value={stats.needsInfo} tone="amber" />
+        <MetricCard icon={CheckCircle2} label="Prêt pour votre équipe" value={stats.ready} tone="emerald" />
       </section>
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]">
-        <form
-          className="grid gap-3 border-b border-[var(--border)] p-4 md:grid-cols-[minmax(220px,1fr)_190px_190px_auto]"
-          action="/app/requests"
-        >
-          <label className="relative min-w-0">
-            <span className="sr-only">Rechercher une demande</span>
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
-            <input
-              name="q"
-              defaultValue={query}
-              placeholder="Rechercher par titre…"
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] py-2.5 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400"
-            />
-          </label>
+        <FilterBar action="/app/requests" layoutClassName="md:grid-cols-[minmax(220px,1fr)_190px_190px_auto]">
+          <SearchField label="Rechercher une demande" defaultValue={query} placeholder="Rechercher par titre…" />
           <label>
             <span className="sr-only">Filtrer par statut</span>
             <select
               name="status"
               defaultValue={status}
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-2.5 text-sm text-slate-200 outline-none focus:border-violet-400"
+              className={filterSelectClassName}
             >
               <option value="ALL">Tous les statuts</option>
               {REQUEST_STATUSES.map((requestStatus) => (
@@ -136,7 +123,7 @@ export function RequestListScreen({
             <select
               name="source"
               defaultValue={source}
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-2.5 text-sm text-slate-200 outline-none focus:border-violet-400"
+              className={filterSelectClassName}
             >
               <option value="ALL">Toutes les sources</option>
               {REQUEST_SOURCES.map((requestSource) => (
@@ -146,10 +133,10 @@ export function RequestListScreen({
               ))}
             </select>
           </label>
-          <button className="rounded-xl border border-[var(--border)] bg-[var(--panel-soft)] px-5 py-2.5 text-sm font-medium text-white transition hover:border-slate-500">
+          <button className="sesira-secondary-action bg-[var(--panel-soft)] px-5">
             Filtrer
           </button>
-        </form>
+        </FilterBar>
 
         {requests.length ? (
           <div>
@@ -212,24 +199,22 @@ export function RequestListScreen({
             </div>
           </div>
         ) : (
-          <div className="px-6 py-16 text-center">
-            <Sparkles className="mx-auto size-9 text-violet-300" />
-            <p className="mt-5 font-medium">
-              {hasFilters ? "Aucune demande ne correspond à ces filtres." : "Aucune demande pour le moment."}
-            </p>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">
-              {hasFilters
+          <EmptyState
+            contained={false}
+            icon={Sparkles}
+            title={hasFilters ? "Aucune demande ne correspond à ces filtres." : "Aucune demande pour le moment."}
+            description={
+              hasFilters
                 ? "Modifiez la recherche ou réinitialisez les filtres."
-                : "Créez une première demande pour la relier à un client et suivre son avancement."}
-            </p>
-            <Link
-              href={hasFilters ? "/app/requests" : "/app/requests/new"}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--panel-soft)]"
-            >
-              {hasFilters ? "Réinitialiser" : "Créer une demande"}
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
+                : "Créez une première demande pour la relier à un client et suivre son avancement."
+            }
+            action={
+              <Link href={hasFilters ? "/app/requests" : "/app/requests/new"} className="sesira-secondary-action">
+                {hasFilters ? "Réinitialiser" : "Créer une demande"}
+                <ArrowRight className="size-4" />
+              </Link>
+            }
+          />
         )}
 
         {requests.length ? (
@@ -252,52 +237,17 @@ export function RequestListScreen({
 }
 
 export function RequestStatusBadge({ status }: { status: string }) {
-  const tones: Record<string, string> = {
-    NEW: "border-cyan-400/20 bg-cyan-400/10 text-cyan-200",
-    PROCESSING: "border-violet-400/20 bg-violet-400/10 text-violet-200",
-    NEEDS_INFO: "border-amber-400/20 bg-amber-400/10 text-amber-200",
-    QUALIFIED: "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
-    READY: "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
-    ASSIGNED: "border-blue-400/20 bg-blue-400/10 text-blue-200",
-    CLOSED: "border-slate-400/20 bg-slate-400/10 text-slate-300",
-    SPAM: "border-rose-400/20 bg-rose-400/10 text-rose-200",
-    LOST: "border-rose-400/20 bg-rose-400/10 text-rose-200",
+  const tones: Record<string, StatusTone> = {
+    NEW: "cyan",
+    PROCESSING: "violet",
+    NEEDS_INFO: "amber",
+    QUALIFIED: "emerald",
+    READY: "emerald",
+    ASSIGNED: "blue",
+    CLOSED: "neutral",
+    SPAM: "rose",
+    LOST: "rose",
   };
 
-  return (
-    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${tones[status] ?? tones.CLOSED}`}>
-      {requestStatusLabel(status)}
-    </span>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: typeof Inbox;
-  label: string;
-  value: number;
-  tone: "violet" | "cyan" | "amber" | "emerald";
-}) {
-  const tones = {
-    violet: "bg-violet-400/10 text-violet-200",
-    cyan: "bg-cyan-400/10 text-cyan-200",
-    amber: "bg-amber-400/10 text-amber-200",
-    emerald: "bg-emerald-400/10 text-emerald-200",
-  };
-
-  return (
-    <article className="flex items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
-      <span className={`grid size-11 place-items-center rounded-xl ${tones[tone]}`}>
-        <Icon className="size-5" />
-      </span>
-      <span>
-        <span className="block text-2xl font-semibold tracking-tight">{value}</span>
-        <span className="mt-0.5 block text-xs text-[var(--muted)]">{label}</span>
-      </span>
-    </article>
-  );
+  return <StatusBadge tone={tones[status] ?? "neutral"}>{requestStatusLabel(status)}</StatusBadge>;
 }

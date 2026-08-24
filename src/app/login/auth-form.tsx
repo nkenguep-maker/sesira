@@ -89,7 +89,7 @@ function Field({
         name={name}
         type={type}
         autoComplete={autoComplete}
-        className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400 focus:ring-2 focus:ring-violet-400/15"
+        className="sesira-field px-4 py-3"
       />
     </label>
   );

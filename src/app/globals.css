@@ -8,7 +8,9 @@
   --foreground: #f6f7fb;
   --muted: #8e99b3;
   --brand: #8b5cf6;
+  --brand-soft: #a78bfa;
   --accent: #42d6d0;
+  --warning: #e3b86c;
 }
 
 * {
@@ -34,6 +36,81 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid var(--brand-soft);
+  outline-offset: 2px;
+}
+
+.sesira-field {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--background) 72%, var(--panel));
+  color: var(--foreground);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+
+.sesira-field::placeholder {
+  color: color-mix(in srgb, var(--muted) 64%, transparent);
+}
+
+.sesira-field:hover {
+  border-color: color-mix(in srgb, var(--border) 58%, var(--muted));
+}
+
+.sesira-field:focus {
+  border-color: var(--brand-soft);
+  box-shadow: 0 0 0 2px rgb(167 139 250 / 15%);
+  outline: none;
+}
+
+.sesira-primary-action,
+.sesira-secondary-action {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.sesira-primary-action {
+  border: 1px solid transparent;
+  background: var(--brand);
+  color: var(--foreground);
+}
+
+.sesira-primary-action:hover {
+  background: color-mix(in srgb, var(--brand) 84%, var(--brand-soft));
+}
+
+.sesira-secondary-action {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+}
+
+.sesira-secondary-action:hover {
+  border-color: color-mix(in srgb, var(--border) 55%, var(--brand-soft));
+  background: var(--panel-soft);
+}
+
+.sesira-primary-action:active,
+.sesira-secondary-action:active {
+  transform: translateY(1px);
 }
 
 a {

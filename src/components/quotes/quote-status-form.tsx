@@ -32,7 +32,7 @@ export function QuoteStatusForm({
           defaultValue=""
           required
           disabled={pending}
-          className="w-full rounded-xl border border-[var(--border)] bg-[#0a0e18] px-4 py-3 text-white outline-none transition focus:border-violet-400 disabled:opacity-60"
+          className="sesira-field px-4 py-3 disabled:opacity-60"
         >
           <option value="" disabled>Choisir un statut</option>
           {options.map((status) => (
@@ -45,7 +45,7 @@ export function QuoteStatusForm({
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-wait disabled:opacity-60"
+        className="sesira-primary-action w-full px-4 disabled:cursor-wait disabled:opacity-60"
       >
         {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
         {pending ? "Mise à jour…" : "Mettre à jour"}
