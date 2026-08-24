@@ -6,10 +6,10 @@
 > Expected handoff commit message: `docs: prepare core workflow handoff`
 
 This is an engineering handoff, not permission to redesign SESIRA. Start by running
-`git branch --show-current` and `git log -1 --oneline`, then read this document,
-`docs/CURRENT_STATE.md`, `docs/SCHEMA_REQUESTS.md`, the migrations and the existing domain code.
-The uploaded product specification is summarized in `docs/CODEX_PRODUCT_PLAN.md`; a file literally
-named `SESIRA_SPEC.md` is not currently versioned in this repository.
+`git branch --show-current` and `git log -1 --oneline`, then read `SESIRA_SPEC.md` first, followed by
+this document, `docs/CURRENT_STATE.md`, `docs/SCHEMA_REQUESTS.md`, the migrations and the existing
+domain code. `SESIRA_SPEC.md` version 2.0 is the principal product source of truth; this handoff
+describes the verified implementation beneath it.
 
 ## 1. Current architecture
 
