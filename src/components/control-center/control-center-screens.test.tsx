@@ -100,7 +100,9 @@ describe("Control Center screens", () => {
     }} />);
 
     expect(unavailable).toContain("Données internes indisponibles");
-    expect(unavailable).toContain("Aucune donnée locataire n’est interrogée");
+    expect(unavailable).toContain("Aucune donnée d’organisation n’est consultée");
+    expect(unavailable).not.toContain("Core");
+    expect(unavailable).not.toContain("locataire");
     expect(empty).toContain("Aucun élément");
     expect(empty).not.toContain("Données internes indisponibles");
   });

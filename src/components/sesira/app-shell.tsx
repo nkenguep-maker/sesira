@@ -17,12 +17,22 @@ export function AppShell({
     <div className="min-h-screen bg-[var(--background)] text-white lg:grid lg:grid-cols-[272px_1fr]">
       <aside className="border-b border-[var(--border)] bg-[var(--background)] lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
         <div className="flex h-full flex-col p-4 lg:p-5">
-          <div className="flex items-center gap-3 px-2 py-3">
-            <span className="grid size-9 place-items-center rounded-xl bg-[var(--brand)] font-bold">S</span>
-            <div>
-              <p className="font-semibold tracking-wide">SESIRA</p>
-              <p className="text-xs text-[var(--muted)]">Operational system</p>
+          <div className="flex items-center justify-between gap-3 px-2 py-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--brand)] font-bold">S</span>
+              <div className="min-w-0">
+                <p className="font-semibold tracking-wide">SESIRA</p>
+                <p className="text-xs text-[var(--muted)]">Pilotage d’activité</p>
+              </div>
             </div>
+            <form action={logoutAction} className="lg:hidden">
+              <button
+                aria-label="Se déconnecter"
+                className="grid size-11 place-items-center rounded-xl border border-[var(--border)] text-[var(--muted)] transition hover:bg-[var(--panel-soft)] hover:text-white"
+              >
+                <LogOut className="size-4" />
+              </button>
+            </form>
           </div>
 
           <div className="mt-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 lg:mt-6">
@@ -30,7 +40,7 @@ export function AppShell({
               <Building2 className="mt-0.5 size-4 text-[var(--accent)]" />
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{viewer.organization.name}</p>
-                <p className="mt-1 text-xs text-[var(--muted)]">{viewer.organization.status}</p>
+                <p className="mt-1 text-xs text-[var(--muted)]">{organizationStatusLabel(viewer.organization.status)}</p>
               </div>
             </div>
           </div>
@@ -52,4 +62,13 @@ export function AppShell({
       <main className="min-w-0 px-5 py-8 md:px-8 lg:px-12 lg:py-10">{children}</main>
     </div>
   );
+}
+
+function organizationStatusLabel(status: string): string {
+  return ({
+    TRIAL: "Essai",
+    ACTIVE: "Actif",
+    SUSPENDED: "Suspendu",
+    ARCHIVED: "Archivé",
+  } as Record<string, string>)[status] ?? "État non renseigné";
 }

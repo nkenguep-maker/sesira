@@ -97,7 +97,7 @@ export function CustomerListScreen({
 
         {customers.length ? (
           <div>
-            <div className="hidden grid-cols-[minmax(260px,1.5fr)_minmax(180px,1fr)_140px_120px_32px] gap-4 border-b border-[var(--border)] px-5 py-3 text-xs font-medium uppercase tracking-[0.12em] text-slate-500 md:grid">
+            <div className="hidden grid-cols-[minmax(260px,1.5fr)_minmax(180px,1fr)_140px_120px_32px] gap-4 border-b border-[var(--border)] px-5 py-3 text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)] lg:grid">
               <span>Client</span>
               <span>Contact</span>
               <span>Type</span>
@@ -109,7 +109,7 @@ export function CustomerListScreen({
                 <Link
                   key={customer.id}
                   href={`/app/customers/${customer.id}`}
-                  className="group grid gap-4 px-5 py-4 transition hover:bg-[var(--panel-soft)] md:grid-cols-[minmax(260px,1.5fr)_minmax(180px,1fr)_140px_120px_32px] md:items-center"
+                  className="group grid gap-4 px-5 py-4 transition hover:bg-[var(--panel-soft)] lg:grid-cols-[minmax(260px,1.5fr)_minmax(180px,1fr)_140px_120px_32px] lg:items-center"
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-400/10 text-sm font-semibold text-violet-200">
@@ -132,7 +132,7 @@ export function CustomerListScreen({
                     <CustomerTypeBadge type={customer.type} />
                   </span>
                   <span className="text-sm text-[var(--muted)]">{formatCustomerDate(customer.created_at)}</span>
-                  <ChevronRight className="hidden size-4 text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-violet-300 md:block" />
+                  <ChevronRight className="hidden size-4 text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-violet-300 lg:block" />
                 </Link>
               ))}
             </div>
@@ -166,7 +166,7 @@ export function CustomerListScreen({
                 Page suivante <ArrowRight className="size-4" />
               </Link>
             ) : (
-              <span className="text-slate-600">Fin de la liste</span>
+              <span className="text-[var(--muted)]">Fin de la liste</span>
             )}
           </footer>
         ) : null}

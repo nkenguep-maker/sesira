@@ -115,8 +115,8 @@ function UnavailableState({ noun }: { noun: string }) {
       <ShieldAlert className="mx-auto size-9 text-amber-200" />
       <h2 className="mt-4 text-xl font-semibold">Données internes indisponibles</h2>
       <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-        {noun} apparaîtront lorsque Core fournira une lecture inter-organisation sécurisée,
-        expurgée et auditée. Aucune donnée locataire n’est interrogée en attendant.
+        {noun} apparaîtront lorsqu’une lecture sécurisée, limitée aux informations utiles et
+        contrôlée sera disponible. Aucune donnée d’organisation n’est consultée en attendant.
       </p>
     </section>
   );
@@ -153,12 +153,12 @@ function DataTable<T>({
       <div className="grid gap-4 md:hidden">
         {rows.map((row, rowIndex) => (
           <article key={rowIndex} className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
-            <div className="font-medium">{mobileTitle(row)}</div>
+            <div className="min-w-0 [overflow-wrap:anywhere] font-medium">{mobileTitle(row)}</div>
             <dl className="mt-4 grid gap-3">
               {columns.slice(1).map((column) => (
                 <div key={column.label} className="flex items-start justify-between gap-5 border-t border-[var(--border)] pt-3">
                   <dt className="text-xs text-[var(--muted)]">{column.label}</dt>
-                  <dd className="text-right text-sm">{column.render(row)}</dd>
+                  <dd className="min-w-0 [overflow-wrap:anywhere] text-right text-sm">{column.render(row)}</dd>
                 </div>
               ))}
             </dl>
@@ -207,7 +207,7 @@ export function ControlOverviewScreen({ result }: { result: ControlData<ControlO
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
-        eyebrow="CONTROL CENTER"
+        eyebrow="CENTRE DE CONTRÔLE"
         title="Piloter les opérations par exception."
         description="Une vue interne, calme et en lecture seule de la santé des organisations et de l’infrastructure Sesira."
         eyebrowStyle="section"
@@ -309,7 +309,7 @@ export function ControlIntegrationsScreen({ result }: { result: ControlData<Cont
 
 export function ControlLoadingScreen() {
   return (
-    <LoadingPage label="Chargement du Control Center">
+    <LoadingPage label="Chargement du centre de contrôle">
       <LoadingHeader />
       <LoadingMetricGrid count={6} columns="three" />
     </LoadingPage>
@@ -320,7 +320,7 @@ export function ControlCenterSafetyNote() {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-cyan-300/15 bg-cyan-300/5 p-4 text-sm text-[var(--muted)]">
       <AlertTriangle className="mt-0.5 size-4 shrink-0 text-cyan-200" />
-      <p>Les données affichées par le futur adaptateur devront être expurgées, paginées et attribuées à une identité opérateur auditée.</p>
+      <p>Les futures données devront être limitées aux informations utiles, paginées et associées à une identité interne contrôlée.</p>
     </div>
   );
 }

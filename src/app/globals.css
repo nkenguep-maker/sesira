@@ -66,7 +66,11 @@ select {
 .sesira-field:focus {
   border-color: var(--brand-soft);
   box-shadow: 0 0 0 2px rgb(167 139 250 / 15%);
-  outline: none;
+}
+
+.sesira-choice:has(input:focus-visible) {
+  outline: 2px solid var(--brand-soft);
+  outline-offset: 2px;
 }
 
 .sesira-primary-action,

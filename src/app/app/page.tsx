@@ -4,6 +4,8 @@ import { EmptyState } from "@/components/sesira/empty-state";
 import { MetricCard, type MetricTone } from "@/components/sesira/metric-card";
 import { PageHeader } from "@/components/sesira/page-header";
 import { StatusBadge } from "@/components/sesira/status-badge";
+import { attentionCategoryLabel, attentionPriorityLabels } from "@/lib/attention/format";
+import type { AttentionPriority } from "@/lib/attention/schema";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { areExternalActionsEnabled } from "@/lib/automation/external-actions";
 import { serverEnv } from "@/lib/env";
@@ -63,7 +65,7 @@ export default async function DashboardPage() {
         actions={
           <StatusBadge tone={externalActionsEnabled ? "emerald" : "neutral"}>
             <CheckCircle2 className="mr-1.5 size-3.5" />
-            Actions externes {externalActionsEnabled ? "activées" : "désactivées"}
+            Actions vers l’extérieur {externalActionsEnabled ? "activées" : "désactivées"}
           </StatusBadge>
         }
       />
@@ -89,12 +91,14 @@ export default async function DashboardPage() {
           <div className="divide-y divide-[var(--border)]">
             {recentAttention.data.map((item) => (
               <article key={item.id} className="grid gap-3 px-6 py-5 md:grid-cols-[130px_1fr_auto] md:items-center">
-                <span className="text-xs font-semibold tracking-wide text-amber-300">{item.priority}</span>
+                <span className="text-xs font-semibold tracking-wide text-amber-300">
+                  Priorité {attentionPriorityLabels[item.priority as AttentionPriority]?.toLocaleLowerCase("fr-FR") ?? "à vérifier"}
+                </span>
                 <div>
                   <p className="font-medium">{item.title}</p>
                   {item.explanation ? <p className="mt-1 text-sm text-[var(--muted)]">{item.explanation}</p> : null}
                 </div>
-                <span className="text-xs text-[var(--muted)]">{item.category}</span>
+                <span className="text-xs text-[var(--muted)]">{attentionCategoryLabel(item.category)}</span>
               </article>
             ))}
           </div>
@@ -104,7 +108,7 @@ export default async function DashboardPage() {
             icon={CheckCircle2}
             tone="emerald"
             title="Rien ne nécessite votre attention."
-            description="Les exceptions détectées par Sesira apparaîtront ici."
+            description="Les situations importantes détectées par Sesira apparaîtront ici."
           />
         )}
       </section>

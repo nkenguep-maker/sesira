@@ -148,7 +148,7 @@ function TypeOption({
 }) {
   return (
     <label
-      className={`flex cursor-pointer gap-3 rounded-2xl border p-4 transition ${
+      className={`sesira-choice flex cursor-pointer gap-3 rounded-2xl border p-4 transition ${
         checked
           ? "border-violet-400/50 bg-violet-400/10"
           : "border-[var(--border)] bg-[var(--background)] hover:border-slate-500"

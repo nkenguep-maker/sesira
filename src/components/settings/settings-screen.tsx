@@ -230,7 +230,7 @@ export function SettingsScreen({
               danger
             />
           </div>
-          <UnavailableNote text="Export, conservation et suppression attendent un traitement Core audité. Les boutons sont volontairement désactivés." />
+          <UnavailableNote text="Export, conservation et suppression attendent un traitement sécurisé et contrôlé. Les boutons sont volontairement désactivés." />
         </SettingsSection>
 
         <SettingsSection

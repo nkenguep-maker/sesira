@@ -143,7 +143,7 @@ export function MarketingHomeScreen({
 }) {
   return (
     <GrowthPage
-      eyebrow="SESIRA GROWTH"
+      eyebrow="SESIRA MARKETING"
       title="Préparer une présence utile, sans bruit."
       description="Centralisez les sujets, les validations et le calendrier éditorial avant de connecter le moindre canal."
       source={summary.source}
@@ -194,7 +194,7 @@ function SummaryCard({ href, icon: Icon, label, value }: { href: string; icon: L
         <span className="grid size-10 place-items-center rounded-xl bg-violet-400/10 text-violet-300"><Icon className="size-5" /></span>
         <ArrowRight className="size-4 text-[var(--muted)] transition group-hover:translate-x-1 group-hover:text-white" />
       </div>
-      <p className="mt-7 text-3xl font-semibold">{value}</p>
+      <p className="mt-7 [overflow-wrap:anywhere] text-3xl font-semibold tabular-nums">{value}</p>
       <p className="mt-2 text-sm text-[var(--muted)]">{label}</p>
     </Link>
   );
@@ -346,7 +346,7 @@ export function MarketingPublicationsScreen({ result }: { result: GrowthResult<G
 
           <section className="mt-6 flex items-start gap-3 rounded-xl border border-amber-300/15 bg-amber-300/5 p-4">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-amber-200" />
-            <p className="text-sm leading-6 text-[var(--muted)]">La planification, la validation du canal et la publication réelle nécessitent encore les services Core et les connexions autorisées.</p>
+            <p className="text-sm leading-6 text-[var(--muted)]">La planification, la validation du canal et la publication réelle nécessitent encore les services sécurisés et les connexions autorisées.</p>
           </section>
         </>
       ) : <GrowthEmptyState icon={Megaphone} title="Aucune publication prévue" description="Le calendrier est vide." />}

@@ -136,7 +136,7 @@ export function DiagnosticResults({
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-[10px] tracking-wide text-slate-500">MOTEUR DE CALCUL {result.calculationVersion}</p>
+          <p className="mt-4 text-xs tracking-wide text-[var(--muted)]">CALCUL {result.calculationVersion}</p>
         </details>
       </section>
 
@@ -184,7 +184,7 @@ function DiagnosticLeadForm({ employees }: { employees: number }) {
               Envoi sécurisé bientôt disponible <ArrowRight className="size-4" />
             </button>
             <p id="lead-unavailable-note" className="mt-3 text-center text-xs leading-5 text-[var(--muted)]">
-              Aucun contact ne sera créé tant que la persistance Core n’est pas disponible.
+              Aucun contact ne sera créé tant que l’enregistrement sécurisé n’est pas disponible.
             </p>
           </div>
         </form>

@@ -47,7 +47,7 @@ export function buildEstimatedMetrics(observed: ObservedMetric[]): EstimatedMetr
       key: "potential_gain",
       label: "Gain potentiel estimé",
       estimate: { value: null, unit: "CURRENCY", currency: "EUR" },
-      context: "En attente des résultats de suivi et de l’attribution Core.",
+      context: "En attente de résultats de suivi fiables et d’une attribution validée.",
     },
     {
       key: "total_potential",

@@ -26,7 +26,7 @@ export function ControlCenterShell({ children }: { children: ReactNode }) {
           <Link href="/control" className="flex items-center gap-3 px-2 py-3">
             <span className="grid size-9 place-items-center rounded-xl bg-[var(--brand)] font-bold">S</span>
             <div>
-              <p className="font-semibold tracking-wide">SESIRA CONTROL</p>
+              <p className="font-semibold tracking-wide">SESIRA INTERNE</p>
               <p className="text-xs text-[var(--muted)]">Opérations internes</p>
             </div>
           </Link>
@@ -41,7 +41,7 @@ export function ControlCenterShell({ children }: { children: ReactNode }) {
             </p>
           </div>
 
-          <nav aria-label="Navigation Control Center" className="mt-5 overflow-x-auto lg:overflow-visible">
+          <nav aria-label="Navigation du centre de contrôle" className="mt-5 overflow-x-auto lg:overflow-visible">
             <ul className="flex min-w-max gap-2 lg:min-w-0 lg:flex-col">
               {navigation.map(({ href, label, icon: Icon }) => (
                 <li key={href}>

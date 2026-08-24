@@ -150,7 +150,7 @@ function AttentionCard({ item, open }: { item: AttentionInboxItem; open: boolean
               <div className="mt-4">
                 <p className="text-sm font-medium text-violet-300">{entityTypeLabel(item.entity.type)}</p>
                 {item.entity.amount ? (
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-white">{item.entity.amount}</p>
+                  <p className="mt-2 [overflow-wrap:anywhere] text-3xl font-semibold tracking-tight tabular-nums text-white">{item.entity.amount}</p>
                 ) : (
                   <p className="mt-2 text-lg font-semibold text-white">{item.entity.label}</p>
                 )}
@@ -204,7 +204,7 @@ function DecisionBlock({
         <Icon className="size-4" />
       </span>
       <div>
-        <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">{eyebrow}</p>
+        <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">{eyebrow}</p>
         <p className="mt-2 text-sm leading-6 text-slate-200">{text}</p>
       </div>
     </div>

@@ -123,7 +123,7 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
                 )}
               </div>
               <p className="mt-5 text-sm leading-5 text-[var(--muted)]">{metric.label}</p>
-              <p className="mt-3 break-words text-3xl font-semibold tracking-tight">
+              <p className="mt-3 [overflow-wrap:anywhere] text-3xl font-semibold tracking-tight tabular-nums">
                 {formatResultsEstimate(metric.estimate)}
               </p>
               <p className="mt-auto pt-5 text-xs leading-5 text-[var(--muted)]">{metric.context}</p>
@@ -142,8 +142,8 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
             <h2 className="mt-3 text-xl font-semibold">Comment lire ces estimations</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
               Les hypothèses sont visibles, modérées et appliquées uniquement aux actions réellement
-              comptées. Le gain commercial et le retour par euro resteront à établir tant que Core ne
-              fournit pas une attribution fiable.
+              comptées. Le gain commercial et le retour par euro resteront à établir tant que les
+              données disponibles ne permettent pas une attribution fiable.
             </p>
           </div>
           <ul className="grid gap-3 sm:grid-cols-2" aria-label="Hypothèses utilisées">

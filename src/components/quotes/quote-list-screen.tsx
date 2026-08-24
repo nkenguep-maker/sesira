@@ -123,7 +123,7 @@ export function QuoteListScreen({
 
         {quotes.length ? (
           <div>
-            <div className="hidden grid-cols-[minmax(210px,1.2fr)_minmax(140px,1fr)_minmax(110px,.8fr)_130px_120px_115px_135px_32px] gap-4 border-b border-[var(--border)] px-5 py-3 text-xs font-medium uppercase tracking-[0.12em] text-slate-500 xl:grid">
+            <div className="hidden grid-cols-[minmax(210px,1.2fr)_minmax(140px,1fr)_minmax(110px,.8fr)_130px_120px_115px_135px_32px] gap-4 border-b border-[var(--border)] px-5 py-3 text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)] xl:grid">
               <span>Devis</span><span>Client</span><span>Demande</span><span>Montant</span><span>Statut</span><span>Envoyé le</span><span>Prochaine date</span><span />
             </div>
             <div className="divide-y divide-[var(--border)]">
@@ -145,7 +145,7 @@ export function QuoteListScreen({
                     <ListValue label="Demande" value={quote.requests?.title ?? "Aucune"} />
                     <span>
                       <MobileLabel>Montant</MobileLabel>
-                      <span className="text-base font-semibold text-white">{formatQuoteAmount(quote.amount, quote.currency)}</span>
+                      <span className="block [overflow-wrap:anywhere] text-base font-semibold tabular-nums text-white">{formatQuoteAmount(quote.amount, quote.currency)}</span>
                     </span>
                     <span>
                       <MobileLabel>Statut</MobileLabel>
@@ -190,7 +190,7 @@ export function QuoteListScreen({
             <Link href="/app/quotes" className="text-[var(--muted)] transition hover:text-white">Retour au début</Link>
             {nextPageUrl ? (
               <Link href={nextPageUrl} className="inline-flex items-center gap-2 font-medium text-violet-300 hover:text-violet-200">Page suivante <ArrowRight className="size-4" /></Link>
-            ) : <span className="text-slate-600">Fin de la liste</span>}
+            ) : <span className="text-[var(--muted)]">Fin de la liste</span>}
           </footer>
         ) : null}
       </section>
@@ -214,7 +214,7 @@ export function QuoteStatusBadge({ status }: { status: string }) {
 }
 
 function MobileLabel({ children }: { children: string }) {
-  return <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-slate-600 xl:hidden">{children}</span>;
+  return <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)] xl:hidden">{children}</span>;
 }
 
 function ListValue({ label, value }: { label: string; value: string }) {

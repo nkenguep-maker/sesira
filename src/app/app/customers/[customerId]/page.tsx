@@ -115,7 +115,7 @@ export default async function CustomerPage({ params, searchParams }: CustomerPag
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="truncate text-3xl font-semibold tracking-tight">{customer.display_name}</h1>
+            <h1 className="[overflow-wrap:anywhere] text-3xl font-semibold tracking-tight">{customer.display_name}</h1>
             <CustomerTypeBadge type={customer.type} />
           </div>
           <p className="mt-2 text-[var(--muted)]">

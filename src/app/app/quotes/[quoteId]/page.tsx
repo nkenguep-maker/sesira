@@ -19,6 +19,7 @@ import { QuoteStatusForm } from "@/components/quotes/quote-status-form";
 import { BusinessTimeline } from "@/components/sesira/business-timeline";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { loadBusinessTimeline } from "@/lib/events/load-business-timeline";
+import { messageChannelLabel } from "@/lib/messages/format";
 import { formatQuoteAmount, formatQuoteDate, formatQuoteDateTime } from "@/lib/quotes/format";
 import { getAllowedQuoteStatuses, isQuoteStatus } from "@/lib/quotes/schema";
 import { requestStatusLabel } from "@/lib/requests/format";
@@ -104,12 +105,12 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
               <QuoteStatusBadge status={quote.status} />
               <span className="text-sm text-[var(--muted)]">{quote.reference ?? "Sans référence"}</span>
             </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">{quote.title}</h1>
+            <h1 className="mt-4 [overflow-wrap:anywhere] text-3xl font-semibold tracking-tight md:text-4xl">{quote.title}</h1>
             <p className="mt-3 text-sm text-[var(--muted)]">Créé le {formatQuoteDate(quote.created_at)} · propriétaire : {ownerName}</p>
           </div>
           <div className="rounded-2xl border border-violet-400/20 bg-violet-400/10 px-6 py-5 lg:min-w-72 lg:text-right">
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-violet-200/70">Montant du devis</p>
-            <p className="mt-2 text-4xl font-semibold tracking-tight text-white md:text-5xl">{formatQuoteAmount(quote.amount, quote.currency)}</p>
+            <p className="mt-2 [overflow-wrap:anywhere] text-4xl font-semibold tracking-tight tabular-nums text-white md:text-5xl">{formatQuoteAmount(quote.amount, quote.currency)}</p>
           </div>
         </div>
       </header>
@@ -162,7 +163,7 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
                       <span className="text-xs text-[var(--muted)]">{formatQuoteDateTime(message.created_at)}</span>
                     </div>
                     <p className="mt-2 line-clamp-3 text-sm leading-6 text-[var(--muted)]">{message.body_text ?? "Contenu non disponible."}</p>
-                    <p className="mt-3 text-xs text-slate-500">{message.direction === "INBOUND" ? "Reçu" : "Envoyé"} · {message.channel}</p>
+                    <p className="mt-3 text-xs text-[var(--muted)]">{message.direction === "INBOUND" ? "Reçu" : "Envoyé"} · {messageChannelLabel(message.channel)}</p>
                   </article>
                 ))}
               </div>

@@ -16,7 +16,7 @@ export default function HomePage() {
         </div>
 
         <div className="max-w-3xl">
-          <p className="mb-4 text-sm font-medium text-[var(--muted)]">Midnight Papyrus</p>
+          <p className="mb-4 text-sm font-medium text-[var(--muted)]">Pilotage quotidien</p>
           <h1 className="text-4xl font-semibold tracking-tight md:text-6xl">
             Automatiser le normal.
             <span className="mt-2 block text-[var(--accent)]">Faire remonter les exceptions.</span>

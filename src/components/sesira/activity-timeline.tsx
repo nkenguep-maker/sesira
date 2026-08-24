@@ -49,9 +49,9 @@ export function ActivityTimeline({
               <time className="shrink-0 text-xs text-[var(--muted)]">{item.date}</time>
             </div>
             {item.detail ? <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{item.detail}</p> : null}
-            {item.meta ? <p className="mt-2 text-xs text-slate-500">{item.meta}</p> : null}
+            {item.meta ? <p className="mt-2 text-xs text-[var(--muted)]">{item.meta}</p> : null}
             {item.actor || item.source || item.entity ? (
-              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--muted)]">
                 {item.actor ? <span>Par {item.actor}</span> : item.source ? <span>{item.source}</span> : null}
                 {(item.actor || item.source) && item.entity ? <span aria-hidden="true">·</span> : null}
                 {item.entity?.href ? (

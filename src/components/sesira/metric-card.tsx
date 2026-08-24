@@ -39,7 +39,7 @@ export function MetricCard({
             </span>
           ) : null}
         </div>
-        <p className="mt-4 text-3xl font-semibold tracking-tight text-[var(--foreground)]">{value}</p>
+        <p className="mt-4 min-w-0 [overflow-wrap:anywhere] text-3xl font-semibold tracking-tight text-[var(--foreground)]">{value}</p>
         {detail ? <div className="mt-2 text-xs leading-5 text-[var(--muted)]">{detail}</div> : null}
       </article>
     );
@@ -53,7 +53,7 @@ export function MetricCard({
         </span>
       ) : null}
       <div className="min-w-0">
-        <p className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">{value}</p>
+        <p className="[overflow-wrap:anywhere] text-2xl font-semibold tracking-tight text-[var(--foreground)]">{value}</p>
         <p className="mt-0.5 text-xs text-[var(--muted)]">{label}</p>
         {detail ? <div className="mt-1 text-xs text-[var(--muted)]">{detail}</div> : null}
       </div>

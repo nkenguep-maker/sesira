@@ -28,14 +28,17 @@ describe("AutomationsScreen", () => {
     expect(html).toContain("xl:grid-cols-2");
   });
 
-  it("explains Shadow Mode without presenting the example as a real run", () => {
+  it("explains observation in real conditions without presenting the example as a real action", () => {
     const shadow = card("SHADOW");
     shadow.recentActivity = [];
     shadow.lastSuccess = null;
     const html = renderToStaticMarkup(<AutomationsScreen cards={[shadow]} />);
 
     expect(html).toContain("Sesira aurait effectué cette action.");
-    expect(html).toContain("Elle ne représente pas un run réel");
+    expect(html).toContain("APERÇU EN CONDITIONS RÉELLES");
+    expect(html).toContain("Il ne correspond pas à une action réellement effectuée");
+    expect(html).not.toContain("SHADOW");
+    expect(html).not.toContain("run réel");
     expect(html).toContain("Aucune activité réelle enregistrée");
   });
 

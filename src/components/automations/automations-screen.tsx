@@ -47,7 +47,7 @@ export function AutomationsScreen({ cards }: { cards: AutomationCard[] }) {
     <div className="mx-auto max-w-7xl">
       <PageHeader
         eyebrow="Automatisations"
-        title="Un niveau de confiance clair pour chaque processus."
+        title="Un niveau de confiance clair pour chaque action."
         description="Sesira commence par observer. Votre équipe garde la main sur tout ce qui demande du jugement, une décision commerciale ou une action sensible."
       />
 
@@ -153,11 +153,11 @@ function AutomationCardView({ card }: { card: AutomationCard }) {
         <div className="mt-5 rounded-xl border border-violet-300/20 bg-violet-300/5 p-4">
           <div className="flex items-center gap-2 text-violet-200">
             <Sparkles className="size-4" />
-            <p className="text-xs font-semibold tracking-wide">APERÇU SHADOW</p>
+            <p className="text-xs font-semibold tracking-wide">APERÇU EN CONDITIONS RÉELLES</p>
           </div>
           <p className="mt-2 font-medium">Sesira aurait effectué cette action.</p>
           <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
-            Cette phrase explique le mode. Elle ne représente pas un run réel et aucun envoi n’est effectué.
+            Cet aperçu explique le mode. Il ne correspond pas à une action réellement effectuée et aucun envoi n’a lieu.
           </p>
         </div>
       ) : null}

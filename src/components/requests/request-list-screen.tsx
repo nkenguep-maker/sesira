@@ -140,7 +140,7 @@ export function RequestListScreen({
 
         {requests.length ? (
           <div>
-            <div className="hidden grid-cols-[minmax(260px,1.5fr)_minmax(170px,1fr)_150px_140px_130px_32px] gap-4 border-b border-[var(--border)] px-5 py-3 text-xs font-medium uppercase tracking-[0.12em] text-slate-500 lg:grid">
+            <div className="hidden grid-cols-[minmax(260px,1.5fr)_minmax(170px,1fr)_150px_140px_130px_32px] gap-4 border-b border-[var(--border)] px-5 py-3 text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)] lg:grid">
               <span>Demande</span>
               <span>Client</span>
               <span>Source</span>
@@ -163,7 +163,7 @@ export function RequestListScreen({
                     </span>
                   </span>
                   <span className="min-w-0">
-                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-slate-600 lg:hidden">
+                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)] lg:hidden">
                       Client
                     </span>
                     <span className="block truncate text-sm text-slate-200">
@@ -176,19 +176,19 @@ export function RequestListScreen({
                     ) : null}
                   </span>
                   <span className="text-sm text-[var(--muted)]">
-                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-slate-600 lg:hidden">
+                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)] lg:hidden">
                       Source
                     </span>
                     {requestSourceLabel(request.source)}
                   </span>
                   <span>
-                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-slate-600 lg:hidden">
+                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)] lg:hidden">
                       Statut
                     </span>
                     <RequestStatusBadge status={request.status} />
                   </span>
                   <span className="text-sm text-[var(--muted)]">
-                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-slate-600 lg:hidden">
+                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)] lg:hidden">
                       Créée le
                     </span>
                     {formatRequestDate(request.created_at)}
@@ -227,7 +227,7 @@ export function RequestListScreen({
                 Page suivante <ArrowRight className="size-4" />
               </Link>
             ) : (
-              <span className="text-slate-600">Fin de la liste</span>
+              <span className="text-[var(--muted)]">Fin de la liste</span>
             )}
           </footer>
         ) : null}

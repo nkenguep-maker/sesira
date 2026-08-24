@@ -188,7 +188,7 @@ export function DiagnosticExperience() {
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
                 <p className="text-xs font-semibold tracking-[0.16em] text-violet-300">MÉTHODE</p>
                 <ul className="mt-4 space-y-3 text-xs leading-5 text-[var(--muted)]">
-                  {["Vos propres chiffres", "Des règles de calcul visibles", "Aucun benchmark ajouté", "Aucune intelligence artificielle"].map((item) => (
+                  {["Vos propres chiffres", "Des règles de calcul visibles", "Aucune comparaison externe", "Aucune intelligence artificielle"].map((item) => (
                     <li key={item} className="flex items-start gap-2">
                       <Check className="mt-0.5 size-3.5 shrink-0 text-violet-300" /> {item}
                     </li>
@@ -199,8 +199,8 @@ export function DiagnosticExperience() {
           </div>
         )}
 
-        <footer className="py-10 text-center text-xs text-slate-600">
-          © 2026 Sesira — Diagnostic indicatif, sans benchmark externe.
+        <footer className="py-10 text-center text-xs text-[var(--muted)]">
+          © 2026 Sesira — Diagnostic indicatif, sans comparaison externe.
         </footer>
       </div>
     </main>
@@ -253,7 +253,7 @@ function ActivityStep({ draft, update }: StepProps) {
         {SECTORS.map(({ value, title, description, icon: Icon }) => {
           const selected = draft.sector === value;
           return (
-            <label key={value} className={`cursor-pointer rounded-2xl border p-5 transition ${selected ? "border-violet-300/60 bg-violet-400/10" : "border-[var(--border)] bg-[var(--background)] hover:border-slate-500"}`}>
+            <label key={value} className={`sesira-choice cursor-pointer rounded-2xl border p-5 transition ${selected ? "border-violet-300/60 bg-violet-400/10" : "border-[var(--border)] bg-[var(--background)] hover:border-slate-500"}`}>
               <input type="radio" name="sector" value={value} checked={selected} onChange={() => update("sector", value)} className="sr-only" />
               <div className="flex items-start gap-4">
                 <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${selected ? "bg-violet-400/20 text-violet-200" : "bg-[var(--panel-soft)] text-slate-400"}`}><Icon className="size-5" /></span>

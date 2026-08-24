@@ -48,7 +48,7 @@ describe("core product list states", () => {
     expect(html).toContain("type=COMPANY");
     expect(html).toContain("cursor=opaque_cursor");
     expect(html).toContain("truncate");
-    expect(html).toContain("md:grid");
+    expect(html).toContain("lg:grid");
   });
 
   it("renders request empty and no-result states", () => {

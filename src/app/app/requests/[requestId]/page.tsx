@@ -18,6 +18,7 @@ import { RequestStatusForm } from "@/components/requests/request-status-form";
 import { BusinessTimeline } from "@/components/sesira/business-timeline";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { loadBusinessTimeline } from "@/lib/events/load-business-timeline";
+import { messageChannelLabel } from "@/lib/messages/format";
 import { formatRequestDate, formatRequestDateTime, requestSourceLabel } from "@/lib/requests/format";
 import { getAllowedRequestStatuses, isRequestStatus, readRequestDescription } from "@/lib/requests/schema";
 import { createClient } from "@/lib/supabase/server";
@@ -113,7 +114,7 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
               <RequestStatusBadge status={request.status} />
               <span className="text-sm text-[var(--muted)]">{requestSourceLabel(request.source)}</span>
             </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">{request.title}</h1>
+            <h1 className="mt-4 [overflow-wrap:anywhere] text-3xl font-semibold tracking-tight md:text-4xl">{request.title}</h1>
             <p className="mt-3 text-[var(--muted)]">
               {request.service_catalog_items?.name ?? "Type à préciser"} · créée le {formatRequestDate(request.created_at)}
             </p>
@@ -172,7 +173,7 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
                       <span className="text-xs text-[var(--muted)]">{formatRequestDateTime(message.created_at)}</span>
                     </div>
                     <p className="mt-2 line-clamp-3 text-sm leading-6 text-[var(--muted)]">{message.body_text ?? "Contenu non disponible."}</p>
-                    <p className="mt-3 text-xs text-slate-500">{message.direction === "INBOUND" ? "Reçu" : "Envoyé"} · {message.channel}</p>
+                    <p className="mt-3 text-xs text-[var(--muted)]">{message.direction === "INBOUND" ? "Reçu" : "Envoyé"} · {messageChannelLabel(message.channel)}</p>
                   </article>
                 ))}
               </div>
