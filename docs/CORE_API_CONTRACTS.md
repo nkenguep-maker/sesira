@@ -162,3 +162,69 @@ invoice_follow_up
 
 Core should preserve stable template identity or provide an explicit mapping. Product copy must not
 be used as a workflow identifier.
+
+## Organization settings contracts
+
+The current `/app/settings` page persists only existing `organizations` fields and reads existing
+members and integrations. Product does not emulate the missing services below.
+
+### `getNotificationPreferences()` / `updateNotificationPreferences(input)` — P1 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: read and update tenant-scoped preferences for urgent requests, quote replies, price
+objections and automation incidents.
+
+Requirements:
+
+- organization authority derived from authenticated membership;
+- explicit channel, enabled state, preference version and update timestamp;
+- permission checks compatible with existing organization roles;
+- validation, audit logging and an unavailable state;
+- no preference inferred from a disabled Product control.
+
+Product status: notification controls are disabled and explicitly state that no preference is
+currently applied.
+
+### `createOrganizationDataExport()` — P1 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: create an auditable, asynchronous export for the active organization.
+
+Required output: export identifier, state, requested/completed/expiry times and a short-lived safe
+download reference. Requests must be idempotent and must not expose another tenant’s data.
+
+### `getOrganizationRetentionPolicy()` — P1 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: return the effective retention rules, policy source, effective date and explicit exceptions.
+
+Product status: the UI says that retention is not configured; it does not invent a duration.
+
+### `requestOrganizationDeletion(input)` — P0 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: start a controlled deletion request. This must not be a direct browser-triggered cascade.
+
+Requirements:
+
+- OWNER-only authorization with recent re-authentication;
+- impact preview, explicit confirmation and cooling-off/cancellation policy;
+- stable idempotency key, audit log and incident-safe failure handling;
+- export option before deletion and tenant-scoped progress state;
+- documented treatment of legal retention, backups and connected providers.
+
+Product status: deletion is disabled and no destructive action is sent.
+
+### `getBillingSummary()` — P1 — REQUESTED
+
+Owner: Core/Commercial platform.
+
+Purpose: return the actual plan, billing state, currency, renewal date, invoice references and safe
+billing-portal capability for the active organization.
+
+Product status: only the existing organization status is displayed. No plan, price, subscription or
+Stripe connection is fabricated.
