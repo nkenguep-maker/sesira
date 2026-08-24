@@ -228,3 +228,42 @@ billing-portal capability for the active organization.
 
 Product status: only the existing organization status is displayed. No plan, price, subscription or
 Stripe connection is fabricated.
+
+## Public diagnostic lead contract
+
+The public `/diagnostic` route calculates results entirely in the browser. No prospect table or
+secure public ingestion endpoint exists in the current schema, so Product does not send or persist
+contact details.
+
+The typed Product boundary is defined by `DiagnosticLead`, `DiagnosticLeadSubmission`,
+`DiagnosticLeadSubmissionResult` and `DiagnosticLeadRepository` in
+`src/lib/diagnostic/contracts.ts`.
+
+### `submitDiagnosticLead(input)` — P0 — REQUESTED
+
+Owner: Claude Core.
+
+Purpose: accept a contact request only after the visitor has seen their diagnostic results.
+
+Required input:
+
+- first name, last name, company and professional email;
+- optional phone, employee count and postal code;
+- explicit contact consent;
+- diagnostic calculation version and validated diagnostic inputs;
+- source, campaign fields when supplied by trusted server parsing;
+- idempotency token created for the submission, not supplied as authority.
+
+Security and operating requirements:
+
+- server-side validation and normalization;
+- abuse protection, rate limiting and bot mitigation suitable for a public endpoint;
+- duplicate prevention without revealing whether an email already exists;
+- no browser-supplied organization authority and no `service_role` in client code;
+- explicit consent timestamp, privacy-policy version and retention policy;
+- audit-safe status without storing raw diagnostic data in logs;
+- client-safe success, validation, throttled and unavailable outcomes;
+- notification or CRM handoff must be asynchronous and idempotent.
+
+Product status: the contact fields are visible after results, but submission is disabled and the UI
+states that no data is sent or stored.

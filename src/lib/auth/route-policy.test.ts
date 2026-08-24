@@ -17,6 +17,11 @@ describe("product route policy", () => {
     expect(getAuthRedirect("/application", false)).toBeNull();
   });
 
+  it("keeps the diagnostic public", () => {
+    expect(isProtectedRoute("/diagnostic")).toBe(false);
+    expect(getAuthRedirect("/diagnostic", false)).toBeNull();
+  });
+
   it("keeps authenticated users in the product and out of the login page", () => {
     expect(getAuthRedirect("/app/quotes", true)).toBeNull();
     expect(getAuthRedirect("/login", true)).toBe("/app");
