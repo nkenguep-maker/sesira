@@ -31,7 +31,7 @@ export function AppNavigation() {
 
   return (
     <nav
-      className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:mt-6 lg:grid lg:grid-cols-1 lg:gap-1 lg:overflow-visible lg:pb-0"
+      className="flex gap-px overflow-x-auto border-b border-white/15 bg-[var(--ink)] py-2 lg:grid lg:grid-cols-1 lg:gap-0 lg:overflow-visible lg:border-b-0 lg:py-3"
       aria-label="Navigation principale"
     >
       {navigation.map(({ href, label, icon: Icon, exact }) => {
@@ -42,13 +42,13 @@ export function AppNavigation() {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition lg:shrink ${
+            className={`flex min-h-11 shrink-0 items-center gap-3 px-[1.375rem] py-2.5 text-sm transition lg:shrink ${
               active
-                ? "bg-violet-400/10 font-medium text-violet-100"
-                : "text-[var(--muted)] hover:bg-[var(--panel-soft)] hover:text-white"
+                ? "bg-[var(--blue)] font-semibold text-white"
+                : "text-white/65 hover:bg-white/5 hover:text-white"
             }`}
           >
-            <Icon className={`size-4 ${active ? "text-violet-300" : ""}`} />
+            <Icon className={`size-4 ${active ? "text-white" : "text-white/45"}`} />
             {label}
           </Link>
         );

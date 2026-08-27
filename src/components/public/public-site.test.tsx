@@ -43,7 +43,7 @@ describe("PublicSite", () => {
     expect(html).toContain("Le résultat apparaît avant le formulaire de contact");
   });
 
-  it("utilise Midnight Papyrus sans effets visuels IA génériques", () => {
+  it("utilise le système visuel Sesira v6 sans effets visuels génériques", () => {
     const html = renderToStaticMarkup(<PublicSite />).toLowerCase();
     const forbiddenTerms = [
       "ai agent",
@@ -56,16 +56,16 @@ describe("PublicSite", () => {
       "ils nous font confiance",
     ];
 
-    expect(html).toContain("var(--background)");
-    expect(html).toContain("var(--panel)");
-    expect(html).toContain("var(--brand)");
-    expect(html).toContain("var(--accent)");
-    expect(html).toContain("var(--warning)");
-    expect(html).toContain("var(--font-geist-sans)");
+    expect(html).toContain("var(--ink)");
+    expect(html).toContain("var(--surface)");
+    expect(html).toContain("var(--blue)");
+    expect(html).toContain("var(--blue-light)");
+    expect(html).toContain("var(--sand)");
+    expect(html).toContain("var(--font-text)");
     expect(html).not.toContain("font-family:georgia");
     expect(html).not.toContain("bg-gradient");
     expect(html).not.toContain("blur-");
-    expect(html).not.toContain("rounded-3xl");
+    expect(html).not.toContain("rounded-");
     expect(html).not.toContain("shadow-[0_0");
     forbiddenTerms.forEach((term) => expect(html).not.toContain(term));
   });

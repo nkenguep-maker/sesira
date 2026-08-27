@@ -16,7 +16,7 @@ export function GrowthNavigation() {
 
   return (
     <nav aria-label="Navigation Marketing" className="mt-7 overflow-x-auto">
-      <div className="flex min-w-max gap-2 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-2">
+      <div className="flex min-w-max gap-px border border-[var(--line)] bg-[var(--line)]">
         {links.map(({ href, label, icon: Icon, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(href);
           return (
@@ -24,10 +24,10 @@ export function GrowthNavigation() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm transition ${
+              className={`flex min-h-11 items-center gap-2 bg-[var(--surface)] px-4 py-2.5 text-sm transition ${
                 active
-                  ? "bg-violet-400/15 font-medium text-violet-100"
-                  : "text-[var(--muted)] hover:bg-[var(--panel-soft)] hover:text-white"
+                  ? "!bg-[var(--ink)] font-semibold text-white"
+                  : "text-[var(--ink-soft)] hover:text-[var(--blue)]"
               }`}
             >
               <Icon className="size-4" />

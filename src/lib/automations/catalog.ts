@@ -16,7 +16,7 @@ export const AUTOMATION_CATALOG: AutomationDefinition[] = [
     title: "Relancer les devis",
     description: "Suivre les devis qui attendent une réponse.",
     allowedAction: "Repérer les devis à suivre et préparer une relance standard.",
-    humanJudgment: "Les réponses clients, objections de prix et décisions commerciales.",
+    humanJudgment: "Les réponses clients, baisses de prix demandées et décisions commerciales.",
   },
   {
     key: "REQUEST_INTAKE",
@@ -24,7 +24,7 @@ export const AUTOMATION_CATALOG: AutomationDefinition[] = [
     title: "Traiter les nouvelles demandes",
     description: "Préparer les demandes entrantes pour votre équipe.",
     allowedAction: "Repérer une nouvelle demande et structurer les informations disponibles.",
-    humanJudgment: "Les priorités, cas ambigus, qualifications sensibles et décisions commerciales.",
+    humanJudgment: "Les priorités, informations manquantes, cas à part et décisions commerciales.",
   },
   {
     key: "EMAIL_TRIAGE",
@@ -48,7 +48,7 @@ export const AUTOMATION_CATALOG: AutomationDefinition[] = [
     title: "Relancer les factures",
     description: "Suivre les échéances qui nécessitent une action.",
     allowedAction: "Repérer une échéance et préparer un rappel standard.",
-    humanJudgment: "Les litiges, promesses de paiement et modifications financières.",
+    humanJudgment: "Les clients mécontents, promesses de paiement et modifications financières.",
   },
 ];
 

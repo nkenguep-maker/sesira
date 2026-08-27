@@ -111,8 +111,8 @@ function Badge({ value, label }: { value: string; label: string }) {
 
 function UnavailableState({ noun }: { noun: string }) {
   return (
-    <section className="mt-8 rounded-2xl border border-amber-300/15 bg-amber-300/5 px-6 py-14 text-center">
-      <ShieldAlert className="mx-auto size-9 text-amber-200" />
+    <section className="mt-8  border border-[var(--sand-line)] bg-[var(--sand)] px-6 py-14 text-center">
+      <ShieldAlert className="mx-auto size-9 text-[var(--sand-text)]" />
       <h2 className="mt-4 text-xl font-semibold">Données internes indisponibles</h2>
       <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">
         {noun} apparaîtront lorsqu’une lecture sécurisée, limitée aux informations utiles et
@@ -133,7 +133,7 @@ function DataTable<T>({
 }) {
   return (
     <>
-      <div className="hidden overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)] md:block">
+      <div className="hidden overflow-hidden  border border-[var(--border)] bg-[var(--panel)] md:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[780px] text-left text-sm">
             <thead className="border-b border-[var(--border)] bg-[var(--panel-soft)] text-xs uppercase tracking-[0.12em] text-[var(--muted)]">
@@ -152,7 +152,7 @@ function DataTable<T>({
 
       <div className="grid gap-4 md:hidden">
         {rows.map((row, rowIndex) => (
-          <article key={rowIndex} className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+          <article key={rowIndex} className=" border border-[var(--border)] bg-[var(--panel)] p-5">
             <div className="min-w-0 [overflow-wrap:anywhere] font-medium">{mobileTitle(row)}</div>
             <dl className="mt-4 grid gap-3">
               {columns.slice(1).map((column) => (
@@ -219,12 +219,12 @@ export function ControlOverviewScreen({ result }: { result: ControlData<ControlO
           <p className="mt-8 text-xs text-[var(--muted)]">
             {result.data.periodLabel} · généré le {formatDate(result.generatedAt)}
           </p>
-          <section className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Indicateurs opérationnels">
+          <section className="sesira-metric-grid mt-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Indicateurs opérationnels">
             <MetricCard icon={Building2} label="Organisations" value={result.data.organizationCount.toLocaleString("fr-FR")} tone="cyan" layout="stacked" />
             <MetricCard icon={CircleGauge} label="Santé des automatisations" value={healthLabels[result.data.automationHealth]} tone="cyan" layout="stacked" />
             <MetricCard icon={Activity} label="Taux de réussite" value={result.data.automationSuccessRate === null ? "Non disponible" : percentFormatter.format(result.data.automationSuccessRate)} tone="cyan" layout="stacked" />
             <MetricCard icon={ShieldAlert} label="Incidents ouverts" value={result.data.openIncidentCount.toLocaleString("fr-FR")} tone="cyan" layout="stacked" />
-            <MetricCard icon={Bot} label="Coût IA" value={formatMoney(result.data.aiCost)} tone="cyan" layout="stacked" />
+            <MetricCard icon={Bot} label="Coût des traitements Sesira" value={formatMoney(result.data.aiCost)} tone="cyan" layout="stacked" />
             <MetricCard icon={CircleDollarSign} label="Coût infrastructure" value={formatMoney(result.data.infrastructureCost)} tone="cyan" layout="stacked" />
           </section>
         </>
@@ -264,12 +264,12 @@ export function ControlRunsScreen({ result }: { result: ControlData<ControlRun[]
 
 export function ControlAiRunsScreen({ result }: { result: ControlData<ControlAiRun[]> }) {
   return (
-    <ListPage eyebrow="EXÉCUTIONS IA" title="Usage des modèles" description="Une lecture agrégée de la qualité, de la latence et du coût. Les entrées et sorties brutes ne sont jamais exposées." result={result} unavailableNoun="Les exécutions IA" emptyLabel="Aucune exécution IA sur la période.">
+    <ListPage eyebrow="TRAITEMENTS SESIRA" title="Qualité des traitements" description="Une lecture agrégée de la qualité, du délai et du coût. Les informations détaillées ne sont jamais exposées." result={result} unavailableNoun="Les traitements Sesira" emptyLabel="Aucun traitement Sesira sur la période.">
       {(rows) => <DataTable rows={rows} mobileTitle={(row) => row.feature} columns={[
         { label: "Fonction", render: (row) => <div><p className="font-medium">{row.feature}</p><p className="mt-1 text-xs text-[var(--muted)]">{row.organizationName}</p></div> },
-        { label: "Modèle", render: (row) => row.model },
+        { label: "Service Sesira", render: (row) => row.model },
         { label: "Confiance", render: (row) => row.confidence === null ? "Non disponible" : `${(row.confidence * 100).toFixed(0)} %` },
-        { label: "Latence", render: (row) => formatDuration(row.latencyMs) },
+        { label: "Délai", render: (row) => formatDuration(row.latencyMs) },
         { label: "Coût", render: (row) => formatMoney(row.cost) },
         { label: "Statut", render: (row) => <Badge value={row.status} label={runLabels[row.status]} /> },
         { label: "Date", render: (row) => formatDate(row.createdAt) },
@@ -318,8 +318,8 @@ export function ControlLoadingScreen() {
 
 export function ControlCenterSafetyNote() {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-cyan-300/15 bg-cyan-300/5 p-4 text-sm text-[var(--muted)]">
-      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-cyan-200" />
+    <div className="flex items-start gap-3  border border-[var(--blue)] bg-[var(--blue-soft)] p-4 text-sm text-[var(--muted)]">
+      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[var(--blue)]" />
       <p>Les futures données devront être limitées aux informations utiles, paginées et associées à une identité interne contrôlée.</p>
     </div>
   );

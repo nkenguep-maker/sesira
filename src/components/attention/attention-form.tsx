@@ -17,11 +17,11 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
   const [state, formAction, pending] = useActionState(createManualQuoteAttentionAction, initialState);
 
   return (
-    <form action={formAction} className="space-y-7">
+    <form action={formAction} className="max-w-[640px] space-y-7">
       <input type="hidden" name="quoteId" value={quoteId} />
 
       <label className="block space-y-2 text-sm">
-        <span className="font-medium text-slate-200">Décision à prendre <span className="text-violet-300">*</span></span>
+        <span className="text-[0.78125rem] font-semibold text-[var(--ink-mute)]">Décision à prendre <span className="text-[var(--blue)]">*</span></span>
         <input
           name="title"
           required
@@ -33,7 +33,7 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
       </label>
 
       <label className="block space-y-2 text-sm">
-        <span className="font-medium text-slate-200">Pourquoi votre attention est nécessaire</span>
+        <span className="text-[0.78125rem] font-semibold text-[var(--ink-mute)]">Pourquoi votre attention est nécessaire</span>
         <textarea
           name="explanation"
           rows={4}
@@ -45,7 +45,7 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
       </label>
 
       <label className="block space-y-2 text-sm">
-        <span className="font-medium text-slate-200">Prochaine action suggérée</span>
+        <span className="text-[0.78125rem] font-semibold text-[var(--ink-mute)]">Prochaine action suggérée</span>
         <input
           name="suggestedAction"
           maxLength={500}
@@ -55,9 +55,9 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
         />
       </label>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-5">
         <label className="block space-y-2 text-sm">
-          <span className="font-medium text-slate-200">Priorité</span>
+          <span className="text-[0.78125rem] font-semibold text-[var(--ink-mute)]">Priorité</span>
           <select
             name="priority"
             defaultValue="NORMAL"
@@ -71,7 +71,7 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
         </label>
 
         <label className="block space-y-2 text-sm">
-          <span className="flex items-center gap-2 font-medium text-slate-200"><CalendarDays className="size-4 text-slate-500" />Échéance</span>
+          <span className="flex items-center gap-2 text-[0.78125rem] font-semibold text-[var(--ink-mute)]"><CalendarDays className="size-4 text-[var(--ink-mute)]" />Échéance</span>
           <input
             type="date"
             name="dueOn"
@@ -81,9 +81,9 @@ export function AttentionForm({ quoteId }: { quoteId: string }) {
         </label>
       </div>
 
-      {state.error ? <p role="alert" className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">{state.error}</p> : null}
+      {state.error ? <p role="alert" className=" border border-[var(--danger)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">{state.error}</p> : null}
 
-      <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-6 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-3 border-t border-[var(--line)] pt-6 sm:flex-row">
         <Link href={`/app/quotes/${quoteId}`} className="sesira-secondary-action px-5">
           Annuler
         </Link>

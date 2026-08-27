@@ -74,8 +74,8 @@ export function CompanySettingsForm({
       </fieldset>
 
       {!canManage ? (
-        <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-300/15 bg-amber-300/5 p-4 text-sm">
-          <LockKeyhole className="mt-0.5 size-4 shrink-0 text-amber-300" />
+        <div className="mt-5 flex items-start gap-3  border border-[var(--sand-line)] bg-[var(--sand)] p-4 text-sm">
+          <LockKeyhole className="mt-0.5 size-4 shrink-0 text-[var(--sand-text)]" />
           <p className="leading-6 text-[var(--muted)]">
             Vous pouvez consulter ces informations. Seuls le propriétaire et les administrateurs
             peuvent les modifier.
@@ -86,10 +86,10 @@ export function CompanySettingsForm({
       {state.message ? (
         <div
           role={state.status === "error" ? "alert" : "status"}
-          className={`mt-5 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm ${
+          className={`mt-5 flex items-center gap-2  border px-4 py-3 text-sm ${
             state.status === "success"
-              ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-200"
-              : "border-rose-300/20 bg-rose-300/10 text-rose-200"
+              ? "border-[var(--blue)] bg-[var(--blue-soft)] text-[var(--blue)]"
+              : "border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)]"
           }`}
         >
           {state.status === "success" ? <CheckCircle2 className="size-4 shrink-0" /> : null}
@@ -104,7 +104,7 @@ export function CompanySettingsForm({
         <button
           type="submit"
           disabled={!canManage || !dirty || pending}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-45"
+          className="inline-flex items-center justify-center gap-2  bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
         >
           {pending ? <LoaderCircle className="size-4 animate-spin" /> : null}
           {pending ? "Enregistrement…" : "Enregistrer"}
@@ -135,7 +135,7 @@ function Field({
 }) {
   return (
     <label className="block space-y-2 text-sm">
-      <span className="font-medium text-slate-200">{label}</span>
+      <span className="font-medium text-[var(--ink)]">{label}</span>
       <input
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${name}-error` : undefined}
@@ -146,9 +146,9 @@ function Field({
         name={name}
         onInput={onDirty}
         required={required}
-        className="sesira-field px-4 py-3 disabled:cursor-not-allowed disabled:opacity-65 aria-invalid:border-rose-400"
+        className="sesira-field px-4 py-3 disabled:cursor-not-allowed disabled:opacity-65 aria-invalid:border-[var(--danger)]"
       />
-      {error ? <span id={`${name}-error`} className="block text-xs text-rose-300">{error}</span> : null}
+      {error ? <span id={`${name}-error`} className="block text-xs text-[var(--danger)]">{error}</span> : null}
     </label>
   );
 }
@@ -156,8 +156,8 @@ function Field({
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-2 text-sm">
-      <p className="font-medium text-slate-200">{label}</p>
-      <p className="rounded-xl border border-[var(--border)] bg-[var(--panel-soft)] px-4 py-3 text-slate-400">
+      <p className="font-medium text-[var(--ink)]">{label}</p>
+      <p className=" border border-[var(--border)] bg-[var(--panel-soft)] px-4 py-3 text-[var(--ink-mute)]">
         {value}
       </p>
     </div>

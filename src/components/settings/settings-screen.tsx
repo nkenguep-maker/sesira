@@ -75,9 +75,9 @@ export function SettingsScreen({
             <li key={id}>
               <a
                 href={`#${id}`}
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4 py-2.5 text-sm text-slate-300 transition hover:border-violet-300/30 hover:text-white"
+                className="inline-flex items-center gap-2  border border-[var(--border)] bg-[var(--panel)] px-4 py-2.5 text-sm text-[var(--ink)] transition hover:border-[var(--blue)] hover:text-[var(--blue)]"
               >
-                <Icon className="size-4 text-violet-300" />
+                <Icon className="size-4 text-[var(--blue)]" />
                 {label}
               </a>
             </li>
@@ -103,18 +103,18 @@ export function SettingsScreen({
           title="Membres et rôles"
           description="Les rôles existants sont affichés tels qu’ils sont configurés."
         >
-          <div className="mt-6 overflow-hidden rounded-xl border border-[var(--border)]">
+          <div className="mt-6 overflow-hidden  border border-[var(--border)]">
             {members.length ? (
               <ul className="divide-y divide-[var(--border)]">
                 {members.map((member) => (
                   <li key={member.id} className="flex flex-col gap-4 bg-[var(--background)] p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-violet-400/10 text-sm font-semibold text-violet-200">
+                      <span className="sesira-avatar grid size-10 shrink-0 place-items-center bg-[var(--blue-soft)] text-sm font-semibold text-[var(--blue)]">
                         {initials(member.name)}
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-white">
-                          {member.name} {member.isCurrentViewer ? <span className="text-violet-300">(vous)</span> : null}
+                        <p className="truncate text-sm font-medium text-[var(--ink)]">
+                          {member.name} {member.isCurrentViewer ? <span className="text-[var(--blue)]">(vous)</span> : null}
                         </p>
                         <p className="mt-1 truncate text-xs text-[var(--muted)]">
                           {member.email ?? "Adresse non partagée"}
@@ -148,12 +148,10 @@ export function SettingsScreen({
         >
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {connections.map((connection) => (
-              <article key={connection.key} className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-5">
+              <article key={connection.key} className=" border border-[var(--border)] bg-[var(--background)] p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--panel-soft)] text-violet-300">
-                      {connection.key === "calendar" ? <CalendarDays className="size-5" /> : <Mail className="size-5" />}
-                    </span>
+                    {connection.key === "calendar" ? <CalendarDays className="mt-0.5 size-5 shrink-0 text-[var(--blue)]" /> : <Mail className="mt-0.5 size-5 shrink-0 text-[var(--blue)]" />}
                     <div>
                       <h3 className="font-medium">{connection.title}</h3>
                       <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{connection.description}</p>
@@ -165,7 +163,7 @@ export function SettingsScreen({
                   <p className="text-xs text-[var(--muted)]">
                     {connection.lastSync ? `Dernière synchronisation : ${formatDate(connection.lastSync)}` : "Aucune synchronisation enregistrée"}
                   </p>
-                  <button disabled className="rounded-lg border border-[var(--border)] px-3 py-2 text-xs text-slate-500 disabled:cursor-not-allowed">
+                  <button disabled className=" border border-[var(--border)] px-3 py-2 text-xs text-[var(--ink-mute)] disabled:cursor-not-allowed">
                     {connection.hasRecord ? "Gérer bientôt" : "Connexion bientôt disponible"}
                   </button>
                 </div>
@@ -185,16 +183,16 @@ export function SettingsScreen({
             {[
               ["Demande urgente", "Lorsqu’une nouvelle demande nécessite une réponse rapide."],
               ["Réponse à un devis", "Lorsqu’un client répond à un devis envoyé."],
-              ["Objection prix", "Lorsqu’une discussion commerciale porte sur le prix."],
-              ["Incident d’automatisation", "Lorsqu’un processus activé rencontre un problème."],
+              ["Baisse de prix demandée", "Lorsqu’un client souhaite discuter le montant proposé."],
+              ["Problème dans un suivi Sesira", "Lorsqu’un suivi répétitif rencontre un problème."],
             ].map(([title, description]) => (
-              <div key={title} className="flex items-start justify-between gap-4 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
+              <div key={title} className="flex items-start justify-between gap-4  border border-[var(--border)] bg-[var(--background)] p-4">
                 <div>
                   <h3 className="text-sm font-medium">{title}</h3>
                   <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{description}</p>
                 </div>
-                <span aria-label="Préférence indisponible" className="mt-1 h-6 w-11 shrink-0 rounded-full border border-slate-600 bg-slate-800 opacity-60">
-                  <span className="m-0.5 block size-5 rounded-full bg-slate-500" />
+                <span aria-label="Préférence indisponible" className="mt-1 h-6 w-11 shrink-0 border border-[var(--line-strong)] bg-[var(--paper)] opacity-60">
+                  <span className="m-0.5 block size-5 bg-[var(--ink-mute)]" />
                 </span>
               </div>
             ))}
@@ -240,10 +238,10 @@ export function SettingsScreen({
           title="Plan et facturation"
           description="Aucun moyen de paiement ni abonnement n’est simulé."
         >
-          <div className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--background)] p-5 md:p-6">
+          <div className="mt-6  border border-[var(--border)] bg-[var(--background)] p-5 md:p-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-xs font-semibold tracking-[0.16em] text-violet-300">PLAN</p>
+                <p className="text-xs font-semibold tracking-[0.16em] text-[var(--blue)]">PLAN</p>
                 <h3 className="mt-2 text-xl font-semibold">Informations indisponibles</h3>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">
                   L’état réel de votre organisation est « {formatOrganizationStatus(organization.status)} ».
@@ -252,7 +250,7 @@ export function SettingsScreen({
               </div>
               <StatusBadge tone="neutral">Pas de facturation active</StatusBadge>
             </div>
-            <button disabled className="mt-6 rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm text-slate-500 disabled:cursor-not-allowed">
+            <button disabled className="mt-6  border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--ink-mute)] disabled:cursor-not-allowed">
               Gérer la facturation
             </button>
           </div>
@@ -270,17 +268,13 @@ function SettingsSection({ id, icon: Icon, eyebrow, title, description, children
   description: string;
   children: React.ReactNode;
 }) {
+  void Icon;
   return (
-    <section id={id} className="scroll-mt-6 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 md:p-7" aria-labelledby={`${id}-title`}>
-      <div className="flex items-start gap-4">
-        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-violet-400/10 text-violet-300">
-          <Icon className="size-5" />
-        </span>
-        <div>
-          <p className="text-xs font-semibold tracking-[0.18em] text-[var(--accent)]">{eyebrow}</p>
-          <h2 id={`${id}-title`} className="mt-1 text-xl font-semibold">{title}</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{description}</p>
-        </div>
+    <section id={id} className="scroll-mt-6  border border-[var(--border)] bg-[var(--panel)] p-5 md:p-7" aria-labelledby={`${id}-title`}>
+      <div>
+        <p className="sesira-eyebrow">{eyebrow}</p>
+        <h2 id={`${id}-title`} className="mt-1 text-base font-semibold">{title}</h2>
+        <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{description}</p>
       </div>
       {children}
     </section>
@@ -295,11 +289,11 @@ function DataCard({ icon: Icon, title, description, action, danger = false }: {
   danger?: boolean;
 }) {
   return (
-    <article className={`rounded-xl border p-5 ${danger ? "border-rose-300/15 bg-rose-300/5" : "border-[var(--border)] bg-[var(--background)]"}`}>
-      <Icon className={`size-5 ${danger ? "text-rose-300" : "text-violet-300"}`} />
+    <article className={` border p-5 ${danger ? "border-[var(--danger)] bg-[var(--danger-soft)]" : "border-[var(--border)] bg-[var(--background)]"}`}>
+      <Icon className={`size-5 ${danger ? "text-[var(--danger)]" : "text-[var(--blue)]"}`} />
       <h3 className="mt-4 font-medium">{title}</h3>
       <p className="mt-2 min-h-16 text-xs leading-5 text-[var(--muted)]">{description}</p>
-      <button disabled className={`mt-5 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-50 ${danger ? "border-rose-300/20 text-rose-200" : "border-[var(--border)] text-slate-300"}`}>
+      <button disabled className={`mt-5 inline-flex items-center gap-2  border px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-50 ${danger ? "border-[var(--danger)] text-[var(--danger)]" : "border-[var(--border)] text-[var(--ink)]"}`}>
         {action}<ChevronRight className="size-3.5" />
       </button>
     </article>
@@ -308,16 +302,16 @@ function DataCard({ icon: Icon, title, description, action, danger = false }: {
 
 function PermissionNote({ text }: { text: string }) {
   return (
-    <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-300/15 bg-amber-300/5 p-4 text-xs leading-5 text-[var(--muted)]">
-      <LockKeyhole className="mt-0.5 size-4 shrink-0 text-amber-300" />{text}
+    <div className="mt-4 flex items-start gap-2  border border-[var(--sand-line)] bg-[var(--sand)] p-4 text-xs leading-5 text-[var(--muted)]">
+      <LockKeyhole className="mt-0.5 size-4 shrink-0 text-[var(--sand-text)]" />{text}
     </div>
   );
 }
 
 function UnavailableNote({ text }: { text: string }) {
   return (
-    <div className="mt-4 flex items-start gap-2 rounded-xl border border-cyan-300/15 bg-cyan-300/5 p-4 text-xs leading-5 text-[var(--muted)]">
-      <ShieldAlert className="mt-0.5 size-4 shrink-0 text-cyan-300" />{text}
+    <div className="mt-4 flex items-start gap-2  border border-[var(--blue)] bg-[var(--blue-soft)] p-4 text-xs leading-5 text-[var(--muted)]">
+      <ShieldAlert className="mt-0.5 size-4 shrink-0 text-[var(--blue)]" />{text}
     </div>
   );
 }

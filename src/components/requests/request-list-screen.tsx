@@ -93,14 +93,14 @@ export function RequestListScreen({
         }
       />
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="sesira-metric-grid mt-6 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard icon={ClipboardList} label="Demandes" value={stats.total} tone="violet" />
         <MetricCard icon={Inbox} label="Nouvelles demandes" value={stats.new} tone="cyan" />
         <MetricCard icon={CircleHelp} label="Informations manquantes" value={stats.needsInfo} tone="amber" />
         <MetricCard icon={CheckCircle2} label="Prêt pour votre équipe" value={stats.ready} tone="emerald" />
       </section>
 
-      <section className="mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]">
+      <section className="mt-6 overflow-hidden  border border-[var(--border)] bg-[var(--panel)]">
         <FilterBar action="/app/requests" layoutClassName="md:grid-cols-[minmax(220px,1fr)_190px_190px_auto]">
           <SearchField label="Rechercher une demande" defaultValue={query} placeholder="Rechercher par titre…" />
           <label>
@@ -140,7 +140,7 @@ export function RequestListScreen({
 
         {requests.length ? (
           <div>
-            <div className="hidden grid-cols-[minmax(260px,1.5fr)_minmax(170px,1fr)_150px_140px_130px_32px] gap-4 border-b border-[var(--border)] px-5 py-3 text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)] lg:grid">
+            <div className="hidden grid-cols-[minmax(260px,1.5fr)_minmax(170px,1fr)_150px_140px_130px_32px] gap-4 border-b border-[var(--line)] px-[1.375rem] py-3 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-mute)] lg:grid">
               <span>Demande</span>
               <span>Client</span>
               <span>Source</span>
@@ -148,25 +148,25 @@ export function RequestListScreen({
               <span>Créée le</span>
               <span />
             </div>
-            <div className="divide-y divide-[var(--border)]">
+            <div className="divide-y divide-[var(--line-soft)]">
               {requests.map((request) => (
                 <Link
                   key={request.id}
                   href={`/app/requests/${request.id}`}
-                  className="group grid gap-4 px-5 py-5 transition hover:bg-[var(--panel-soft)] lg:grid-cols-[minmax(260px,1.5fr)_minmax(170px,1fr)_150px_140px_130px_32px] lg:items-center"
+                  className="group grid gap-4 px-[1.375rem] py-[0.9375rem] transition hover:bg-[#f7f9fa] lg:grid-cols-[minmax(260px,1.5fr)_minmax(170px,1fr)_150px_140px_130px_32px] lg:items-center"
                 >
                   <span className="min-w-0">
-                    <span className="block truncate font-medium text-white">{request.title}</span>
+                    <span className="block truncate font-medium text-[var(--ink)]">{request.title}</span>
                     <span className="mt-1 block truncate text-xs text-[var(--muted)]">
                       {request.service_catalog_items?.name ?? "Type à préciser"}
                       {request.qualification_score === null ? "" : ` · ${Math.round(request.qualification_score)} / 100`}
                     </span>
                   </span>
                   <span className="min-w-0">
-                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)] lg:hidden">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-mute)] lg:hidden">
                       Client
                     </span>
-                    <span className="block truncate text-sm text-slate-200">
+                    <span className="block truncate text-sm text-[var(--ink)]">
                       {request.customers?.display_name ?? "Client à retrouver"}
                     </span>
                     {request.customers?.company_name ? (
@@ -176,24 +176,24 @@ export function RequestListScreen({
                     ) : null}
                   </span>
                   <span className="text-sm text-[var(--muted)]">
-                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)] lg:hidden">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-mute)] lg:hidden">
                       Source
                     </span>
                     {requestSourceLabel(request.source)}
                   </span>
                   <span>
-                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)] lg:hidden">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-mute)] lg:hidden">
                       Statut
                     </span>
                     <RequestStatusBadge status={request.status} />
                   </span>
                   <span className="text-sm text-[var(--muted)]">
-                    <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)] lg:hidden">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-mute)] lg:hidden">
                       Créée le
                     </span>
                     {formatRequestDate(request.created_at)}
                   </span>
-                  <ChevronRight className="hidden size-4 text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-violet-300 lg:block" />
+                  <ChevronRight className="hidden size-4 text-[var(--ink-mute)] transition group-hover:translate-x-0.5 group-hover:text-[var(--blue)] lg:block" />
                 </Link>
               ))}
             </div>
@@ -218,17 +218,12 @@ export function RequestListScreen({
         )}
 
         {requests.length ? (
-          <footer className="flex items-center justify-between border-t border-[var(--border)] px-5 py-4 text-sm">
-            <Link href="/app/requests" className="text-[var(--muted)] transition hover:text-white">
-              Retour au début
-            </Link>
-            {nextPageUrl ? (
-              <Link href={nextPageUrl} className="inline-flex items-center gap-2 font-medium text-violet-300 hover:text-violet-200">
-                Page suivante <ArrowRight className="size-4" />
-              </Link>
-            ) : (
-              <span className="text-[var(--muted)]">Fin de la liste</span>
-            )}
+          <footer className="flex items-center justify-between border-t border-[var(--line)] px-[1.375rem] py-4 text-[0.8125rem]">
+            <span className="text-[var(--ink-mute)]">1 – {requests.length} sur {stats.total}</span>
+            <div className="flex items-center gap-5">
+              <Link href="/app/requests" className="text-[var(--ink-soft)] transition hover:text-[var(--blue)]">Précédent</Link>
+              {nextPageUrl ? <Link href={nextPageUrl} className="font-semibold text-[var(--blue)]">Suivant</Link> : <span className="text-[var(--ink-mute)]">Suivant</span>}
+            </div>
           </footer>
         ) : null}
       </section>

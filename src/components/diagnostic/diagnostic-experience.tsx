@@ -127,13 +127,12 @@ export function DiagnosticExperience() {
       <div className="mx-auto max-w-7xl">
         <header className="flex items-center justify-between gap-4 py-2">
           <Link href="/" className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-xl bg-[var(--brand)] font-bold text-white">S</span>
             <span>
-              <span className="block text-sm font-semibold tracking-[0.18em]">SESIRA</span>
-              <span className="block text-[10px] text-[var(--muted)]">Diagnostic opérationnel</span>
+              <span className="block font-[family-name:var(--font-display)] text-sm font-bold tracking-[0.16em]">SESIRA</span>
+              <span className="block text-xs text-[var(--ink-mute)]">Voir mes priorités</span>
             </span>
           </Link>
-          <Link href="/login" className="rounded-full border border-[var(--border)] bg-[var(--panel)] px-4 py-2 text-xs font-medium text-slate-300 transition hover:border-violet-300/40 hover:text-white">
+          <Link href="/login" className=" border border-[var(--border)] bg-[var(--panel)] px-4 py-2 text-xs font-medium text-[var(--ink)] transition hover:border-[var(--blue)] hover:text-[var(--blue)]">
             Ouvrir Sesira
           </Link>
         </header>
@@ -150,27 +149,27 @@ export function DiagnosticExperience() {
           </div>
         ) : (
           <div className="mt-7 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <section className="rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-5 shadow-2xl shadow-black/20 md:p-8 lg:p-10">
+            <section className=" border border-[var(--border)] bg-[var(--panel)] p-5 md:p-8 lg:p-10">
               {step === 1 ? <ActivityStep draft={draft} update={update} /> : null}
               {step === 2 ? <CompanyStep draft={draft} update={update} /> : null}
               {step === 3 ? <OperationsStep draft={draft} update={update} /> : null}
 
               {error ? (
-                <p role="alert" className="mt-6 rounded-xl border border-rose-300/20 bg-rose-300/10 px-4 py-3 text-sm text-rose-200">
+                <p role="alert" className="mt-6  border border-[var(--danger)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">
                   {error}
                 </p>
               ) : null}
 
               <div className="mt-8 flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-6 sm:flex-row sm:items-center sm:justify-between">
                 {step > 1 ? (
-                  <button type="button" onClick={goBack} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--border)] px-5 py-3 text-sm font-medium text-slate-300 transition hover:bg-[var(--panel-soft)] hover:text-white">
+                  <button type="button" onClick={goBack} className="inline-flex items-center justify-center gap-2  border border-[var(--border)] px-5 py-3 text-sm font-medium text-[var(--ink)] transition hover:bg-[var(--panel-soft)] hover:text-[var(--blue)]">
                     <ArrowLeft className="size-4" /> Retour
                   </button>
                 ) : <span />}
                 <button
                   type="button"
                   onClick={step === 1 ? continueFromActivity : step === 2 ? continueFromCompany : calculate}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-500"
+                  className="inline-flex items-center justify-center gap-2  bg-[var(--brand)] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
                 >
                   {step === 3 ? "Voir mes résultats" : "Continuer"} <ArrowRight className="size-4" />
                 </button>
@@ -178,19 +177,19 @@ export function DiagnosticExperience() {
             </section>
 
             <aside className="space-y-4 lg:sticky lg:top-6">
-              <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-5">
-                <ShieldCheck className="size-5 text-cyan-300" />
+              <div className="border-l-2 border-[var(--blue)] bg-[var(--blue-soft)] p-5">
+                <ShieldCheck className="size-5 text-[var(--blue)]" />
                 <h2 className="mt-4 font-medium">Vos réponses restent locales.</h2>
                 <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
                   Aucun compte n’est nécessaire. Les calculs sont effectués dans votre navigateur et aucune réponse n’est envoyée.
                 </p>
               </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
-                <p className="text-xs font-semibold tracking-[0.16em] text-violet-300">MÉTHODE</p>
+              <div className=" border border-[var(--border)] bg-[var(--panel)] p-5">
+                <p className="sesira-eyebrow">MÉTHODE</p>
                 <ul className="mt-4 space-y-3 text-xs leading-5 text-[var(--muted)]">
-                  {["Vos propres chiffres", "Des règles de calcul visibles", "Aucune comparaison externe", "Aucune intelligence artificielle"].map((item) => (
+                  {["Vos propres chiffres", "Des règles de calcul visibles", "Aucune comparaison externe", "Aucun calcul opaque"].map((item) => (
                     <li key={item} className="flex items-start gap-2">
-                      <Check className="mt-0.5 size-3.5 shrink-0 text-violet-300" /> {item}
+                      <Check className="mt-0.5 size-3.5 shrink-0 text-[var(--blue)]" /> {item}
                     </li>
                   ))}
                 </ul>
@@ -215,16 +214,16 @@ function Progress({ step }: { step: Step }) {
           const active = number === step;
           const complete = number < step;
           return (
-            <li key={number} aria-current={active ? "step" : undefined} className={`rounded-xl border px-4 py-3 ${active ? "border-violet-300/50 bg-violet-400/10" : complete ? "border-cyan-300/20 bg-cyan-300/5" : "border-[var(--border)] bg-[var(--panel)]"}`}>
+            <li key={number} aria-current={active ? "step" : undefined} className={`border px-4 py-3 ${active ? "border-[var(--blue)] bg-[var(--blue)] text-white" : complete ? "border-[var(--blue)] bg-[var(--blue-soft)]" : "border-[var(--line)] bg-[var(--surface)]"}`}>
               <div className="flex items-center gap-3">
-                <span className={`grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold ${active ? "bg-violet-400 text-white" : complete ? "bg-cyan-300/15 text-cyan-200" : "bg-[var(--panel-soft)] text-slate-500"}`}>
+                <span className={`grid size-7 shrink-0 place-items-center text-xs font-semibold ${active ? "text-white" : complete ? "text-[var(--blue)]" : "text-[var(--ink-mute)]"}`}>
                   {complete ? <Check className="size-3.5" /> : number}
                 </span>
                 <div>
-                  <p className="text-[10px] text-[var(--muted)]">ÉTAPE {number}</p>
-                  <p className={`mt-0.5 text-xs font-medium ${active || complete ? "text-white" : "text-slate-500"}`}>{label}</p>
+                  <p className={`text-xs ${active ? "text-white/65" : "text-[var(--ink-mute)]"}`}>ÉTAPE {number}</p>
+                  <p className={`mt-0.5 text-xs font-medium ${active ? "text-white" : complete ? "text-[var(--blue)]" : "text-[var(--ink-mute)]"}`}>{label}</p>
                 </div>
-                <Icon className="ml-auto size-4 text-slate-600" />
+                <Icon className={`ml-auto size-4 ${active ? "text-white/65" : "text-[var(--ink-mute)]"}`} />
               </div>
             </li>
           );
@@ -253,15 +252,15 @@ function ActivityStep({ draft, update }: StepProps) {
         {SECTORS.map(({ value, title, description, icon: Icon }) => {
           const selected = draft.sector === value;
           return (
-            <label key={value} className={`sesira-choice cursor-pointer rounded-2xl border p-5 transition ${selected ? "border-violet-300/60 bg-violet-400/10" : "border-[var(--border)] bg-[var(--background)] hover:border-slate-500"}`}>
+            <label key={value} className={`sesira-choice cursor-pointer border p-5 transition ${selected ? "border-[var(--blue)] bg-[var(--blue-soft)]" : "border-[var(--border)] bg-[var(--background)] hover:border-[var(--ink-mute)]"}`}>
               <input type="radio" name="sector" value={value} checked={selected} onChange={() => update("sector", value)} className="sr-only" />
               <div className="flex items-start gap-4">
-                <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${selected ? "bg-violet-400/20 text-violet-200" : "bg-[var(--panel-soft)] text-slate-400"}`}><Icon className="size-5" /></span>
+                <Icon className={`mt-0.5 size-5 shrink-0 ${selected ? "text-[var(--blue)]" : "text-[var(--ink-mute)]"}`} />
                 <span>
                   <span className="block font-medium">{title}</span>
                   <span className="mt-2 block text-xs leading-5 text-[var(--muted)]">{description}</span>
                 </span>
-                {selected ? <Check className="ml-auto size-4 shrink-0 text-violet-300" /> : null}
+                {selected ? <Check className="ml-auto size-4 shrink-0 text-[var(--blue)]" /> : null}
               </div>
             </label>
           );
@@ -312,16 +311,16 @@ function NumberField({ icon: Icon, label, hint, name, value, min, max, step = "1
   onChange: (value: string) => void;
 }) {
   return (
-    <label className={`block rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 transition focus-within:border-[var(--brand-soft)] focus-within:ring-2 focus-within:ring-violet-400/15 ${className}`}>
+    <label className={`block ${className}`}>
       <span className="flex items-start gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--panel-soft)] text-violet-300"><Icon className="size-4" /></span>
+        <Icon className="mt-0.5 size-4 shrink-0 text-[var(--blue)]" />
         <span>
-          <span className="block text-sm font-medium text-slate-200">{label}</span>
+          <span className="block text-sm font-medium text-[var(--ink)]">{label}</span>
           <span className="mt-1 block text-xs text-[var(--muted)]">{hint}</span>
         </span>
       </span>
-      <span className="mt-4 flex items-center rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 focus-within:border-[var(--brand-soft)]">
-        <input required aria-label={label} inputMode="decimal" min={min} max={max} name={name} step={step} type="number" value={value} onInput={(event) => onChange(event.currentTarget.value)} className="min-w-0 flex-1 bg-transparent py-3 text-lg font-medium text-white outline-none" />
+      <span className="sesira-field mt-3 flex items-center px-4">
+        <input required aria-label={label} inputMode="decimal" min={min} max={max} name={name} step={step} type="number" value={value} onInput={(event) => onChange(event.currentTarget.value)} className="min-w-0 flex-1 bg-transparent py-3 font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--ink)] outline-none" />
         {suffix ? <span className="text-sm text-[var(--muted)]">{suffix}</span> : null}
       </span>
     </label>

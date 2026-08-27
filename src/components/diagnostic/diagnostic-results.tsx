@@ -1,13 +1,8 @@
 import {
   ArrowRight,
-  BarChart3,
-  BriefcaseBusiness,
   CheckCircle2,
-  Clock3,
-  FileSearch,
   Info,
   LockKeyhole,
-  Target,
 } from "lucide-react";
 
 import type { DiagnosticInput, DiagnosticResult } from "@/lib/diagnostic/contracts";
@@ -23,11 +18,11 @@ export function DiagnosticResults({
 }) {
   return (
     <div className="space-y-6">
-      <section aria-labelledby="diagnostic-result-title" className="overflow-hidden rounded-3xl border border-violet-300/20 bg-[var(--panel)] shadow-2xl shadow-black/20">
-        <div className="border-b border-[var(--border)] bg-[linear-gradient(135deg,rgba(139,92,246,.17),rgba(66,214,208,.06))] px-5 py-7 md:px-8 md:py-9">
+      <section aria-labelledby="diagnostic-result-title" className="overflow-hidden border border-[var(--line)] bg-[var(--surface)]">
+        <div className="border-b border-[var(--line)] bg-[var(--surface)] px-5 py-7 md:px-8 md:py-9">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold tracking-[0.2em] text-[var(--accent)]">VOS RÉSULTATS</p>
+              <p className="sesira-eyebrow !text-[var(--blue)]">VOS RÉSULTATS</p>
               <h1 id="diagnostic-result-title" className="mt-3 text-3xl font-semibold tracking-tight md:text-5xl">
                 Trois leviers à examiner en priorité.
               </h1>
@@ -54,27 +49,19 @@ export function DiagnosticResults({
 
         <div className="p-5 md:p-8">
           <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-violet-400/10 text-violet-300">
-              <Target className="size-5" />
-            </span>
             <div>
-              <p className="text-xs font-semibold tracking-[0.16em] text-violet-300">TOP 3</p>
+              <p className="sesira-eyebrow">TOP 3</p>
               <h2 className="mt-1 text-xl font-semibold">Vos priorités opérationnelles</h2>
             </div>
           </div>
 
           <ol className="mt-6 grid gap-4 lg:grid-cols-3">
             {result.priorities.map((priority, index) => (
-              <li key={priority.key} className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5">
-                <div className="flex items-center justify-between">
-                  <span className="grid size-8 place-items-center rounded-full bg-violet-400/15 text-sm font-semibold text-violet-200">
-                    {index + 1}
-                  </span>
-                  {priority.key === "REQUESTS" ? <FileSearch className="size-5 text-cyan-300" /> : priority.key === "QUOTES" ? <BarChart3 className="size-5 text-cyan-300" /> : <Clock3 className="size-5 text-cyan-300" />}
-                </div>
+              <li key={priority.key} className=" border border-[var(--border)] bg-[var(--background)] p-5">
+                <p className="text-sm font-semibold text-[var(--blue)]">0{index + 1}</p>
                 <h3 className="mt-5 font-semibold leading-6">{priority.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{priority.explanation}</p>
-                <p className="mt-5 border-t border-[var(--border)] pt-4 text-xs leading-5 text-cyan-100/70">
+                <p className="mt-5 border-t border-[var(--border)] pt-4 text-xs leading-5 text-[var(--blue)]">
                   {priority.evidence}
                 </p>
               </li>
@@ -83,9 +70,9 @@ export function DiagnosticResults({
         </div>
       </section>
 
-      <section aria-labelledby="scenarios-title" className="rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-5 md:p-8">
+      <section aria-labelledby="scenarios-title" className="border border-[var(--sand-line)] bg-[var(--sand)] p-5 md:p-8">
         <div className="max-w-3xl">
-          <p className="text-xs font-semibold tracking-[0.18em] text-[var(--accent)]">SCÉNARIOS</p>
+          <p className="sesira-eyebrow !text-[var(--sand-text)]">SCÉNARIOS</p>
           <h2 id="scenarios-title" className="mt-2 text-2xl font-semibold">Trois hypothèses, aucune promesse.</h2>
           <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
             Les montants montrent une part de la marge brute associée aux devis saisis. Ils ne
@@ -97,41 +84,37 @@ export function DiagnosticResults({
           {result.scenarios.map((scenario) => (
             <article
               key={scenario.key}
-              className={`relative rounded-2xl border p-5 md:p-6 ${
-                scenario.key === "PROBABLE"
-                  ? "border-violet-300/40 bg-violet-400/10"
-                  : "border-[var(--border)] bg-[var(--background)]"
-              }`}
+              className="relative border border-[var(--sand-line)] bg-[var(--sand)] p-5 md:p-6"
             >
               {scenario.key === "PROBABLE" ? (
-                <span className="absolute right-4 top-4 rounded-full bg-violet-300 px-2.5 py-1 text-[10px] font-bold tracking-wide text-slate-950">
-                  CENTRAL
+                <span className="absolute right-4 top-4 bg-[var(--sand-badge)] px-2.5 py-1 text-xs font-bold tracking-wide text-[var(--sand-text)]">
+                  HYPOTHÈSE CENTRALE
                 </span>
               ) : null}
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-300">{scenario.label}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--sand-text)]">{scenario.label}</p>
               <div className="mt-6">
-                <p className="text-3xl font-semibold tracking-tight">{formatNumber(scenario.recoveredHoursPerMonth)} h</p>
+                <p className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-[-0.03em]">{formatNumber(scenario.recoveredHoursPerMonth)} h</p>
                 <p className="mt-1 text-xs text-[var(--muted)]">de temps à réallouer par mois</p>
               </div>
               <div className="mt-5 border-t border-[var(--border)] pt-5">
-                <p className="text-2xl font-semibold">{formatEuro(scenario.marginPotentialPerMonth)}</p>
+                <p className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-[-0.03em]">{formatEuro(scenario.marginPotentialPerMonth)}</p>
                 <p className="mt-1 text-xs leading-5 text-[var(--muted)]">de marge potentielle à examiner par mois</p>
               </div>
-              <p className="mt-5 rounded-xl bg-black/15 px-3 py-2 text-[11px] leading-5 text-slate-400">
+              <p className="mt-5 border-t border-[var(--sand-line)] pt-4 text-xs leading-5 text-[var(--ink-soft)]">
                 Hypothèse : {scenario.timeSharePercent} % du temps administratif et {scenario.marginSharePercent} % de la marge liée aux devis.
               </p>
             </article>
           ))}
         </div>
 
-        <details className="mt-6 rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-5">
-          <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-cyan-100">
+        <details className="mt-6 border border-[var(--sand-line)] bg-[var(--surface)] p-5">
+          <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-[var(--sand-text)]">
             <Info className="size-4" /> Voir toutes les hypothèses de calcul
           </summary>
           <ul className="mt-4 space-y-2 text-xs leading-5 text-[var(--muted)]">
             {result.assumptions.map((assumption) => (
               <li key={assumption} className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-cyan-300" />
+                <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-[var(--blue)]" />
                 {assumption}
               </li>
             ))}
@@ -147,20 +130,17 @@ export function DiagnosticResults({
 
 function DiagnosticLeadForm({ employees }: { employees: number }) {
   return (
-    <section aria-labelledby="contact-title" className="rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-5 md:p-8">
+    <section aria-labelledby="contact-title" className=" border border-[var(--border)] bg-[var(--panel)] p-5 md:p-8">
       <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
         <div>
-          <span className="grid size-11 place-items-center rounded-xl bg-violet-400/10 text-violet-300">
-            <BriefcaseBusiness className="size-5" />
-          </span>
-          <p className="mt-6 text-xs font-semibold tracking-[0.18em] text-[var(--accent)]">ALLER PLUS LOIN</p>
+          <p className="sesira-eyebrow">ALLER PLUS LOIN</p>
           <h2 id="contact-title" className="mt-2 text-2xl font-semibold">Recevoir une lecture personnalisée</h2>
           <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
             Le formulaire est prêt, mais son envoi sécurisé n’est pas encore connecté. Vous pouvez
             consulter vos résultats sans laisser vos coordonnées.
           </p>
-          <div className="mt-6 flex items-start gap-3 rounded-xl border border-cyan-300/15 bg-cyan-300/5 p-4">
-            <LockKeyhole className="mt-0.5 size-4 shrink-0 text-cyan-300" />
+          <div className="mt-6 flex items-start gap-3  border border-[var(--blue)] bg-[var(--blue-soft)] p-4">
+            <LockKeyhole className="mt-0.5 size-4 shrink-0 text-[var(--blue)]" />
             <p className="text-xs leading-5 text-[var(--muted)]">
               Aucune donnée de ce formulaire n’est envoyée ou enregistrée dans cette version.
             </p>
@@ -179,7 +159,7 @@ function DiagnosticLeadForm({ employees }: { employees: number }) {
             <button
               type="button"
               disabled
-              className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3.5 text-sm font-semibold text-white opacity-45"
+              className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2  bg-[var(--brand)] px-5 py-3.5 text-sm font-semibold text-white opacity-45"
             >
               Envoi sécurisé bientôt disponible <ArrowRight className="size-4" />
             </button>
@@ -195,9 +175,9 @@ function DiagnosticLeadForm({ employees }: { employees: number }) {
 
 function ResultFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/15 p-4">
+    <div className="border border-[var(--line)] bg-[var(--paper)] p-4">
       <dt className="text-xs text-[var(--muted)]">{label}</dt>
-      <dd className="mt-2 text-xl font-semibold">{value}</dd>
+      <dd className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold tracking-[-0.03em]">{value}</dd>
     </div>
   );
 }
@@ -213,7 +193,7 @@ function LeadField({ label, name, autoComplete, type = "text", required = false,
 }) {
   return (
     <label className={`block space-y-2 text-sm ${className}`}>
-      <span className="font-medium text-slate-200">{label}{required ? <span className="text-violet-300"> *</span> : null}</span>
+      <span className="font-medium text-[var(--ink)]">{label}{required ? <span className="text-[var(--blue)]"> *</span> : null}</span>
       <input
         autoComplete={autoComplete}
         defaultValue={defaultValue}

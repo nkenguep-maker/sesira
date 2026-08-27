@@ -83,14 +83,14 @@ export function QuoteListScreen({
         }
       />
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="sesira-metric-grid mt-6 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard icon={ReceiptText} label="Devis" value={stats.total} tone="violet" />
         <MetricCard icon={FilePenLine} label="Brouillons" value={stats.drafts} tone="cyan" />
         <MetricCard icon={Clock3} label="À suivre" value={stats.following} tone="amber" />
         <MetricCard icon={CheckCircle2} label="Gagnés" value={stats.won} tone="emerald" />
       </section>
 
-      <section className="mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]">
+      <section className="mt-6 overflow-hidden  border border-[var(--border)] bg-[var(--panel)]">
         <FilterBar action="/app/quotes" layoutClassName="md:grid-cols-[minmax(220px,1fr)_190px_210px_auto]">
           <SearchField label="Rechercher un devis ou un client" defaultValue={query} placeholder="Devis, référence ou client…" />
           <label>
@@ -123,10 +123,10 @@ export function QuoteListScreen({
 
         {quotes.length ? (
           <div>
-            <div className="hidden grid-cols-[minmax(210px,1.2fr)_minmax(140px,1fr)_minmax(110px,.8fr)_130px_120px_115px_135px_32px] gap-4 border-b border-[var(--border)] px-5 py-3 text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)] xl:grid">
-              <span>Devis</span><span>Client</span><span>Demande</span><span>Montant</span><span>Statut</span><span>Envoyé le</span><span>Prochaine date</span><span />
+            <div className="hidden grid-cols-[minmax(210px,1.2fr)_130px_minmax(140px,1fr)_minmax(110px,.8fr)_120px_115px_135px_32px] gap-4 border-b border-[var(--line)] px-[1.375rem] py-3 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-mute)] xl:grid">
+              <span>Devis</span><span>Montant</span><span>Client</span><span>Demande</span><span>Statut</span><span>Envoyé le</span><span>Prochaine date</span><span />
             </div>
-            <div className="divide-y divide-[var(--border)]">
+            <div className="divide-y divide-[var(--line-soft)]">
               {quotes.map((quote) => {
                 const relevantDate = quote.next_action_at ?? quote.expires_at;
                 const relevantLabel = quote.next_action_at ? "Prochaine étape" : quote.expires_at ? "Expiration" : "Date à préciser";
@@ -135,32 +135,34 @@ export function QuoteListScreen({
                   <Link
                     key={quote.id}
                     href={`/app/quotes/${quote.id}`}
-                    className="group grid gap-4 px-5 py-5 transition hover:bg-[var(--panel-soft)] xl:grid-cols-[minmax(210px,1.2fr)_minmax(140px,1fr)_minmax(110px,.8fr)_130px_120px_115px_135px_32px] xl:items-center"
+                    className="group grid gap-4 px-[1.375rem] py-[0.9375rem] transition hover:bg-[#f7f9fa] xl:grid-cols-[minmax(210px,1.2fr)_130px_minmax(140px,1fr)_minmax(110px,.8fr)_120px_115px_135px_32px] xl:items-center"
                   >
                     <span className="min-w-0">
-                      <span className="block truncate font-medium text-white">{quote.title}</span>
+                      <span className="block truncate font-medium text-[var(--ink)]">{quote.title}</span>
                       <span className="mt-1 block truncate text-xs text-[var(--muted)]">{quote.reference ?? "Sans référence"} · {quote.owner_name ?? "Non attribué"}</span>
                     </span>
-                    <ListValue label="Client" value={quote.customers?.display_name ?? "Client à retrouver"} />
-                    <ListValue label="Demande" value={quote.requests?.title ?? "Aucune"} />
                     <span>
                       <MobileLabel>Montant</MobileLabel>
-                      <span className="block [overflow-wrap:anywhere] text-base font-semibold tabular-nums text-white">{formatQuoteAmount(quote.amount, quote.currency)}</span>
+                      <span className="block whitespace-nowrap font-[family-name:var(--font-display)] text-base font-semibold tracking-[-0.02em] tabular-nums text-[var(--ink)]">{formatQuoteAmount(quote.amount, quote.currency)}</span>
+                    </span>
+                    <ListValue label="Client" value={quote.customers?.display_name ?? "Client à retrouver"} />
+                    <span className="hidden sm:block">
+                      <ListValue label="Demande" value={quote.requests?.title ?? "Aucune"} />
                     </span>
                     <span>
                       <MobileLabel>Statut</MobileLabel>
                       <QuoteStatusBadge status={quote.status} />
                     </span>
-                    <span className="text-sm text-slate-300">
+                    <span className="hidden text-sm text-[var(--ink)] sm:block">
                       <MobileLabel>Envoyé le</MobileLabel>
                       {formatQuoteDate(quote.sent_at)}
                     </span>
                     <span className="text-sm text-[var(--muted)]">
                       <MobileLabel>Prochaine date</MobileLabel>
-                      <span className="block text-slate-300">{formatQuoteDate(relevantDate)}</span>
+                      <span className="block text-[var(--ink)]">{formatQuoteDate(relevantDate)}</span>
                       <span className="mt-1 block text-xs">{relevantLabel}</span>
                     </span>
-                    <ChevronRight className="hidden size-4 text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-violet-300 xl:block" />
+                    <ChevronRight className="hidden size-4 text-[var(--ink-mute)] transition group-hover:translate-x-0.5 group-hover:text-[var(--blue)] xl:block" />
                   </Link>
                 );
               })}
@@ -186,11 +188,12 @@ export function QuoteListScreen({
         )}
 
         {quotes.length ? (
-          <footer className="flex items-center justify-between border-t border-[var(--border)] px-5 py-4 text-sm">
-            <Link href="/app/quotes" className="text-[var(--muted)] transition hover:text-white">Retour au début</Link>
-            {nextPageUrl ? (
-              <Link href={nextPageUrl} className="inline-flex items-center gap-2 font-medium text-violet-300 hover:text-violet-200">Page suivante <ArrowRight className="size-4" /></Link>
-            ) : <span className="text-[var(--muted)]">Fin de la liste</span>}
+          <footer className="flex items-center justify-between border-t border-[var(--line)] px-[1.375rem] py-4 text-[0.8125rem]">
+            <span className="text-[var(--ink-mute)]">1 – {quotes.length} sur {stats.total}</span>
+            <div className="flex items-center gap-5">
+              <Link href="/app/quotes" className="text-[var(--ink-soft)] transition hover:text-[var(--blue)]">Précédent</Link>
+              {nextPageUrl ? <Link href={nextPageUrl} className="font-semibold text-[var(--blue)]">Suivant</Link> : <span className="text-[var(--ink-mute)]">Suivant</span>}
+            </div>
           </footer>
         ) : null}
       </section>
@@ -214,9 +217,9 @@ export function QuoteStatusBadge({ status }: { status: string }) {
 }
 
 function MobileLabel({ children }: { children: string }) {
-  return <span className="mb-1 block text-[0.65rem] font-medium uppercase tracking-[0.12em] text-[var(--muted)] xl:hidden">{children}</span>;
+  return <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-mute)] xl:hidden">{children}</span>;
 }
 
 function ListValue({ label, value }: { label: string; value: string }) {
-  return <span className="min-w-0 text-sm text-slate-200"><MobileLabel>{label}</MobileLabel><span className="block truncate">{value}</span></span>;
+  return <span className="min-w-0 text-sm text-[var(--ink)]"><MobileLabel>{label}</MobileLabel><span className="block truncate">{value}</span></span>;
 }

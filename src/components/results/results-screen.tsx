@@ -1,4 +1,4 @@
-import { ArrowRight, CircleHelp, Clock3, Info, Sparkles } from "lucide-react";
+import { ArrowRight, CircleHelp, Info } from "lucide-react";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/sesira/page-header";
@@ -40,7 +40,7 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
         title="Ce que Sesira rend visible."
         description="Les faits observés restent séparés des projections. Aucun montant estimé n’est présenté comme un revenu généré."
         actions={
-          <nav aria-label="Période des résultats" className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--panel)] p-1">
+          <nav aria-label="Période des résultats" className="inline-flex  border border-[var(--border)] bg-[var(--panel)] p-1">
             {PERIODS.map((period) => {
               const active = period.key === summary.period.key;
 
@@ -49,10 +49,10 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
                   key={period.key}
                   href={`/app/results?period=${period.key}`}
                   aria-current={active ? "page" : undefined}
-                  className={`rounded-lg px-3 py-2 text-sm transition sm:px-4 ${
+                  className={` px-3 py-2 text-sm transition sm:px-4 ${
                     active
-                      ? "bg-violet-400/15 font-medium text-violet-100"
-                      : "text-[var(--muted)] hover:text-white"
+                      ? "bg-[var(--blue-soft)] font-medium text-[var(--blue)]"
+                      : "text-[var(--muted)] hover:text-[var(--blue)]"
                   }`}
                 >
                   {period.label}
@@ -65,10 +65,10 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
 
       {stateMessage ? (
         <section
-          className="mt-8 flex items-start gap-3 rounded-2xl border border-cyan-300/20 bg-cyan-300/5 p-5"
+          className="mt-8 flex items-start gap-3  border border-[var(--blue)] bg-[var(--blue-soft)] p-5"
           aria-live="polite"
         >
-          <Info className="mt-0.5 size-5 shrink-0 text-cyan-300" />
+          <Info className="mt-0.5 size-5 shrink-0 text-[var(--blue)]" />
           <div>
             <h2 className="font-medium">{stateMessage.title}</h2>
             <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{stateMessage.description}</p>
@@ -79,24 +79,25 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
       <section className="mt-10" aria-labelledby="observed-title">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
-            <p className="text-xs font-semibold tracking-[0.18em] text-emerald-300">OBSERVÉ</p>
+            <p className="sesira-eyebrow">OBSERVÉ</p>
             <h2 id="observed-title" className="mt-2 text-xl font-semibold">
               Activité réelle
             </h2>
+            <p className="mt-1 text-[0.84375rem] text-[var(--ink-soft)]">Compté dans le système, pas estimé.</p>
           </div>
           <p className="text-sm text-[var(--muted)]">Période : {summary.period.label}</p>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-5 grid gap-px border border-[var(--line)] bg-[var(--line)] sm:grid-cols-2 xl:grid-cols-5">
           {summary.observed.map((metric) => (
             <ObservedCard key={metric.key} metric={metric} />
           ))}
         </div>
       </section>
 
-      <section className="mt-12" aria-labelledby="estimated-title">
+      <section className="mt-10 border border-[var(--sand-line)] bg-[var(--sand)] p-5 md:p-7" aria-labelledby="estimated-title">
         <div className="max-w-3xl">
-          <p className="text-xs font-semibold tracking-[0.18em] text-violet-300">ESTIMATION</p>
+          <p className="sesira-eyebrow !text-[var(--sand-text)]">ESTIMATION</p>
           <h2 id="estimated-title" className="mt-2 text-xl font-semibold">
             Potentiel calculé avec prudence
           </h2>
@@ -106,21 +107,16 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
           </p>
         </div>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-5 grid gap-px border border-[var(--sand-line)] bg-[var(--sand-line)] md:grid-cols-2 xl:grid-cols-5">
           {summary.estimated.map((metric) => (
             <article
               key={metric.key}
-              className="flex min-h-48 flex-col rounded-2xl border border-violet-300/15 bg-[var(--panel)] p-5"
+              className="flex min-h-48 flex-col bg-[var(--sand)] p-5"
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[0.68rem] font-semibold tracking-[0.16em] text-violet-300">
-                  ESTIMATION
+                <span className="bg-[var(--sand-badge)] px-2.5 py-1 text-xs font-semibold tracking-[0.1em] text-[var(--sand-text)]">
+                  HYPOTHÈSE
                 </span>
-                {metric.key === "recovered_time" ? (
-                  <Clock3 className="size-4 text-violet-300" />
-                ) : (
-                  <Sparkles className="size-4 text-violet-300" />
-                )}
               </div>
               <p className="mt-5 text-sm leading-5 text-[var(--muted)]">{metric.label}</p>
               <p className="mt-3 [overflow-wrap:anywhere] text-3xl font-semibold tracking-tight tabular-nums">
@@ -132,10 +128,10 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
         </div>
       </section>
 
-      <section className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
+      <section className="mt-6 border border-[var(--sand-line)] bg-[var(--surface)] p-6 md:p-8">
         <div className="grid gap-7 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
-            <div className="flex items-center gap-2 text-amber-300">
+            <div className="flex items-center gap-2 text-[var(--sand-text)]">
               <CircleHelp className="size-4" />
               <p className="text-xs font-semibold tracking-[0.18em]">HYPOTHÈSE</p>
             </div>
@@ -145,14 +141,15 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
               comptées. Le gain commercial et le retour par euro resteront à établir tant que les
               données disponibles ne permettent pas une attribution fiable.
             </p>
+            <p className="mt-4 text-sm font-semibold text-[var(--sand-text)]">Ces montants ne sont pas un chiffre d’affaires déjà réalisé.</p>
           </div>
           <ul className="grid gap-3 sm:grid-cols-2" aria-label="Hypothèses utilisées">
             {summary.hypotheses.map((hypothesis) => (
               <li
                 key={hypothesis}
-                className="flex items-start gap-3 rounded-xl bg-[var(--panel-soft)] px-4 py-3 text-sm leading-6"
+                className="flex items-start gap-3 border border-[var(--sand-line)] bg-[var(--sand)] px-4 py-3 text-sm leading-6"
               >
-                <ArrowRight className="mt-1 size-3.5 shrink-0 text-amber-300" />
+                <ArrowRight className="mt-1 size-3.5 shrink-0 text-[var(--sand-text)]" />
                 {hypothesis}
               </li>
             ))}
@@ -167,10 +164,10 @@ function ObservedCard({ metric }: { metric: ObservedMetric }) {
   const available = metric.availability === "AVAILABLE";
 
   return (
-    <article className="flex min-h-44 flex-col rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
-      <span className="text-[0.68rem] font-semibold tracking-[0.16em] text-emerald-300">OBSERVÉ</span>
+    <article className="flex min-h-44 flex-col bg-[var(--surface)] p-5">
+      <span className="sesira-eyebrow">OBSERVÉ</span>
       <p className="mt-5 text-sm leading-5 text-[var(--muted)]">{metric.label}</p>
-      <p className={`mt-3 font-semibold tracking-tight ${available ? "text-4xl" : "text-xl text-slate-300"}`}>
+      <p className={`mt-3 font-[family-name:var(--font-display)] font-semibold tracking-[-0.03em] ${available ? "text-4xl" : "text-xl text-[var(--ink)]"}`}>
         {available ? metric.value : "Indisponible"}
       </p>
       <p className="mt-auto pt-4 text-xs leading-5 text-[var(--muted)]">{metric.context}</p>

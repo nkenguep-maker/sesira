@@ -1,16 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  --background: #070a12;
-  --panel: #0e1320;
-  --panel-soft: #171e2d;
-  --border: #263047;
-  --foreground: #f6f7fb;
-  --muted: #8e99b3;
-  --brand: #8b5cf6;
-  --brand-soft: #a78bfa;
-  --accent: #42d6d0;
-  --warning: #e3b86c;
+  --ink: #0e1418;
+  --ink-soft: #4a555e;
+  --ink-mute: #8a949c;
+  --paper: #eef1f3;
+  --surface: #ffffff;
+  --line: #dce2e6;
+  --line-soft: #e4e9ec;
+  --line-strong: #c9d2d8;
+  --blue: #1d4ed8;
+  --blue-soft: #e8eefc;
+  --blue-light: #7fa0f5;
+  --sand: #fffbf3;
+  --sand-line: #e8dcc4;
+  --sand-badge: #f0e2c6;
+  --sand-text: #8a5a12;
+  --danger: #b42318;
+  --danger-soft: #fff1f0;
+
+  /* Aliases kept for existing component APIs while the visual system is centralized here. */
+  --background: var(--paper);
+  --panel: var(--surface);
+  --panel-soft: var(--paper);
+  --border: var(--line);
+  --foreground: var(--ink);
+  --muted: var(--ink-mute);
+  --brand: var(--blue);
+  --brand-soft: var(--blue);
+  --accent: var(--blue);
+  --warning: var(--sand-text);
+  --font-display: var(--font-archivo), sans-serif;
+  --font-text: var(--font-public-sans), sans-serif;
 }
 
 * {
@@ -18,17 +39,26 @@
 }
 
 html {
-  background: var(--background);
+  background: var(--paper);
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 15% 0%, rgb(139 92 246 / 12%), transparent 34rem),
-    var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4,
+.sesira-display {
+  font-family: var(--font-display);
+  font-style: normal;
 }
 
 button,
@@ -39,16 +69,17 @@ select {
 }
 
 :where(a, button, input, textarea, select):focus-visible {
-  outline: 2px solid var(--brand-soft);
+  outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
 
 .sesira-field {
   width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--background) 72%, var(--panel));
-  color: var(--foreground);
+  min-height: 2.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
   transition:
     border-color 150ms ease,
     box-shadow 150ms ease,
@@ -56,20 +87,20 @@ select {
 }
 
 .sesira-field::placeholder {
-  color: color-mix(in srgb, var(--muted) 64%, transparent);
+  color: var(--ink-mute);
 }
 
 .sesira-field:hover {
-  border-color: color-mix(in srgb, var(--border) 58%, var(--muted));
+  border-color: var(--ink-mute);
 }
 
 .sesira-field:focus {
-  border-color: var(--brand-soft);
-  box-shadow: 0 0 0 2px rgb(167 139 250 / 15%);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue);
 }
 
 .sesira-choice:has(input:focus-visible) {
-  outline: 2px solid var(--brand-soft);
+  outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
 
@@ -80,7 +111,7 @@ select {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 0.75rem;
+  border-radius: 0;
   padding: 0.625rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
@@ -93,23 +124,24 @@ select {
 
 .sesira-primary-action {
   border: 1px solid transparent;
-  background: var(--brand);
-  color: var(--foreground);
+  background: var(--blue);
+  color: var(--surface);
 }
 
 .sesira-primary-action:hover {
-  background: color-mix(in srgb, var(--brand) 84%, var(--brand-soft));
+  opacity: 0.9;
 }
 
 .sesira-secondary-action {
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--foreground);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
 }
 
 .sesira-secondary-action:hover {
-  border-color: color-mix(in srgb, var(--border) 55%, var(--brand-soft));
-  background: var(--panel-soft);
+  border-color: var(--blue);
+  background: var(--blue-soft);
+  color: var(--blue);
 }
 
 .sesira-primary-action:active,
@@ -120,4 +152,42 @@ select {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+.sesira-page {
+  min-width: 0;
+  padding: 1.625rem 2rem;
+}
+
+.sesira-block {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.sesira-metric-grid {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+
+.sesira-eyebrow {
+  color: var(--ink-mute);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.sesira-status-dot,
+.sesira-avatar {
+  border-radius: 9999px;
+}
+
+@media (max-width: 767px) {
+  .sesira-page {
+    padding: 1.25rem;
+  }
 }

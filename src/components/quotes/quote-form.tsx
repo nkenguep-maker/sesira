@@ -38,12 +38,12 @@ export function QuoteForm({
   const availableRequests = requests.filter((request) => request.customerId === customerId);
 
   return (
-    <form action={formAction} className="space-y-8">
-      <div className="grid gap-5 md:grid-cols-2">
+    <form action={formAction} className="max-w-[640px] space-y-7">
+      <div className="grid gap-5">
         <label className="block space-y-2 text-sm">
-          <span className="flex items-center gap-2 font-medium text-slate-200">
-            <UserRound className="size-4 text-slate-500" />
-            Client <span className="text-violet-300">*</span>
+          <span className="flex items-center gap-2 text-[0.78125rem] font-semibold text-[var(--ink-mute)]">
+            <UserRound className="size-4 text-[var(--ink-mute)]" />
+            Client <span className="text-[var(--blue)]">*</span>
           </span>
           <select
             name="customerId"
@@ -64,8 +64,8 @@ export function QuoteForm({
         </label>
 
         <label className="block space-y-2 text-sm">
-          <span className="flex items-center gap-2 font-medium text-slate-200">
-            <FileText className="size-4 text-slate-500" />
+          <span className="flex items-center gap-2 text-[0.78125rem] font-semibold text-[var(--ink-mute)]">
+            <FileText className="size-4 text-[var(--ink-mute)]" />
             Demande liée
           </span>
           <select
@@ -86,8 +86,8 @@ export function QuoteForm({
         <Field label="Référence" name="reference" placeholder="DEV-2026-0042" maxLength={100} />
 
         <label className="block space-y-2 text-sm">
-          <span className="font-medium text-slate-200">
-            Montant <span className="text-violet-300">*</span>
+          <span className="text-[0.78125rem] font-semibold text-[var(--ink-mute)]">
+            Montant <span className="text-[var(--blue)]">*</span>
           </span>
           <div className="relative">
             <input
@@ -101,13 +101,13 @@ export function QuoteForm({
               disabled={pending}
               className="sesira-field px-4 py-3 pr-12 text-lg font-semibold disabled:opacity-60"
             />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500">€</span>
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[var(--ink-mute)]">€</span>
           </div>
         </label>
 
         <label className="block space-y-2 text-sm">
-          <span className="flex items-center gap-2 font-medium text-slate-200">
-            <UserRound className="size-4 text-slate-500" />
+          <span className="flex items-center gap-2 text-[0.78125rem] font-semibold text-[var(--ink-mute)]">
+            <UserRound className="size-4 text-[var(--ink-mute)]" />
             Propriétaire
           </span>
           <select
@@ -124,7 +124,7 @@ export function QuoteForm({
         </label>
       </div>
 
-      <div className="grid gap-5 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 md:grid-cols-2">
+      <div className="grid gap-5 border-t border-[var(--line)] pt-6">
         <DateField label="Date d’expiration" name="expiresOn" />
         <DateField label="Prochaine date utile" name="nextActionOn" />
       </div>
@@ -134,12 +134,12 @@ export function QuoteForm({
       </p>
 
       {state.error ? (
-        <p role="alert" className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
+        <p role="alert" className=" border border-[var(--danger)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">
           {state.error}
         </p>
       ) : null}
 
-      <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-6 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-3 border-t border-[var(--line)] pt-6 sm:flex-row">
         <Link
           href="/app/quotes"
           className="sesira-secondary-action px-5"
@@ -174,8 +174,8 @@ function Field({
 }) {
   return (
     <label className="block space-y-2 text-sm">
-      <span className="font-medium text-slate-200">
-        {label} {required ? <span className="text-violet-300">*</span> : null}
+      <span className="text-[0.78125rem] font-semibold text-[var(--ink-mute)]">
+        {label} {required ? <span className="text-[var(--blue)]">*</span> : null}
       </span>
       <input
         name={name}
@@ -192,8 +192,8 @@ function Field({
 function DateField({ label, name }: { label: string; name: string }) {
   return (
     <label className="block space-y-2 text-sm">
-      <span className="flex items-center gap-2 font-medium text-slate-200">
-        <CalendarDays className="size-4 text-slate-500" />
+      <span className="flex items-center gap-2 text-[0.78125rem] font-semibold text-[var(--ink-mute)]">
+        <CalendarDays className="size-4 text-[var(--ink-mute)]" />
         {label}
       </span>
       <input

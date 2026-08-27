@@ -72,6 +72,7 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
 
   const description = readRequestDescription(request.data);
   const messages = messagesResult.data ?? [];
+  const latestInboundMessage = messages.find((message) => message.direction === "INBOUND");
   const quotes = quotesResult.data ?? [];
   const timelineScopes = [
     { entityType: "request", entityIds: [request.id] },
@@ -95,35 +96,33 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
 
   return (
     <div className="mx-auto max-w-7xl">
-      <Link href="/app/requests" className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-white">
+      <Link href="/app/requests" className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-[var(--blue)]">
         <ArrowLeft className="size-4" />
         Toutes les demandes
       </Link>
 
       {query.created === "1" ? (
-        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-          <CheckCircle2 className="size-4 shrink-0 text-emerald-300" />
+        <div className="mt-6 flex items-center gap-3  border border-[var(--blue)] bg-[var(--blue-soft)] px-4 py-3 text-sm text-[var(--blue)]">
+          <CheckCircle2 className="size-4 shrink-0 text-[var(--blue)]" />
           Demande créée et ajoutée au journal d’activité.
         </div>
       ) : null}
 
-      <header className="mt-8 rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
+      <header className="mt-6 border border-[var(--line)] bg-[var(--surface)] p-6 md:p-7">
         <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
+              <h1 className="[overflow-wrap:anywhere] font-[family-name:var(--font-display)] text-[1.375rem] font-semibold tracking-[-0.02em]">{request.title}</h1>
               <RequestStatusBadge status={request.status} />
               <span className="text-sm text-[var(--muted)]">{requestSourceLabel(request.source)}</span>
             </div>
-            <h1 className="mt-4 [overflow-wrap:anywhere] text-3xl font-semibold tracking-tight md:text-4xl">{request.title}</h1>
             <p className="mt-3 text-[var(--muted)]">
               {request.service_catalog_items?.name ?? "Type à préciser"} · créée le {formatRequestDate(request.created_at)}
             </p>
           </div>
           {request.customers ? (
-            <Link href={`/app/customers/${request.customers.id}`} className="flex min-w-0 items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 transition hover:border-violet-400/50">
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-400/10 text-violet-200">
-                <UserRound className="size-4" />
-              </span>
+            <Link href={`/app/customers/${request.customers.id}`} className="flex min-w-0 items-center gap-3  border border-[var(--border)] bg-[var(--background)] px-4 py-3 transition hover:border-[var(--blue)]">
+              <UserRound className="size-5 shrink-0 text-[var(--blue)]" />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium">{request.customers.display_name}</span>
                 <span className="mt-1 block truncate text-xs text-[var(--muted)]">{request.customers.company_name ?? "Voir le client"}</span>
@@ -133,35 +132,29 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
         </div>
       </header>
 
-      <div className="mt-4 flex justify-end">
-        <Link href={`/app/quotes/new?requestId=${request.id}`} className="inline-flex items-center gap-2 rounded-xl border border-violet-400/25 bg-violet-400/10 px-4 py-2.5 text-sm font-medium text-violet-100 transition hover:border-violet-400/50">
-          Créer un devis lié
-        </Link>
-      </div>
-
-      <section className="mt-6 grid gap-4 sm:grid-cols-3">
+      <section className="sesira-metric-grid mt-6 sm:grid-cols-3">
         <Metric icon={ClipboardCheck} label="Qualification" value={request.qualification_score === null ? "À qualifier" : `${Math.round(request.qualification_score)} / 100`} />
         <Metric icon={UserRound} label="Attribution" value={assignedName} />
         <Metric icon={CalendarDays} label="Dernière mise à jour" value={formatRequestDate(request.updated_at)} />
       </section>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] min-[1360px]:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6">
+          <section className=" border border-[var(--border)] bg-[var(--panel)] p-6">
             <h2 className="text-lg font-semibold">Description</h2>
             {description ? (
-              <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-300">{description}</p>
+              <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[var(--ink)]">{description}</p>
             ) : (
-              <div className="mt-4 flex gap-3 rounded-xl border border-dashed border-[var(--border)] p-4 text-sm text-[var(--muted)]">
+              <div className="mt-4 flex gap-3  border border-dashed border-[var(--border)] p-4 text-sm text-[var(--muted)]">
                 <CircleHelp className="mt-0.5 size-4 shrink-0" />
                 Aucune description n’a encore été ajoutée.
               </div>
             )}
           </section>
 
-          <section className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]">
+          <section className="overflow-hidden  border border-[var(--border)] bg-[var(--panel)]">
             <div className="flex items-center gap-3 border-b border-[var(--border)] px-5 py-4">
-              <MessageSquareText className="size-4 text-violet-300" />
+              <MessageSquareText className="size-4 text-[var(--blue)]" />
               <h2 className="font-semibold">Messages récents</h2>
             </div>
             {messages.length ? (
@@ -169,7 +162,7 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
                 {messages.map((message) => (
                   <article key={message.id} className="px-5 py-5">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-medium text-slate-200">{message.subject ?? (message.direction === "INBOUND" ? "Message reçu" : "Message envoyé")}</p>
+                      <p className="text-sm font-medium text-[var(--ink)]">{message.subject ?? (message.direction === "INBOUND" ? "Message reçu" : "Message envoyé")}</p>
                       <span className="text-xs text-[var(--muted)]">{formatRequestDateTime(message.created_at)}</span>
                     </div>
                     <p className="mt-2 line-clamp-3 text-sm leading-6 text-[var(--muted)]">{message.body_text ?? "Contenu non disponible."}</p>
@@ -184,13 +177,22 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+          <section className="border border-[var(--ink)] bg-[var(--ink)] p-5 text-white">
+            <p className="sesira-eyebrow !text-[var(--blue-light)]">POURQUOI VOUS VOYEZ CE DOSSIER</p>
+            <blockquote className="mt-4 border-l-2 border-[var(--blue-light)] pl-4 text-sm leading-6 text-white/80">
+              {latestInboundMessage?.body_text ?? "Aucun message client n’est encore associé à cette demande."}
+            </blockquote>
+            <Link href={`/app/quotes/new?requestId=${request.id}`} className="mt-5 inline-flex min-h-11 items-center bg-[var(--blue)] px-4 py-2.5 text-sm font-semibold text-white">
+              Créer un devis lié
+            </Link>
+          </section>
+          <section className=" border border-[var(--border)] bg-[var(--panel)] p-5">
             <h2 className="font-semibold">Mettre à jour</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Choisissez uniquement la prochaine étape connue.</p>
             <div className="mt-5"><RequestStatusForm requestId={request.id} options={getAllowedRequestStatuses(requestStatus)} /></div>
           </section>
 
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+          <section className=" border border-[var(--border)] bg-[var(--panel)] p-5">
             <h2 className="font-semibold">Client</h2>
             {request.customers ? (
               <div className="mt-5 space-y-4 text-sm">
@@ -201,7 +203,7 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
             ) : <p className="mt-4 text-sm text-[var(--muted)]">Client à retrouver.</p>}
           </section>
 
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+          <section className=" border border-[var(--border)] bg-[var(--panel)] p-5">
             <h2 className="font-semibold">Journal d’activité</h2>
             <BusinessTimeline
               className="mt-5"
@@ -222,12 +224,12 @@ export default async function RequestPage({ params, searchParams }: RequestPageP
 
 function Metric({ icon: Icon, label, value }: { icon: typeof ClipboardCheck; label: string; value: string }) {
   return (
-    <article className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+    <article className="bg-[var(--surface)] p-5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-[var(--muted)]">{label}</p>
-        <Icon className="size-4 shrink-0 text-violet-300" />
+        <Icon className="size-4 shrink-0 text-[var(--blue)]" />
       </div>
-      <p className="mt-5 truncate text-xl font-semibold">{value}</p>
+      <p className="mt-3 truncate font-[family-name:var(--font-display)] text-xl font-semibold tracking-[-0.02em]">{value}</p>
     </article>
   );
 }
@@ -235,10 +237,10 @@ function Metric({ icon: Icon, label, value }: { icon: typeof ClipboardCheck; lab
 function ContactLine({ icon: Icon, label, value }: { icon: typeof Mail; label: string; value: string | null }) {
   return (
     <div className="flex gap-3">
-      <Icon className="mt-0.5 size-4 shrink-0 text-slate-500" />
+      <Icon className="mt-0.5 size-4 shrink-0 text-[var(--ink-mute)]" />
       <div className="min-w-0">
         <p className="text-xs text-[var(--muted)]">{label}</p>
-        <p className="mt-1 truncate text-slate-200">{value ?? "À compléter"}</p>
+        <p className="mt-1 truncate text-[var(--ink)]">{value ?? "À compléter"}</p>
       </div>
     </div>
   );

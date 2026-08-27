@@ -1,12 +1,10 @@
 import {
-  AlertTriangle,
   ArrowUpRight,
   CalendarClock,
   CheckCircle2,
   CircleAlert,
   Clock3,
   Inbox,
-  Lightbulb,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -45,7 +43,7 @@ export function AttentionInbox({
         title="À traiter"
         description="Voyez ce qui s’est passé, pourquoi votre attention est nécessaire et quelle décision prendre."
         actions={
-          <div className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--panel)] p-1">
+          <div className="inline-flex  border border-[var(--border)] bg-[var(--panel)] p-1">
             <ViewLink href="/app/attention" active={view === "open"} count={stats.open}>
               Ouverts
             </ViewLink>
@@ -56,14 +54,14 @@ export function AttentionInbox({
         }
       />
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={Inbox} label="À traiter" value={stats.open} tone="violet" />
+      <section className="sesira-metric-grid mt-6 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard icon={Inbox} label="À traiter" value={stats.open} tone="blue" />
         <MetricCard icon={CircleAlert} label="Urgents" value={stats.urgent} tone="rose" />
         <MetricCard icon={CalendarClock} label="Échus" value={stats.due} tone="amber" />
         <MetricCard icon={CheckCircle2} label="Terminés" value={stats.resolved} tone="emerald" />
       </section>
 
-      <section className="mt-6">
+      <section className="mt-8">
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold">{view === "open" ? "Décisions en attente" : "Décisions terminées"}</h2>
@@ -76,7 +74,7 @@ export function AttentionInbox({
         </div>
 
         {items.length ? (
-          <div className="grid gap-4">
+          <div className="grid gap-px border border-[var(--line)] bg-[var(--line)]">
             {items.map((item) => <AttentionCard key={item.id} item={item} open={view === "open"} />)}
           </div>
         ) : (
@@ -93,9 +91,9 @@ function AttentionCard({ item, open }: { item: AttentionInboxItem; open: boolean
   return (
     <article
       id={`attention-${item.id}`}
-      className="scroll-mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)] transition target:border-violet-400/50 target:ring-2 target:ring-violet-400/20"
+      className="scroll-mt-6 overflow-hidden bg-[var(--surface)] transition target:outline target:outline-2 target:outline-[var(--blue)]"
     >
-      <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-2">
             <PriorityBadge priority={item.priority} />
@@ -103,21 +101,12 @@ function AttentionCard({ item, open }: { item: AttentionInboxItem; open: boolean
             <AttentionStatusBadge status={item.status} />
           </div>
 
-          <h3 className="mt-5 text-xl font-semibold leading-snug text-white">{item.title}</h3>
+          <h3 className="mt-5 font-[family-name:var(--font-display)] text-base font-semibold leading-snug text-[var(--ink)]">Décision à prendre</h3>
 
-          <div className="mt-6 grid gap-5 md:grid-cols-2">
-            <DecisionBlock
-              eyebrow="Pourquoi Sesira vous le montre"
-              text={item.explanation}
-              icon={AlertTriangle}
-              tone="amber"
-            />
-            <DecisionBlock
-              eyebrow="Prochaine décision"
-              text={item.suggested_action ?? "Consultez l’élément lié, puis choisissez l’issue."}
-              icon={Lightbulb}
-              tone="violet"
-            />
+          <div className="mt-5 grid gap-4">
+            <DecisionBlock eyebrow="Ce qui s’est passé." text={item.title} />
+            <DecisionBlock eyebrow="Pourquoi Sesira vous le montre." text={item.explanation} />
+            <DecisionBlock eyebrow="Ce que vous pouvez faire." text={item.suggested_action ?? "Consultez l’élément lié, puis choisissez l’issue."} />
           </div>
 
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-[var(--border)] pt-4 text-xs text-[var(--muted)]">
@@ -126,7 +115,7 @@ function AttentionCard({ item, open }: { item: AttentionInboxItem; open: boolean
               Signalé le {formatAttentionDateTime(item.created_at)}
             </span>
             {item.due_at ? (
-              <span className={`inline-flex items-center gap-2 ${overdue ? "font-medium text-rose-300" : ""}`}>
+              <span className={`inline-flex items-center gap-2 ${overdue ? "font-medium text-[var(--danger)]" : ""}`}>
                 <CalendarClock className="size-3.5" />
                 {overdue ? "Échu" : "À décider"} le {formatAttentionDate(item.due_at)}
               </span>
@@ -143,22 +132,22 @@ function AttentionCard({ item, open }: { item: AttentionInboxItem; open: boolean
           </div>
         </div>
 
-        <aside className="flex flex-col justify-between border-t border-[var(--border)] bg-[var(--background)]/70 p-5 sm:p-6 xl:border-l xl:border-t-0">
+        <aside className="flex flex-col justify-between border-t border-[var(--line-soft)] bg-[var(--surface)] p-5 sm:p-6 xl:border-l xl:border-t-0">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Élément concerné</p>
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--ink-mute)]">Élément concerné</p>
             {item.entity ? (
               <div className="mt-4">
-                <p className="text-sm font-medium text-violet-300">{entityTypeLabel(item.entity.type)}</p>
+                <p className="text-sm font-medium text-[var(--blue)]">{entityTypeLabel(item.entity.type)}</p>
                 {item.entity.amount ? (
-                  <p className="mt-2 [overflow-wrap:anywhere] text-3xl font-semibold tracking-tight tabular-nums text-white">{item.entity.amount}</p>
+                  <p className="mt-2 whitespace-nowrap [overflow-wrap:anywhere] font-[family-name:var(--font-display)] text-[1.375rem] font-semibold tracking-[-0.03em] tabular-nums text-[var(--ink)]">{item.entity.amount}</p>
                 ) : (
-                  <p className="mt-2 text-lg font-semibold text-white">{item.entity.label}</p>
+                  <p className="mt-2 text-lg font-semibold text-[var(--ink)]">{item.entity.label}</p>
                 )}
-                {item.entity.amount ? <p className="mt-2 text-sm text-slate-200">{item.entity.label}</p> : null}
+                {item.entity.amount ? <p className="mt-2 text-sm text-[var(--ink)]">{item.entity.label}</p> : null}
                 {item.entity.detail ? <p className="mt-1 text-sm text-[var(--muted)]">{item.entity.detail}</p> : null}
                 <Link
                   href={item.entity.href}
-                  className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-medium text-white transition hover:border-violet-400/50 hover:bg-violet-400/10"
+                  className="mt-5 inline-flex min-h-11 items-center gap-2  border border-[var(--border)] px-4 py-2.5 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--blue)] hover:opacity-90"
                 >
                   Voir {entityTypeArticle(item.entity.type)}
                   <ArrowUpRight className="size-4" />
@@ -182,31 +171,10 @@ function AttentionCard({ item, open }: { item: AttentionInboxItem; open: boolean
   );
 }
 
-function DecisionBlock({
-  eyebrow,
-  text,
-  icon: Icon,
-  tone,
-}: {
-  eyebrow: string;
-  text: string;
-  icon: typeof AlertTriangle;
-  tone: "amber" | "violet";
-}) {
-  const tones = {
-    amber: "bg-amber-400/10 text-amber-200",
-    violet: "bg-violet-400/10 text-violet-200",
-  };
-
+function DecisionBlock({ eyebrow, text }: { eyebrow: string; text: string }) {
   return (
-    <div className="flex gap-3">
-      <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${tones[tone]}`}>
-        <Icon className="size-4" />
-      </span>
-      <div>
-        <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--muted)]">{eyebrow}</p>
-        <p className="mt-2 text-sm leading-6 text-slate-200">{text}</p>
-      </div>
+    <div>
+      <p className="text-sm leading-6 text-[var(--ink)]"><strong className="font-semibold">{eyebrow}</strong> {text}</p>
     </div>
   );
 }
@@ -231,12 +199,12 @@ function ViewLink({ href, active, count, children }: { href: string; active: boo
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`inline-flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
-        active ? "bg-violet-400/15 font-medium text-violet-100" : "text-[var(--muted)] hover:text-white"
+      className={`inline-flex min-h-10 items-center gap-2  px-3 py-2 text-sm transition ${
+        active ? "bg-[var(--blue-soft)] font-medium text-[var(--blue)]" : "text-[var(--muted)] hover:text-[var(--blue)]"
       }`}
     >
       {children}
-      <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs">{count}</span>
+      <span className=" bg-white/5 px-2 py-0.5 text-xs">{count}</span>
     </Link>
   );
 }

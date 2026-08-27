@@ -46,10 +46,10 @@ export default async function NewRequestPage({ searchParams }: { searchParams: N
   const cancelHref = defaultCustomerId ? `/app/customers/${defaultCustomerId}` : "/app/requests";
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-[704px]">
       <Link
         href={cancelHref}
-        className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-white"
+        className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-[var(--blue)]"
       >
         <ArrowLeft className="size-4" />
         Retour aux demandes
@@ -64,9 +64,9 @@ export default async function NewRequestPage({ searchParams }: { searchParams: N
       </div>
 
       {customers.length ? (
-        <section className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
-          <div className="mb-8 flex gap-3 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 p-4 text-sm text-cyan-100">
-            <Sparkles className="mt-0.5 size-4 shrink-0 text-cyan-300" />
+        <section className="mt-8  border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
+          <div className="mb-8 flex gap-3 border-l-2 border-[var(--blue)] bg-[var(--blue-soft)] p-4 text-sm text-[var(--ink-soft)]">
+            <Sparkles className="mt-0.5 size-4 shrink-0 text-[var(--blue)]" />
             <p className="leading-6">
               La demande restera dans votre organisation et sa création sera ajoutée automatiquement au journal d’activité.
             </p>

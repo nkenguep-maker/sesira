@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export function LoadingSkeleton({ className }: { className: string }) {
-  return <div aria-hidden="true" className={`animate-pulse rounded-xl bg-[var(--panel-soft)] ${className}`} />;
+  return <div aria-hidden="true" className={`bg-[var(--paper)] ${className}`} />;
 }
 
 export function LoadingPage({ label, children }: { label: string; children: ReactNode }) {
@@ -28,7 +28,7 @@ export function LoadingHeader({ withAction = false }: { withAction?: boolean }) 
 
 export function LoadingMetricGrid({ count = 4, columns = "four" }: { count?: number; columns?: "three" | "four" }) {
   return (
-    <div className={`mt-8 grid gap-4 sm:grid-cols-2 ${columns === "three" ? "lg:grid-cols-3" : "xl:grid-cols-4"}`}>
+    <div className={`sesira-metric-grid mt-6 sm:grid-cols-2 ${columns === "three" ? "lg:grid-cols-3" : "xl:grid-cols-4"}`}>
       {Array.from({ length: count }, (_, index) => (
         <LoadingSkeleton key={index} className="h-[86px]" />
       ))}

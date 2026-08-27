@@ -83,6 +83,15 @@ describe("quote status transitions", () => {
     expect(getAllowedQuoteStatuses("WON")).toEqual([]);
     expect(canChangeQuoteStatus("LOST", "SENT")).toBe(false);
     expect(canChangeQuoteStatus("EXPIRED", "FOLLOWING_UP")).toBe(false);
+    expect(canChangeQuoteStatus("WON", "REPLIED")).toBe(false);
+  });
+
+  it("blocks unsafe jumps and skipping the SENT gate", () => {
+    expect(canChangeQuoteStatus("DRAFT", "FOLLOWING_UP")).toBe(false);
+    expect(canChangeQuoteStatus("DRAFT", "REPLIED")).toBe(false);
+    expect(canChangeQuoteStatus("DRAFT", "NEEDS_HUMAN")).toBe(false);
+    expect(canChangeQuoteStatus("DRAFT", "EXPIRED")).toBe(false);
+    expect(canChangeQuoteStatus("SENT", "DRAFT")).toBe(false);
   });
 });
 

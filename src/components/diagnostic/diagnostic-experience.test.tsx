@@ -13,7 +13,7 @@ describe("DiagnosticExperience", () => {
     for (const sector of ["Chauffage / Climatisation", "Solaire / Photovoltaïque", "Maintenance / Services techniques", "Construction / Rénovation"]) {
       expect(html).toContain(sector);
     }
-    expect(html).toContain("Aucune intelligence artificielle");
+    expect(html).toContain("Aucun calcul opaque");
     expect(html).not.toContain("Email professionnel");
   });
 });

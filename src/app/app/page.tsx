@@ -70,19 +70,19 @@ export default async function DashboardPage() {
         }
       />
 
-      <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="sesira-metric-grid mt-6 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map(({ label, value, icon, tone }) => (
           <MetricCard key={label} icon={icon} label={label} value={value} tone={tone} layout="stacked" />
         ))}
       </section>
 
-      <section className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--panel)]">
+      <section className="mt-6  border border-[var(--border)] bg-[var(--panel)]">
         <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-5">
           <div>
             <h2 className="font-semibold">À traiter</h2>
             <p className="mt-1 text-sm text-[var(--muted)]">Les situations qui demandent une décision humaine.</p>
           </div>
-          <a href="/app/attention" className="flex items-center gap-2 text-sm text-violet-300 hover:text-violet-200">
+          <a href="/app/attention" className="flex items-center gap-2 text-sm text-[var(--blue)] hover:text-[var(--blue)]">
             Tout voir <ArrowUpRight className="size-4" />
           </a>
         </div>
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
           <div className="divide-y divide-[var(--border)]">
             {recentAttention.data.map((item) => (
               <article key={item.id} className="grid gap-3 px-6 py-5 md:grid-cols-[130px_1fr_auto] md:items-center">
-                <span className="text-xs font-semibold tracking-wide text-amber-300">
+                <span className="text-xs font-semibold tracking-wide text-[var(--sand-text)]">
                   Priorité {attentionPriorityLabels[item.priority as AttentionPriority]?.toLocaleLowerCase("fr-FR") ?? "à vérifier"}
                 </span>
                 <div>

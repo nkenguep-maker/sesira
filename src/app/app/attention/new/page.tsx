@@ -28,8 +28,8 @@ export default async function NewAttentionPage({ searchParams }: { searchParams:
   if (!quote) notFound();
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <Link href={`/app/quotes/${quote.id}`} className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-white">
+    <div className="mx-auto max-w-[704px]">
+      <Link href={`/app/quotes/${quote.id}`} className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-[var(--blue)]">
         <ArrowLeft className="size-4" />Retour au devis
       </Link>
 
@@ -41,13 +41,13 @@ export default async function NewAttentionPage({ searchParams }: { searchParams:
         />
       </div>
 
-      <section className="mt-8 rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
-        <div className="mb-8 flex gap-4 rounded-2xl border border-violet-400/20 bg-violet-400/10 p-4">
-          <CircleAlert className="mt-0.5 size-5 shrink-0 text-violet-200" />
+      <section className="mt-8  border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
+        <div className="mb-8 flex gap-4 border-l-2 border-[var(--blue)] bg-[var(--blue-soft)] p-4">
+          <CircleAlert className="mt-0.5 size-5 shrink-0 text-[var(--blue)]" />
           <div>
-            <p className="font-medium text-white">{quote.title}</p>
-            <p className="mt-1 text-sm text-violet-100/70">{formatQuoteAmount(quote.amount, quote.currency)} · {quote.customers?.display_name ?? "Client"}</p>
-            <p className="mt-2 text-xs text-violet-100/60">Création manuelle. Aucune automatisation ni communication externe.</p>
+            <p className="font-medium text-[var(--ink)]">{quote.title}</p>
+            <p className="mt-1 text-sm text-[var(--blue)]">{formatQuoteAmount(quote.amount, quote.currency)} · {quote.customers?.display_name ?? "Client"}</p>
+            <p className="mt-2 text-xs text-[var(--blue)]">Création manuelle. Aucune automatisation ni communication externe.</p>
           </div>
         </div>
         <AttentionForm quoteId={quote.id} />

@@ -6,7 +6,7 @@ export default function NotFound() {
       <div className="text-center">
         <p className="text-sm font-semibold text-[var(--accent)]">404</p>
         <h1 className="mt-3 text-3xl font-semibold">Cette page n’existe pas.</h1>
-        <Link href="/" className="mt-7 inline-flex rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold">
+        <Link href="/" className="mt-7 inline-flex bg-[var(--blue)] px-4 py-2.5 text-sm font-semibold text-white">
           Revenir à l’accueil
         </Link>
       </div>

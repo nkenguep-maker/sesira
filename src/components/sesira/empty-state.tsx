@@ -16,19 +16,15 @@ export function EmptyState({
   tone?: "violet" | "emerald" | "neutral";
   contained?: boolean;
 }) {
-  const iconTone = {
-    violet: "text-violet-300",
-    emerald: "text-emerald-300",
-    neutral: "text-[var(--muted)]",
-  }[tone];
+  void Icon;
+  void tone;
 
   return (
     <div
-      className={`${contained ? "rounded-2xl border border-[var(--border)] bg-[var(--panel)]" : ""} px-6 py-16 text-center`}
+      className={`${contained ? "border border-[var(--line)] bg-[var(--surface)]" : ""} px-6 py-14 text-center`}
     >
-      <Icon className={`mx-auto size-10 ${iconTone}`} aria-hidden="true" />
-      <p className="mt-5 font-medium text-[var(--foreground)]">{title}</p>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">{description}</p>
+      <p className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--ink)]">{title}</p>
+      <p className="mx-auto mt-2 max-w-md text-[0.84375rem] leading-6 text-[var(--ink-soft)]">{description}</p>
       {action ? <div className="mt-6 flex justify-center">{action}</div> : null}
     </div>
   );

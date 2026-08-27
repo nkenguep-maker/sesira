@@ -60,8 +60,8 @@ export default async function NewQuotePage({ searchParams }: { searchParams: New
   const defaultRequestId = requestedRequest?.customer_id === defaultCustomerId ? requestedRequest.id : "";
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <Link href="/app/quotes" className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-white">
+    <div className="mx-auto max-w-[704px]">
+      <Link href="/app/quotes" className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-[var(--blue)]">
         <ArrowLeft className="size-4" />
         Tous les devis
       </Link>
@@ -74,7 +74,7 @@ export default async function NewQuotePage({ searchParams }: { searchParams: New
         />
       </div>
 
-      <section className="mt-8 rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
+      <section className="mt-8  border border-[var(--border)] bg-[var(--panel)] p-6 md:p-8">
         {customers.length ? (
           <QuoteForm
             customers={customers.map((customer) => ({

@@ -60,9 +60,19 @@ describe("request status transitions", () => {
     expect(canChangeRequestStatus("QUALIFIED", "READY")).toBe(true);
   });
 
+  it("routes READY through ASSIGNED and back", () => {
+    expect(canChangeRequestStatus("READY", "ASSIGNED")).toBe(true);
+    expect(canChangeRequestStatus("ASSIGNED", "READY")).toBe(true);
+    expect(canChangeRequestStatus("ASSIGNED", "CLOSED")).toBe(true);
+  });
+
   it("blocks reopening terminal requests and unsafe jumps", () => {
     expect(canChangeRequestStatus("CLOSED", "NEW")).toBe(false);
     expect(canChangeRequestStatus("NEW", "READY")).toBe(false);
+    expect(canChangeRequestStatus("LOST", "PROCESSING")).toBe(false);
+    expect(canChangeRequestStatus("SPAM", "NEW")).toBe(false);
+    expect(canChangeRequestStatus("NEW", "ASSIGNED")).toBe(false);
+    expect(canChangeRequestStatus("QUALIFIED", "ASSIGNED")).toBe(false);
   });
 });
 

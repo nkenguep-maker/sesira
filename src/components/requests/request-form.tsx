@@ -32,8 +32,8 @@ export function RequestForm({
   const [state, formAction, pending] = useActionState(createRequestAction, initialState);
 
   return (
-    <form action={formAction} className="space-y-8">
-      <div className="grid gap-5 md:grid-cols-2">
+    <form action={formAction} className="max-w-[640px] space-y-7">
+      <div className="grid gap-5">
         <SelectField
           icon={UserRound}
           label="Client"
@@ -58,8 +58,8 @@ export function RequestForm({
           required
         />
         <label className="block space-y-2 text-sm">
-          <span className="font-medium text-slate-200">
-            Source <span className="text-violet-300">*</span>
+          <span className="text-[0.78125rem] font-semibold text-[var(--ink-mute)]">
+            Source <span className="text-[var(--blue)]">*</span>
           </span>
           <select
             name="source"
@@ -77,7 +77,7 @@ export function RequestForm({
       </div>
 
       <label className="block space-y-2 text-sm">
-        <span className="font-medium text-slate-200">Description</span>
+        <span className="text-[0.78125rem] font-semibold text-[var(--ink-mute)]">Description</span>
         <textarea
           name="description"
           rows={6}
@@ -91,13 +91,13 @@ export function RequestForm({
       {state.error ? (
         <p
           role="alert"
-          className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200"
+          className=" border border-[var(--danger)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]"
         >
           {state.error}
         </p>
       ) : null}
 
-      <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-6 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-3 border-t border-[var(--line)] pt-6 sm:flex-row">
         <Link
           href={cancelHref}
           className="sesira-secondary-action px-5"
@@ -132,8 +132,8 @@ function Field({
 }) {
   return (
     <label className="block space-y-2 text-sm">
-      <span className="font-medium text-slate-200">
-        {label} {required ? <span className="text-violet-300">*</span> : null}
+      <span className="text-[0.78125rem] font-semibold text-[var(--ink-mute)]">
+        {label} {required ? <span className="text-[var(--blue)]">*</span> : null}
       </span>
       <input
         required={required}
@@ -166,9 +166,9 @@ function SelectField({
 }) {
   return (
     <label className="block space-y-2 text-sm">
-      <span className="flex items-center gap-2 font-medium text-slate-200">
-        <Icon className="size-4 text-slate-500" />
-        {label} {required ? <span className="text-violet-300">*</span> : null}
+      <span className="flex items-center gap-2 text-[0.78125rem] font-semibold text-[var(--ink-mute)]">
+        <Icon className="size-4 text-[var(--ink-mute)]" />
+        {label} {required ? <span className="text-[var(--blue)]">*</span> : null}
       </span>
       <select
         name={name}

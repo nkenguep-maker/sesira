@@ -80,6 +80,7 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
       : ownerResult?.data?.full_name ?? "Membre de votre équipe"
     : "Non attribué";
   const messages = messagesResult.data ?? [];
+  const latestInboundMessage = messages.find((message) => message.direction === "INBOUND");
   const timelineScopes = [{ entityType: "quote", entityIds: [quote.id] }];
   const timeline = await loadBusinessTimeline(supabase, organizationId, timelineScopes);
   const timelineEntities = [{ type: "quote", id: quote.id, label: `Devis · ${quote.title}` }];
@@ -88,78 +89,78 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
 
   return (
     <div className="mx-auto max-w-7xl">
-      <Link href="/app/quotes" className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-white">
+      <Link href="/app/quotes" className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-[var(--blue)]">
         <ArrowLeft className="size-4" />Tous les devis
       </Link>
 
       {query.created === "1" ? (
-        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-          <CheckCircle2 className="size-4 shrink-0 text-emerald-300" />Devis créé et ajouté au journal d’activité.
+        <div className="mt-6 flex items-center gap-3  border border-[var(--blue)] bg-[var(--blue-soft)] px-4 py-3 text-sm text-[var(--blue)]">
+          <CheckCircle2 className="size-4 shrink-0 text-[var(--blue)]" />Devis créé et ajouté au journal d’activité.
         </div>
       ) : null}
 
-      <header className="mt-8 overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--panel)]">
-        <div className="grid gap-8 p-6 md:p-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+      <header className="mt-6 overflow-hidden border border-[var(--line)] bg-[var(--surface)]">
+        <div className="grid gap-8 p-6 md:p-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
+              <h1 className="[overflow-wrap:anywhere] font-[family-name:var(--font-display)] text-[1.375rem] font-semibold tracking-[-0.02em]">{quote.title}</h1>
               <QuoteStatusBadge status={quote.status} />
               <span className="text-sm text-[var(--muted)]">{quote.reference ?? "Sans référence"}</span>
             </div>
-            <h1 className="mt-4 [overflow-wrap:anywhere] text-3xl font-semibold tracking-tight md:text-4xl">{quote.title}</h1>
             <p className="mt-3 text-sm text-[var(--muted)]">Créé le {formatQuoteDate(quote.created_at)} · propriétaire : {ownerName}</p>
           </div>
-          <div className="rounded-2xl border border-violet-400/20 bg-violet-400/10 px-6 py-5 lg:min-w-72 lg:text-right">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-violet-200/70">Montant du devis</p>
-            <p className="mt-2 [overflow-wrap:anywhere] text-4xl font-semibold tracking-tight tabular-nums text-white md:text-5xl">{formatQuoteAmount(quote.amount, quote.currency)}</p>
+          <div className="border-l border-[var(--line)] px-6 py-3 lg:min-w-72 lg:text-right">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--blue)]">Montant du devis</p>
+            <p className="mt-2 whitespace-nowrap font-[family-name:var(--font-display)] text-[2rem] font-semibold tracking-[-0.03em] tabular-nums text-[var(--ink)]">{formatQuoteAmount(quote.amount, quote.currency)}</p>
           </div>
         </div>
       </header>
 
       <div className="mt-4 flex flex-wrap justify-end gap-3">
         {quote.customers ? (
-          <Link href={`/app/customers/${quote.customers.id}`} className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4 py-2.5 text-sm font-medium text-white transition hover:border-violet-400/40">
-            <UserRound className="size-4 text-violet-300" />Voir le client
+          <Link href={`/app/customers/${quote.customers.id}`} className="inline-flex items-center gap-2  border border-[var(--border)] bg-[var(--panel)] px-4 py-2.5 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--blue)]">
+            <UserRound className="size-4 text-[var(--blue)]" />Voir le client
           </Link>
         ) : null}
         {quote.requests ? (
-          <Link href={`/app/requests/${quote.requests.id}`} className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4 py-2.5 text-sm font-medium text-white transition hover:border-violet-400/40">
-            <FileText className="size-4 text-violet-300" />Voir la demande
+          <Link href={`/app/requests/${quote.requests.id}`} className="inline-flex items-center gap-2  border border-[var(--border)] bg-[var(--panel)] px-4 py-2.5 text-sm font-medium text-[var(--ink)] transition hover:border-[var(--blue)]">
+            <FileText className="size-4 text-[var(--blue)]" />Voir la demande
           </Link>
         ) : null}
         <Link
           href={openAttentionId ? `/app/attention#attention-${openAttentionId}` : `/app/attention/new?quoteId=${quote.id}`}
-          className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500"
+          className="inline-flex items-center gap-2  bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
         >
           <CircleAlert className="size-4" />
           {openAttentionId ? "Voir à traiter" : "Ajouter à traiter"}
         </Link>
       </div>
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="sesira-metric-grid mt-6 sm:grid-cols-2 xl:grid-cols-4">
         <Metric icon={CalendarDays} label="Envoyé le" value={formatQuoteDate(quote.sent_at)} />
         <Metric icon={Clock3} label="Expiration" value={formatQuoteDate(quote.expires_at)} />
         <Metric icon={UserRound} label="Propriétaire" value={ownerName} />
         <Metric icon={ReceiptText} label="Dernière activité" value={latestActivity ? formatQuoteDateTime(latestActivity.created_at) : "Aucune activité"} />
       </section>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] min-[1360px]:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6">
+          <section className=" border border-[var(--border)] bg-[var(--panel)] p-6">
             <div className="flex items-center justify-between gap-4">
               <div><p className="text-sm text-[var(--muted)]">Prochaine date utile</p><p className="mt-2 text-xl font-semibold">{formatQuoteDate(quote.next_action_at)}</p></div>
-              <CalendarDays className="size-5 text-violet-300" />
+              <CalendarDays className="size-5 text-[var(--blue)]" />
             </div>
             <p className="mt-4 text-sm leading-6 text-[var(--muted)]">Cette date reste informative. Aucun suivi automatique n’est activé.</p>
           </section>
 
-          <section className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]">
-            <div className="flex items-center gap-3 border-b border-[var(--border)] px-5 py-4"><MessageSquareText className="size-4 text-violet-300" /><h2 className="font-semibold">Messages liés</h2></div>
+          <section className="overflow-hidden  border border-[var(--border)] bg-[var(--panel)]">
+            <div className="flex items-center gap-3 border-b border-[var(--border)] px-5 py-4"><MessageSquareText className="size-4 text-[var(--blue)]" /><h2 className="font-semibold">Messages liés</h2></div>
             {messages.length ? (
               <div className="divide-y divide-[var(--border)]">
                 {messages.map((message) => (
                   <article key={message.id} className="px-5 py-5">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-medium text-slate-200">{message.subject ?? (message.direction === "INBOUND" ? "Message reçu" : "Message envoyé")}</p>
+                      <p className="text-sm font-medium text-[var(--ink)]">{message.subject ?? (message.direction === "INBOUND" ? "Message reçu" : "Message envoyé")}</p>
                       <span className="text-xs text-[var(--muted)]">{formatQuoteDateTime(message.created_at)}</span>
                     </div>
                     <p className="mt-2 line-clamp-3 text-sm leading-6 text-[var(--muted)]">{message.body_text ?? "Contenu non disponible."}</p>
@@ -170,7 +171,7 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
             ) : <p className="px-5 py-8 text-sm leading-6 text-[var(--muted)]">Aucun message n’est encore lié à ce devis.</p>}
           </section>
 
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6">
+          <section className=" border border-[var(--border)] bg-[var(--panel)] p-6">
             <h2 className="font-semibold">Historique</h2>
             <BusinessTimeline
               events={timeline.events}
@@ -186,28 +187,37 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+          <section className="border border-[var(--ink)] bg-[var(--ink)] p-5 text-white">
+            <p className="sesira-eyebrow !text-[var(--blue-light)]">POURQUOI VOUS VOYEZ CE DOSSIER</p>
+            <blockquote className="mt-4 border-l-2 border-[var(--blue-light)] pl-4 text-sm leading-6 text-white/80">
+              {latestInboundMessage?.body_text ?? "Aucun message client n’est encore associé à ce devis."}
+            </blockquote>
+            <Link href={openAttentionId ? `/app/attention#attention-${openAttentionId}` : `/app/attention/new?quoteId=${quote.id}`} className="mt-5 inline-flex min-h-11 items-center bg-[var(--blue)] px-4 py-2.5 text-sm font-semibold text-white">
+              {openAttentionId ? "Voir la décision" : "Ajouter à traiter"}
+            </Link>
+          </section>
+          <section className=" border border-[var(--border)] bg-[var(--panel)] p-5">
             <h2 className="font-semibold">Mettre à jour</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Choisissez uniquement l’état réellement atteint par ce devis.</p>
             <div className="mt-5"><QuoteStatusForm quoteId={quote.id} options={getAllowedQuoteStatuses(quoteStatus)} /></div>
           </section>
 
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+          <section className=" border border-[var(--border)] bg-[var(--panel)] p-5">
             <h2 className="font-semibold">Client</h2>
             {quote.customers ? (
               <div className="mt-5 space-y-4 text-sm">
                 <ContactLine icon={UserRound} label="Nom" value={quote.customers.display_name} />
                 <ContactLine icon={Mail} label="Email" value={quote.customers.email} />
-                <Link href={`/app/customers/${quote.customers.id}`} className="inline-flex text-sm font-medium text-violet-300 hover:text-violet-200">Voir le client</Link>
+                <Link href={`/app/customers/${quote.customers.id}`} className="inline-flex text-sm font-medium text-[var(--blue)] hover:text-[var(--blue)]">Voir le client</Link>
               </div>
             ) : <p className="mt-4 text-sm text-[var(--muted)]">Client à retrouver.</p>}
           </section>
 
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+          <section className=" border border-[var(--border)] bg-[var(--panel)] p-5">
             <h2 className="font-semibold">Demande liée</h2>
             {quote.requests ? (
-              <Link href={`/app/requests/${quote.requests.id}`} className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 transition hover:border-violet-400/40">
-                <FileText className="mt-0.5 size-4 shrink-0 text-violet-300" />
+              <Link href={`/app/requests/${quote.requests.id}`} className="mt-4 flex items-start gap-3  border border-[var(--border)] bg-[var(--background)] p-4 transition hover:border-[var(--blue)]">
+                <FileText className="mt-0.5 size-4 shrink-0 text-[var(--blue)]" />
                 <span className="min-w-0"><span className="block truncate text-sm font-medium">{quote.requests.title}</span><span className="mt-1 block text-xs text-[var(--muted)]">{requestStatusLabel(quote.requests.status)}</span></span>
               </Link>
             ) : <p className="mt-4 text-sm leading-6 text-[var(--muted)]">Ce devis n’est lié à aucune demande.</p>}
@@ -219,9 +229,9 @@ export default async function QuotePage({ params, searchParams }: QuotePageProps
 }
 
 function Metric({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value: string }) {
-  return <article className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5"><div className="flex items-center justify-between gap-3"><p className="text-sm text-[var(--muted)]">{label}</p><Icon className="size-4 shrink-0 text-violet-300" /></div><p className="mt-5 truncate text-lg font-semibold">{value}</p></article>;
+  return <article className="bg-[var(--surface)] p-5"><div className="flex items-center justify-between gap-3"><p className="text-sm text-[var(--muted)]">{label}</p><Icon className="size-4 shrink-0 text-[var(--blue)]" /></div><p className="mt-3 truncate font-[family-name:var(--font-display)] text-lg font-semibold tracking-[-0.02em]">{value}</p></article>;
 }
 
 function ContactLine({ icon: Icon, label, value }: { icon: typeof Mail; label: string; value: string | null }) {
-  return <div className="flex gap-3"><Icon className="mt-0.5 size-4 shrink-0 text-slate-500" /><div className="min-w-0"><p className="text-xs text-[var(--muted)]">{label}</p><p className="mt-1 truncate text-slate-200">{value ?? "À compléter"}</p></div></div>;
+  return <div className="flex gap-3"><Icon className="mt-0.5 size-4 shrink-0 text-[var(--ink-mute)]" /><div className="min-w-0"><p className="text-xs text-[var(--muted)]">{label}</p><p className="mt-1 truncate text-[var(--ink)]">{value ?? "À compléter"}</p></div></div>;
 }

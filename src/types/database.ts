@@ -722,6 +722,8 @@ export type Database = {
       quotes: {
         Row: {
           amount: number | null
+          automation_pause_reason: string | null
+          automation_paused_at: string | null
           created_at: string
           currency: string
           customer_id: string
@@ -731,6 +733,7 @@ export type Database = {
           id: string
           metadata: Json
           next_action_at: string | null
+          opted_out_at: string | null
           organization_id: string
           owner_user_id: string | null
           reference: string | null
@@ -742,6 +745,8 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          automation_pause_reason?: string | null
+          automation_paused_at?: string | null
           created_at?: string
           currency?: string
           customer_id: string
@@ -751,6 +756,7 @@ export type Database = {
           id?: string
           metadata?: Json
           next_action_at?: string | null
+          opted_out_at?: string | null
           organization_id: string
           owner_user_id?: string | null
           reference?: string | null
@@ -762,6 +768,8 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          automation_pause_reason?: string | null
+          automation_paused_at?: string | null
           created_at?: string
           currency?: string
           customer_id?: string
@@ -771,6 +779,7 @@ export type Database = {
           id?: string
           metadata?: Json
           next_action_at?: string | null
+          opted_out_at?: string | null
           organization_id?: string
           owner_user_id?: string | null
           reference?: string | null

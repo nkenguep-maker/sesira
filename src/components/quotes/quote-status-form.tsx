@@ -26,7 +26,7 @@ export function QuoteStatusForm({
     <form action={formAction} className="space-y-3">
       <input type="hidden" name="quoteId" value={quoteId} />
       <label className="block space-y-2 text-sm">
-        <span className="font-medium text-slate-200">Nouveau statut</span>
+        <span className="font-medium text-[var(--ink)]">Nouveau statut</span>
         <select
           name="status"
           defaultValue=""
@@ -40,8 +40,8 @@ export function QuoteStatusForm({
           ))}
         </select>
       </label>
-      {state.error ? <p role="alert" className="text-sm text-rose-300">{state.error}</p> : null}
-      {state.success ? <p role="status" className="text-sm text-emerald-300">{state.success}</p> : null}
+      {state.error ? <p role="alert" className="text-sm text-[var(--danger)]">{state.error}</p> : null}
+      {state.success ? <p role="status" className="text-sm text-[var(--blue)]">{state.success}</p> : null}
       <button
         type="submit"
         disabled={pending}

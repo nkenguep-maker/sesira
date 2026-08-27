@@ -29,7 +29,7 @@ export function RequestStatusForm({
     <form action={formAction} className="space-y-3">
       <input type="hidden" name="requestId" value={requestId} />
       <label className="block space-y-2 text-sm">
-        <span className="font-medium text-slate-200">Prochaine étape</span>
+        <span className="font-medium text-[var(--ink)]">Prochaine étape</span>
         <select
           name="status"
           defaultValue=""
@@ -47,8 +47,8 @@ export function RequestStatusForm({
           ))}
         </select>
       </label>
-      {state.error ? <p role="alert" className="text-sm text-rose-300">{state.error}</p> : null}
-      {state.success ? <p role="status" className="text-sm text-emerald-300">{state.success}</p> : null}
+      {state.error ? <p role="alert" className="text-sm text-[var(--danger)]">{state.error}</p> : null}
+      {state.success ? <p role="status" className="text-sm text-[var(--blue)]">{state.success}</p> : null}
       <button
         type="submit"
         disabled={pending}

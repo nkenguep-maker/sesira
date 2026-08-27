@@ -10,7 +10,7 @@ import { MetricCard } from "@/components/sesira/metric-card";
 import { PageHeader } from "@/components/sesira/page-header";
 import { StatusBadge } from "@/components/sesira/status-badge";
 
-describe("Midnight Papyrus design system", () => {
+describe("Sesira v6 design system", () => {
   it("renders a responsive page header with an optional action", () => {
     const html = renderToStaticMarkup(
       <PageHeader
@@ -24,7 +24,8 @@ describe("Midnight Papyrus design system", () => {
     expect(html).toContain("Relation client");
     expect(html).toContain("Nouveau client");
     expect(html).toContain("lg:flex-row");
-    expect(html).toContain("md:text-4xl");
+    expect(html).toContain("text-[1.375rem]");
+    expect(html).toContain("border-[var(--line)]");
   });
 
   it("keeps metric and status tones inside the shared vocabulary", () => {
@@ -38,8 +39,9 @@ describe("Midnight Papyrus design system", () => {
 
     expect(html).toContain("Clients");
     expect(html).toContain("18 450 €");
-    expect(html).toContain("border-emerald-400/20");
-    expect(html).toContain("rounded-2xl");
+    expect(html).toContain("bg-[var(--surface)]");
+    expect(html).toContain("bg-[var(--blue-soft)]");
+    expect(html).not.toContain("rounded-");
   });
 
   it("shares empty, filter and loading states without hiding their labels", () => {
@@ -69,6 +71,7 @@ describe("Midnight Papyrus design system", () => {
     expect(html).toContain("Aucun élément");
     expect(html).toContain("Rechercher un client");
     expect(html).toContain("Chargement des clients");
-    expect(html).toContain("animate-pulse");
+    expect(html).toContain("bg-[var(--paper)]");
+    expect(html).not.toContain("animate-pulse");
   });
 });

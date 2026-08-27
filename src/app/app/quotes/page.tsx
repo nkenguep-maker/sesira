@@ -76,8 +76,14 @@ export default async function QuotesPage({ searchParams }: { searchParams: Quote
   const now = new Date();
 
   if (date === "DUE") {
+    // Invariant: a follow-up is never due when the quote is paused, opted
+    // out, or already replied/won/lost/expired. Terminal statuses are
+    // excluded by the .in() list; REPLIED is excluded because a reply
+    // needs a human handoff, not another automated follow-up.
     listQuery = listQuery
-      .in("status", ["SENT", "FOLLOWING_UP", "REPLIED", "NEEDS_HUMAN"])
+      .in("status", ["SENT", "FOLLOWING_UP", "NEEDS_HUMAN"])
+      .is("automation_paused_at", null)
+      .is("opted_out_at", null)
       .not("next_action_at", "is", null)
       .lte("next_action_at", now.toISOString());
   }

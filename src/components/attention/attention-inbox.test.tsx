@@ -42,7 +42,7 @@ describe("AttentionInbox", () => {
 
     expect(html).toContain("Le client demande un geste sur le prix.");
     expect(html).toContain("Pourquoi Sesira vous le montre");
-    expect(html).toContain("Prochaine décision");
+    expect(html).toContain("Ce que vous pouvez faire");
     expect(html).toContain("18 450 €");
     expect(html).toContain("Voir le devis");
     expect(html).toContain("Résoudre");

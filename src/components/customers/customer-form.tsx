@@ -16,10 +16,10 @@ export function CustomerForm() {
   const [state, formAction, pending] = useActionState(createCustomerAction, initialState);
 
   return (
-    <form action={formAction} className="space-y-8">
+    <form action={formAction} className="max-w-[640px] space-y-7">
       <fieldset>
-        <legend className="text-sm font-medium text-slate-200">Type de client</legend>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <legend className="text-sm text-[0.78125rem] font-semibold text-[var(--ink-mute)]">Type de client</legend>
+        <div className="mt-3 grid gap-px border border-[var(--line)] bg-[var(--line)] sm:grid-cols-2">
           <TypeOption
             checked={customerType === "PERSON"}
             description="Un particulier ou un contact individuel"
@@ -39,7 +39,7 @@ export function CustomerForm() {
         </div>
       </fieldset>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid gap-5">
         <Field
           autoComplete="name"
           label={customerType === "PERSON" ? "Nom complet" : "Contact principal"}
@@ -73,13 +73,13 @@ export function CustomerForm() {
       {state.error ? (
         <p
           role="alert"
-          className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200"
+          className=" border border-[var(--danger)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]"
         >
           {state.error}
         </p>
       ) : null}
 
-      <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-6 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-3 border-t border-[var(--line)] pt-6 sm:flex-row">
         <Link
           href="/app/customers"
           className="sesira-secondary-action px-5"
@@ -116,8 +116,8 @@ function Field({
 }) {
   return (
     <label className="block space-y-2 text-sm">
-      <span className="font-medium text-slate-200">
-        {label} {required ? <span className="text-violet-300">*</span> : null}
+      <span className="text-[0.78125rem] font-semibold text-[var(--ink-mute)]">
+        {label} {required ? <span className="text-[var(--blue)]">*</span> : null}
       </span>
       <input
         required={required}
@@ -148,10 +148,10 @@ function TypeOption({
 }) {
   return (
     <label
-      className={`sesira-choice flex cursor-pointer gap-3 rounded-2xl border p-4 transition ${
+      className={`sesira-choice flex cursor-pointer gap-3 bg-[var(--surface)] p-4 transition ${
         checked
-          ? "border-violet-400/50 bg-violet-400/10"
-          : "border-[var(--border)] bg-[var(--background)] hover:border-slate-500"
+          ? "outline outline-2 outline-[var(--blue)]"
+          : "hover:bg-[#f7f9fa]"
       }`}
     >
       <input
@@ -162,11 +162,11 @@ function TypeOption({
         checked={checked}
         onChange={onChange}
       />
-      <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${checked ? "bg-violet-400/20" : "bg-slate-800"}`}>
-        <Icon className={`size-4 ${checked ? "text-violet-200" : "text-slate-400"}`} />
+      <span className="grid size-9 shrink-0 place-items-center">
+        <Icon className={`size-4 ${checked ? "text-[var(--blue)]" : "text-[var(--ink-mute)]"}`} />
       </span>
       <span>
-        <span className="block text-sm font-medium text-white">{label}</span>
+        <span className="block text-sm text-[0.78125rem] font-semibold text-[var(--ink-mute)]">{label}</span>
         <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">{description}</span>
       </span>
     </label>

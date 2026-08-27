@@ -14,22 +14,22 @@ export function PageHeader({
   eyebrowStyle?: "product" | "section";
 }) {
   return (
-    <header className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+    <header className="flex flex-col justify-between gap-5 border-b border-[var(--line)] bg-[var(--surface)] px-5 py-5 md:px-8 lg:flex-row lg:items-center">
       <div className="min-w-0">
         <p
           className={
             eyebrowStyle === "section"
-              ? "text-xs font-medium uppercase tracking-[0.16em] text-[var(--accent)]"
-              : "text-sm font-medium text-[var(--accent)]"
+              ? "sesira-eyebrow"
+              : "text-[0.8125rem] font-medium text-[var(--ink-mute)]"
           }
         >
           {eyebrow}
         </p>
-        <h1 className="mt-2 [overflow-wrap:anywhere] text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl">
+        <h1 className="mt-1 [overflow-wrap:anywhere] font-[family-name:var(--font-display)] text-[1.375rem] font-semibold leading-tight tracking-[-0.02em] text-[var(--ink)]">
           {title}
         </h1>
         {description ? (
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)] sm:text-base">
+          <p className="mt-1 max-w-3xl text-[0.84375rem] leading-5 text-[var(--ink-mute)]">
             {description}
           </p>
         ) : null}

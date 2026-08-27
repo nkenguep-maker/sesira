@@ -21,11 +21,11 @@ describe("AutomationsScreen", () => {
     expect(html).toContain("Validation par votre équipe");
     expect(html).toContain("Stable");
     expect(html).toContain("Action enregistrée avec succès");
-    expect(html).toContain("Dernier succès");
+    expect(html).toContain("Dernière réussite");
     expect(html).toContain("Dernier problème");
-    expect(html).toContain("Ce que Sesira peut faire");
-    expect(html).toContain("Toujours à votre équipe");
-    expect(html).toContain("xl:grid-cols-2");
+    expect(html).toContain("CE QUE SESIRA PEUT FAIRE");
+    expect(html).toContain("TOUJOURS DÉCIDÉ PAR VOUS");
+    expect(html).toContain("xl:grid-cols-[minmax(0,1fr)_380px]");
   });
 
   it("explains observation in real conditions without presenting the example as a real action", () => {
@@ -35,8 +35,8 @@ describe("AutomationsScreen", () => {
     const html = renderToStaticMarkup(<AutomationsScreen cards={[shadow]} />);
 
     expect(html).toContain("Sesira aurait effectué cette action.");
-    expect(html).toContain("APERÇU EN CONDITIONS RÉELLES");
-    expect(html).toContain("Il ne correspond pas à une action réellement effectuée");
+    expect(html).toContain("OBSERVATION EN CONDITIONS RÉELLES");
+    expect(html).toContain("Action préparée uniquement. Aucun envoi n’a eu lieu.");
     expect(html).not.toContain("SHADOW");
     expect(html).not.toContain("run réel");
     expect(html).toContain("Aucune activité réelle enregistrée");
@@ -76,6 +76,6 @@ function card(level: AutomationCard["level"]): AutomationCard {
     lastSuccess: "24 août 2026, 10:00",
     lastProblem: null,
     allowedAction: "Repérer les devis à suivre et préparer une relance standard.",
-    humanJudgment: "Les réponses clients, objections de prix et décisions commerciales.",
+    humanJudgment: "Les réponses clients, baisses de prix demandées et décisions commerciales.",
   };
 }

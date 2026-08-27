@@ -56,8 +56,8 @@ describe("BusinessTimeline", () => {
 
     expect(html).toContain("Client créé");
     expect(html).toContain("Activité enregistrée");
-    expect(html).toContain("flex-col");
-    expect(html).toContain("sm:flex-row");
+    expect(html).toContain("sm:grid-cols-[96px_minmax(0,1fr)]");
+    expect(html).toContain("border-[var(--line-soft)]");
     expect(html).not.toContain("unknown.private_event");
   });
 });

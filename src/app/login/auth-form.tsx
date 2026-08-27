@@ -14,15 +14,15 @@ export function AuthForm() {
   const pending = mode === "login" ? loginPending : signupPending;
 
   return (
-    <div className="rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-7 shadow-2xl shadow-black/30 md:p-9">
-      <div className="mb-8 grid grid-cols-2 rounded-xl bg-[var(--panel-soft)] p-1 text-sm">
+    <div className="border border-[var(--line)] bg-[var(--surface)] p-7 md:p-9">
+      <div className="mb-8 grid grid-cols-2  bg-[var(--panel-soft)] p-1 text-sm">
         {(["login", "signup"] as const).map((item) => (
           <button
             key={item}
             type="button"
             onClick={() => setMode(item)}
-            className={`rounded-lg px-4 py-2.5 transition ${
-              mode === item ? "bg-[var(--brand)] text-white" : "text-[var(--muted)] hover:text-white"
+            className={` px-4 py-2.5 transition ${
+              mode === item ? "bg-[var(--brand)] text-white" : "text-[var(--muted)] hover:text-[var(--blue)]"
             }`}
           >
             {item === "login" ? "Connexion" : "Créer un compte"}
@@ -47,13 +47,13 @@ export function AuthForm() {
         />
 
         {state.error ? (
-          <p role="alert" className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
+          <p role="alert" className=" border border-[var(--danger)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">
             {state.error}
           </p>
         ) : null}
 
         {state.success ? (
-          <p className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
+          <p className=" border border-[var(--blue)] bg-[var(--blue-soft)] px-4 py-3 text-sm text-[var(--blue)]">
             {state.success}
           </p>
         ) : null}
@@ -61,7 +61,7 @@ export function AuthForm() {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-xl bg-[var(--brand)] px-4 py-3 font-semibold text-white transition hover:bg-violet-500 disabled:cursor-wait disabled:opacity-60"
+          className="w-full  bg-[var(--brand)] px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
         >
           {pending ? "Veuillez patienter…" : mode === "login" ? "Se connecter" : "Créer mon espace"}
         </button>
@@ -83,7 +83,7 @@ function Field({
 }) {
   return (
     <label className="block space-y-2 text-sm">
-      <span className="font-medium text-slate-200">{label}</span>
+      <span className="text-[0.78125rem] font-semibold text-[var(--ink-mute)]">{label}</span>
       <input
         required
         name={name}
