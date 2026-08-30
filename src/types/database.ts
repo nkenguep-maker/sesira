@@ -254,8 +254,13 @@ export type Database = {
           id: string
           idempotency_key: string
           input_summary: Json
+          lock_expires_at: string | null
+          locked_at: string | null
+          locked_by: string | null
+          next_attempt_at: string | null
           organization_id: string
           output_summary: Json
+          scheduled_for: string | null
           started_at: string | null
           status: string
           trigger_event_id: string | null
@@ -269,8 +274,13 @@ export type Database = {
           id?: string
           idempotency_key: string
           input_summary?: Json
+          lock_expires_at?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          next_attempt_at?: string | null
           organization_id: string
           output_summary?: Json
+          scheduled_for?: string | null
           started_at?: string | null
           status?: string
           trigger_event_id?: string | null
@@ -284,8 +294,13 @@ export type Database = {
           id?: string
           idempotency_key?: string
           input_summary?: Json
+          lock_expires_at?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          next_attempt_at?: string | null
           organization_id?: string
           output_summary?: Json
+          scheduled_for?: string | null
           started_at?: string | null
           status?: string
           trigger_event_id?: string | null
@@ -935,7 +950,45 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_automation_run: {
+        Args: {
+          target_run_id: string
+          target_organization_id: string
+          target_worker_id: string
+          lease_seconds: number
+        }
+        Returns: boolean
+      }
+      release_automation_run: {
+        Args: {
+          target_run_id: string
+          target_organization_id: string
+          target_worker_id: string
+          terminal_status: string
+          error_message?: string | null
+          next_attempt_at?: string | null
+        }
+        Returns: boolean
+      }
+      list_due_quote_followup_runs: {
+        Args: {
+          target_organization_id: string
+          target_now: string
+          target_limit: number
+        }
+        Returns: {
+          id: string
+          organization_id: string
+          automation_config_id: string | null
+          idempotency_key: string
+          scheduled_for: string | null
+          next_attempt_at: string | null
+          input_summary: Json
+          attempt_count: number
+          quote_id: string
+          step: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

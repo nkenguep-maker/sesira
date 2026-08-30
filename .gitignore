@@ -35,3 +35,4 @@ pnpm-debug.log*
 # quarantine of iCloud sync duplicates (files with " 2." suffix)
 /.quarantine-icloud-dupes/
 /.codex-recovery/
+.tsc-lint-passed

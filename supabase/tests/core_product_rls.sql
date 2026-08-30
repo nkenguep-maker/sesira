@@ -671,8 +671,443 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- Deterministic quote follow-up scheduling — claim CAS + lease recovery
+-- =========================================================================
+-- These assertions run as tenant A (already the current role from the
+-- previous section). They exercise the public wrappers
+-- (public.claim_automation_run, public.release_automation_run,
+-- public.list_due_quote_followup_runs) which mirror what the follow-up
+-- worker calls from Postgrest. Together they prove:
+--   * Two workers never claim the same PENDING run.
+--   * A crashed worker's lease is reclaimed once lock_expires_at passes,
+--     bumping attempt_count.
+--   * A stale worker cannot release a run reclaimed by another worker.
+--   * Cross-tenant claims are rejected (organization scoping AND
+--     caller-membership guard).
+--   * PENDING runs whose scheduled_for is in the future are not claimable
+--     nor listed as due.
+--   * list_due_quote_followup_runs enforces every stop guard: automation
+--     disabled, quote paused, quote opted-out, terminal / replied quote.
+--   * Two orgs never see each other's due rows.
+--
+-- Fixture: two automation_configs and PENDING automation_runs — one per
+-- tenant plus stop-guard rows on tenant A. Runs use fixed UUIDs so we
+-- can assert deterministically.
+
+insert into public.automation_configs (id, organization_id, template_key, template_version, enabled, level)
+values
+  ('91700000-0000-4000-8000-000000000001', '91000000-0000-4000-8000-000000000001', 'quote_followup_schedule', 1, true, 'AUTOMATIC'),
+  ('91700000-0000-4000-8000-000000000009', '91000000-0000-4000-8000-000000000001', 'quote_followup_schedule', 1, false, 'AUTOMATIC'),
+  ('92700000-0000-4000-8000-000000000002', '92000000-0000-4000-8000-000000000002', 'quote_followup_schedule', 1, true, 'AUTOMATIC');
+
+-- Extra tenant-A quotes to exercise stop guards. Each starts as DRAFT to
+-- satisfy the state-machine trigger and is then transitioned to a state
+-- appropriate for the guard being tested.
+insert into public.quotes (id, organization_id, customer_id, request_id, title, amount, status)
+values
+  ('91500000-0000-4000-8000-00000000000a', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', null, 'Quote A paused',        1000.00, 'DRAFT'),
+  ('91500000-0000-4000-8000-00000000000b', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', null, 'Quote A opted-out',     1000.00, 'DRAFT'),
+  ('91500000-0000-4000-8000-00000000000c', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', null, 'Quote A replied',       1000.00, 'DRAFT'),
+  ('91500000-0000-4000-8000-00000000000d', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', null, 'Quote A terminal WON',  1000.00, 'DRAFT'),
+  ('91500000-0000-4000-8000-00000000000e', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', null, 'Quote A disabled cfg',  1000.00, 'DRAFT');
+
+update public.quotes set status = 'SENT' where id in (
+  '91500000-0000-4000-8000-00000000000a',
+  '91500000-0000-4000-8000-00000000000b',
+  '91500000-0000-4000-8000-00000000000c',
+  '91500000-0000-4000-8000-00000000000d',
+  '91500000-0000-4000-8000-00000000000e'
+);
+
+update public.quotes
+  set automation_paused_at = now(), automation_pause_reason = 'MANUAL'
+  where id = '91500000-0000-4000-8000-00000000000a';
+
+update public.quotes
+  set opted_out_at = now()
+  where id = '91500000-0000-4000-8000-00000000000b';
+
+update public.quotes
+  set status = 'REPLIED'
+  where id = '91500000-0000-4000-8000-00000000000c';
+
+update public.quotes
+  set status = 'WON'
+  where id = '91500000-0000-4000-8000-00000000000d';
+
+insert into public.automation_runs (
+  id, organization_id, automation_config_id, idempotency_key,
+  status, scheduled_for, input_summary
+)
+values
+  -- The primary tenant-A due run.
+  (
+    '91800000-0000-4000-8000-000000000001',
+    '91000000-0000-4000-8000-000000000001',
+    '91700000-0000-4000-8000-000000000001',
+    'quote_followup:91500000-0000-4000-8000-000000000001:step:1',
+    'PENDING',
+    now() - interval '1 minute',
+    jsonb_build_object('quote_id', '91500000-0000-4000-8000-000000000001', 'step', 1)
+  ),
+  -- Tenant B's due run (must remain invisible to tenant A).
+  (
+    '92800000-0000-4000-8000-000000000002',
+    '92000000-0000-4000-8000-000000000002',
+    '92700000-0000-4000-8000-000000000002',
+    'quote_followup:92500000-0000-4000-8000-000000000002:step:1',
+    'PENDING',
+    now() - interval '1 minute',
+    jsonb_build_object('quote_id', '92500000-0000-4000-8000-000000000002', 'step', 1)
+  ),
+  -- Future scheduled_for on tenant A — not yet due.
+  (
+    '91800000-0000-4000-8000-000000000003',
+    '91000000-0000-4000-8000-000000000001',
+    '91700000-0000-4000-8000-000000000001',
+    'quote_followup:91500000-0000-4000-8000-000000000001:step:future',
+    'PENDING',
+    now() + interval '2 days',
+    jsonb_build_object('quote_id', '91500000-0000-4000-8000-000000000001', 'step', 2)
+  ),
+  -- Stop-guard rows: due timestamp is in the past but the quote / config
+  -- is ineligible, so list_due_quote_followup_runs must skip each one.
+  (
+    '91800000-0000-4000-8000-00000000000a',
+    '91000000-0000-4000-8000-000000000001',
+    '91700000-0000-4000-8000-000000000001',
+    'quote_followup:91500000-0000-4000-8000-00000000000a:step:1',
+    'PENDING',
+    now() - interval '1 minute',
+    jsonb_build_object('quote_id', '91500000-0000-4000-8000-00000000000a', 'step', 1)
+  ),
+  (
+    '91800000-0000-4000-8000-00000000000b',
+    '91000000-0000-4000-8000-000000000001',
+    '91700000-0000-4000-8000-000000000001',
+    'quote_followup:91500000-0000-4000-8000-00000000000b:step:1',
+    'PENDING',
+    now() - interval '1 minute',
+    jsonb_build_object('quote_id', '91500000-0000-4000-8000-00000000000b', 'step', 1)
+  ),
+  (
+    '91800000-0000-4000-8000-00000000000c',
+    '91000000-0000-4000-8000-000000000001',
+    '91700000-0000-4000-8000-000000000001',
+    'quote_followup:91500000-0000-4000-8000-00000000000c:step:1',
+    'PENDING',
+    now() - interval '1 minute',
+    jsonb_build_object('quote_id', '91500000-0000-4000-8000-00000000000c', 'step', 1)
+  ),
+  (
+    '91800000-0000-4000-8000-00000000000d',
+    '91000000-0000-4000-8000-000000000001',
+    '91700000-0000-4000-8000-000000000001',
+    'quote_followup:91500000-0000-4000-8000-00000000000d:step:1',
+    'PENDING',
+    now() - interval '1 minute',
+    jsonb_build_object('quote_id', '91500000-0000-4000-8000-00000000000d', 'step', 1)
+  ),
+  (
+    '91800000-0000-4000-8000-00000000000e',
+    '91000000-0000-4000-8000-000000000001',
+    '91700000-0000-4000-8000-000000000009',
+    'quote_followup:91500000-0000-4000-8000-00000000000e:step:1',
+    'PENDING',
+    now() - interval '1 minute',
+    jsonb_build_object('quote_id', '91500000-0000-4000-8000-00000000000e', 'step', 1)
+  );
+
+-- list_due_quote_followup_runs must return ONLY the primary tenant-A run
+-- and must NEVER include the future / paused / opted-out / replied /
+-- terminal / disabled-config rows, and must be blind to tenant B's run.
+do $$
+declare
+  tenant_a_ids   uuid[];
+  expected_id    uuid := '91800000-0000-4000-8000-000000000001';
+  forbidden_ids  uuid[] := array[
+    '91800000-0000-4000-8000-000000000003',
+    '91800000-0000-4000-8000-00000000000a',
+    '91800000-0000-4000-8000-00000000000b',
+    '91800000-0000-4000-8000-00000000000c',
+    '91800000-0000-4000-8000-00000000000d',
+    '91800000-0000-4000-8000-00000000000e',
+    '92800000-0000-4000-8000-000000000002'
+  ];
+begin
+  select array_agg(id) into tenant_a_ids
+  from public.list_due_quote_followup_runs(
+    '91000000-0000-4000-8000-000000000001',
+    now(),
+    100
+  );
+  if tenant_a_ids is null or not (expected_id = any(tenant_a_ids)) then
+    raise exception 'list_due must include the primary tenant-A run';
+  end if;
+  if exists (select 1 from unnest(forbidden_ids) fid where fid = any(tenant_a_ids)) then
+    raise exception 'list_due leaked a stop-guarded or foreign-org run';
+  end if;
+end;
+$$;
+
+-- A tenant-A caller must not see tenant-B rows even when explicitly
+-- asking for tenant-B's org id (caller-membership guard).
+do $$
+declare
+  cross_rows integer;
+begin
+  select count(*) into cross_rows
+  from public.list_due_quote_followup_runs(
+    '92000000-0000-4000-8000-000000000002',
+    now(),
+    100
+  );
+  if cross_rows <> 0 then
+    raise exception 'tenant A must not read tenant B due rows via foreign org id';
+  end if;
+end;
+$$;
+
+-- Only one of two "concurrent" workers may claim the same PENDING run.
+do $$
+declare
+  worker_a_won boolean;
+  worker_b_won boolean;
+begin
+  worker_a_won := public.claim_automation_run(
+    '91800000-0000-4000-8000-000000000001',
+    '91000000-0000-4000-8000-000000000001',
+    'worker-a',
+    300
+  );
+  worker_b_won := public.claim_automation_run(
+    '91800000-0000-4000-8000-000000000001',
+    '91000000-0000-4000-8000-000000000001',
+    'worker-b',
+    300
+  );
+  if not worker_a_won then
+    raise exception 'first claimer must succeed';
+  end if;
+  if worker_b_won then
+    raise exception 'second claimer must not succeed while lease is valid';
+  end if;
+end;
+$$;
+
+-- A claim with a foreign target_organization_id must be rejected by the
+-- caller-membership guard on the public wrapper.
+do $$
+declare
+  sqlstate_captured text;
+begin
+  begin
+    perform public.claim_automation_run(
+      '91800000-0000-4000-8000-000000000001',
+      '92000000-0000-4000-8000-000000000002',
+      'worker-b-hacker',
+      300
+    );
+    raise exception 'cross-tenant claim was not rejected';
+  exception when others then
+    sqlstate_captured := sqlstate;
+    if sqlstate_captured <> '42501' then
+      raise exception 'unexpected sqlstate % rejecting cross-tenant claim', sqlstate_captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Simulate crash: force lock_expires_at into the past. Then a fresh
+-- claim must succeed and attempt_count must be bumped.
+update public.automation_runs
+set lock_expires_at = now() - interval '1 minute'
+where id = '91800000-0000-4000-8000-000000000001';
+
+do $$
+declare
+  reclaim_won boolean;
+  new_attempt integer;
+begin
+  reclaim_won := public.claim_automation_run(
+    '91800000-0000-4000-8000-000000000001',
+    '91000000-0000-4000-8000-000000000001',
+    'worker-c',
+    300
+  );
+  if not reclaim_won then
+    raise exception 'expired lease must be reclaimable';
+  end if;
+  select attempt_count into new_attempt
+  from public.automation_runs
+  where id = '91800000-0000-4000-8000-000000000001';
+  if new_attempt < 1 then
+    raise exception 'reclaim must bump attempt_count (got %)', new_attempt;
+  end if;
+end;
+$$;
+
+-- The stale worker (worker-a) must NOT be able to release the run
+-- worker-c now owns. This proves lease-holder-only release.
+do $$
+declare
+  stale_release boolean;
+begin
+  stale_release := public.release_automation_run(
+    '91800000-0000-4000-8000-000000000001',
+    '91000000-0000-4000-8000-000000000001',
+    'worker-a',
+    'SUCCEEDED',
+    null,
+    null
+  );
+  if stale_release then
+    raise exception 'stale worker must not be able to release a reclaimed run';
+  end if;
+end;
+$$;
+
+-- The current lease holder (worker-c) can release, transitioning the
+-- run to a terminal status.
+do $$
+declare
+  ok boolean;
+  observed_status text;
+begin
+  ok := public.release_automation_run(
+    '91800000-0000-4000-8000-000000000001',
+    '91000000-0000-4000-8000-000000000001',
+    'worker-c',
+    'SUCCEEDED',
+    null,
+    null
+  );
+  if not ok then
+    raise exception 'current lease holder must be able to release';
+  end if;
+  select status into observed_status
+  from public.automation_runs
+  where id = '91800000-0000-4000-8000-000000000001';
+  if observed_status <> 'SUCCEEDED' then
+    raise exception 'release must transition run to terminal status (got %)', observed_status;
+  end if;
+end;
+$$;
+
+-- A PENDING run whose scheduled_for is in the future must not be
+-- claimable yet.
+do $$
+declare
+  early_claim boolean;
+begin
+  early_claim := public.claim_automation_run(
+    '91800000-0000-4000-8000-000000000003',
+    '91000000-0000-4000-8000-000000000001',
+    'worker-d',
+    300
+  );
+  if early_claim then
+    raise exception 'PENDING run with future scheduled_for must not be claimable';
+  end if;
+end;
+$$;
+
+-- Retry path: releasing to PENDING must set next_attempt_at without
+-- writing completed_at, and the run must reappear as due only once
+-- next_attempt_at has been reached.
+do $$
+declare
+  claimed        boolean;
+  released       boolean;
+  observed       record;
+  future_ids     uuid[];
+  past_ids       uuid[];
+begin
+  claimed := public.claim_automation_run(
+    '91800000-0000-4000-8000-000000000003',
+    '91000000-0000-4000-8000-000000000001',
+    'worker-retry',
+    300
+  );
+  if claimed then
+    raise exception 'future-scheduled run should not have been claimable';
+  end if;
+
+  -- Force scheduled_for into the past so we can claim, then release
+  -- to PENDING with next_attempt_at in the future.
+  update public.automation_runs
+    set scheduled_for = now() - interval '1 minute'
+    where id = '91800000-0000-4000-8000-000000000003';
+
+  claimed := public.claim_automation_run(
+    '91800000-0000-4000-8000-000000000003',
+    '91000000-0000-4000-8000-000000000001',
+    'worker-retry',
+    300
+  );
+  if not claimed then
+    raise exception 'past-scheduled retry run must be claimable';
+  end if;
+
+  released := public.release_automation_run(
+    '91800000-0000-4000-8000-000000000003',
+    '91000000-0000-4000-8000-000000000001',
+    'worker-retry',
+    'PENDING',
+    'transient failure',
+    now() + interval '5 minutes'
+  );
+  if not released then
+    raise exception 'release with PENDING must succeed for the current lease holder';
+  end if;
+
+  select status, completed_at, next_attempt_at, locked_by
+    into observed
+    from public.automation_runs
+    where id = '91800000-0000-4000-8000-000000000003';
+  if observed.status <> 'PENDING' then
+    raise exception 'PENDING release must keep status PENDING (got %)', observed.status;
+  end if;
+  if observed.completed_at is not null then
+    raise exception 'PENDING release must not stamp completed_at';
+  end if;
+  if observed.next_attempt_at is null or observed.next_attempt_at <= now() then
+    raise exception 'PENDING release must set a future next_attempt_at';
+  end if;
+  if observed.locked_by is not null then
+    raise exception 'PENDING release must clear the lease';
+  end if;
+
+  -- With next_attempt_at in the future, list_due must exclude the row.
+  select array_agg(id) into future_ids
+  from public.list_due_quote_followup_runs(
+    '91000000-0000-4000-8000-000000000001',
+    now(),
+    100
+  );
+  if future_ids is not null and '91800000-0000-4000-8000-000000000003' = any(future_ids) then
+    raise exception 'run with future next_attempt_at must not appear as due';
+  end if;
+
+  -- Move next_attempt_at into the past; the row must reappear as due.
+  update public.automation_runs
+    set next_attempt_at = now() - interval '1 minute'
+    where id = '91800000-0000-4000-8000-000000000003';
+  select array_agg(id) into past_ids
+  from public.list_due_quote_followup_runs(
+    '91000000-0000-4000-8000-000000000001',
+    now(),
+    100
+  );
+  if past_ids is null or not ('91800000-0000-4000-8000-000000000003' = any(past_ids)) then
+    raise exception 'run with reached next_attempt_at must reappear as due';
+  end if;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine and assignment/safety assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety and follow-up scheduling assertions passed' as result;
 
 rollback;
