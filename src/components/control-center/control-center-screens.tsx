@@ -1,5 +1,4 @@
 import {
-  Activity,
   AlertTriangle,
   Bot,
   Building2,
@@ -28,10 +27,10 @@ import type {
 } from "@/lib/control-center/contracts";
 
 const healthLabels: Record<ControlHealth, string> = {
-  HEALTHY: "Sain",
+  HEALTHY: "En bon état",
   DEGRADED: "Dégradé",
-  CRITICAL: "Critique",
-  UNKNOWN: "Inconnu",
+  CRITICAL: "Action requise",
+  UNKNOWN: "État inconnu",
 };
 
 const runLabels: Record<ControlRunStatus, string> = {
@@ -133,7 +132,7 @@ function DataTable<T>({
 }) {
   return (
     <>
-      <div className="hidden overflow-hidden  border border-[var(--border)] bg-[var(--panel)] md:block">
+      <div className="control-table hidden overflow-hidden border border-[var(--border)] bg-[var(--panel)] md:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[780px] text-left text-sm">
             <thead className="border-b border-[var(--border)] bg-[var(--panel-soft)] text-xs uppercase tracking-[0.12em] text-[var(--muted)]">
@@ -187,7 +186,7 @@ function ListPage<T>({
   children: (rows: T[]) => ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="control-screen mx-auto max-w-[1320px]">
       <PageHeader eyebrow={eyebrow} title={title} description={description} eyebrowStyle="section" />
       {result.status === "unavailable" ? (
         <UnavailableState noun={unavailableNoun} />
@@ -205,11 +204,11 @@ function ListPage<T>({
 
 export function ControlOverviewScreen({ result }: { result: ControlData<ControlOverview> }) {
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="control-screen mx-auto max-w-[1320px]">
       <PageHeader
         eyebrow="CENTRE DE CONTRÔLE"
-        title="Piloter les opérations par exception."
-        description="Une vue interne, calme et en lecture seule de la santé des organisations et de l’infrastructure Sesira."
+        title="Control Center"
+        description="Vue opérationnelle de Sesira. Qu’est-ce qui nécessite notre attention aujourd’hui ?"
         eyebrowStyle="section"
       />
       {result.status === "unavailable" ? (
@@ -219,13 +218,17 @@ export function ControlOverviewScreen({ result }: { result: ControlData<ControlO
           <p className="mt-8 text-xs text-[var(--muted)]">
             {result.data.periodLabel} · généré le {formatDate(result.generatedAt)}
           </p>
-          <section className="sesira-metric-grid mt-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Indicateurs opérationnels">
+          <section className="control-metrics sesira-metric-grid mt-4 sm:grid-cols-2 xl:grid-cols-5" aria-label="Indicateurs opérationnels">
             <MetricCard icon={Building2} label="Organisations" value={result.data.organizationCount.toLocaleString("fr-FR")} tone="cyan" layout="stacked" />
             <MetricCard icon={CircleGauge} label="Santé des automatisations" value={healthLabels[result.data.automationHealth]} tone="cyan" layout="stacked" />
-            <MetricCard icon={Activity} label="Taux de réussite" value={result.data.automationSuccessRate === null ? "Non disponible" : percentFormatter.format(result.data.automationSuccessRate)} tone="cyan" layout="stacked" />
             <MetricCard icon={ShieldAlert} label="Incidents ouverts" value={result.data.openIncidentCount.toLocaleString("fr-FR")} tone="cyan" layout="stacked" />
             <MetricCard icon={Bot} label="Coût des traitements Sesira" value={formatMoney(result.data.aiCost)} tone="cyan" layout="stacked" />
             <MetricCard icon={CircleDollarSign} label="Coût infrastructure" value={formatMoney(result.data.infrastructureCost)} tone="cyan" layout="stacked" />
+          </section>
+          <section className="control-environment mt-5" aria-label="État global de l’environnement">
+            <p className="sesira-eyebrow">ACTIONS EXTERNES · ENVIRONNEMENT</p>
+            <p className="mt-2 text-sm font-semibold">Lecture seule</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">Taux de réussite observé : {result.data.automationSuccessRate === null ? "Non disponible" : percentFormatter.format(result.data.automationSuccessRate)}. Aucune action opérateur n’est exposée.</p>
           </section>
         </>
       )}
@@ -311,7 +314,7 @@ export function ControlLoadingScreen() {
   return (
     <LoadingPage label="Chargement du centre de contrôle">
       <LoadingHeader />
-      <LoadingMetricGrid count={6} columns="three" />
+      <LoadingMetricGrid count={5} columns="three" />
     </LoadingPage>
   );
 }
