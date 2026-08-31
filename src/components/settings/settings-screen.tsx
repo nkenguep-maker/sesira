@@ -15,6 +15,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 import { PageHeader } from "@/components/sesira/page-header";
 import { StatusBadge, type StatusTone } from "@/components/sesira/status-badge";
@@ -170,6 +171,9 @@ export function SettingsScreen({
               </article>
             ))}
           </div>
+          <Link href="/app/settings/integrations" className="mt-5 inline-flex min-h-11 items-center border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--blue)]">
+            Voir les connexions <ChevronRight className="ml-2 size-4" />
+          </Link>
         </SettingsSection>
 
         <SettingsSection
