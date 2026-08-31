@@ -1107,6 +1107,31 @@ export type Database = {
         }
         Returns: string
       }
+      record_incident_once: {
+        Args: {
+          target_organization_id: string
+          target_fingerprint: string
+          target_severity: string
+          target_category: string
+          target_title: string
+          target_description?: string | null
+          target_entity_type?: string | null
+          target_entity_id?: string | null
+          target_metadata?: Json
+        }
+        Returns: {
+          id: string
+          created: boolean
+          recurrence_count: number
+        }[]
+      }
+      retry_failed_run: {
+        Args: {
+          target_run_id: string
+          target_organization_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

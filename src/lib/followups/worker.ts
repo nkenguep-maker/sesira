@@ -1,6 +1,9 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
 
 /**
  * Default lease duration for a claimed follow-up run. 5 minutes is
@@ -102,6 +105,8 @@ export async function releaseQuoteFollowupRun(
     errorMessage?: string | null;
     nextAttemptAt?: Date | null;
     outputSummary?: Record<string, unknown> | null;
+    /** Escape hatch for tests: inject a preconstructed client. */
+    client?: SupabaseClient<Database>;
   } = {},
 ): Promise<boolean> {
   if (terminalStatus === "PENDING" && !options.nextAttemptAt) {
@@ -110,7 +115,7 @@ export async function releaseQuoteFollowupRun(
     );
   }
 
-  const supabase = await createClient();
+  const supabase = options.client ?? (await createClient());
   const { data, error } = await supabase.rpc("release_automation_run", {
     target_run_id: runId,
     target_organization_id: organizationId,

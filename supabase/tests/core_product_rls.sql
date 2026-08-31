@@ -1812,6 +1812,190 @@ $$;
 
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution and Attention/audit assertions passed' as result;
+-- =========================================================================
+-- Retries + Incidents (C7)
+-- =========================================================================
+-- Runs as tenant A. Exercises:
+--   * record_incident_once inserts a fresh incident (created=true).
+--   * record_incident_once dedups on fingerprint (created=false, recurrence bumps).
+--   * a RESOLVED incident does NOT block a fresh occurrence.
+--   * cross-tenant incident write is rejected 42501.
+--   * empty fingerprint and invalid severity are rejected 22023.
+--   * retry_failed_run transitions FAILED -> PENDING and is a no-op on
+--     non-FAILED statuses.
+--   * release_automation_run(PENDING) bumps attempt_count.
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"91100000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+
+-- Fresh insert
+do $$
+declare
+  r record;
+begin
+  select * into r from public.record_incident_once(
+    '91000000-0000-4000-8000-000000000001',
+    'shadow_quote_followup:quote:91500000-0000-4000-8000-000000000001:provider_timeout',
+    'P3', 'workflow_failure', 'C7 test incident', null,
+    'quote', '91500000-0000-4000-8000-000000000001', '{}'::jsonb
+  );
+  if not r.created or r.recurrence_count <> 1 then
+    raise exception 'first incident should be created with recurrence=1';
+  end if;
+end;
+$$;
+
+-- Dedup on fingerprint
+do $$
+declare
+  r record;
+begin
+  select * into r from public.record_incident_once(
+    '91000000-0000-4000-8000-000000000001',
+    'shadow_quote_followup:quote:91500000-0000-4000-8000-000000000001:provider_timeout',
+    'P3', 'workflow_failure', 'replay title', null,
+    'quote', '91500000-0000-4000-8000-000000000001', '{}'::jsonb
+  );
+  if r.created or r.recurrence_count <> 2 then
+    raise exception 'replay must not create; recurrence should be 2, got created=% rec=%', r.created, r.recurrence_count;
+  end if;
+end;
+$$;
+
+-- RESOLVED does not block fresh
+do $$
+declare
+  r record;
+begin
+  update public.incidents
+  set status = 'RESOLVED', resolved_at = now()
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and fingerprint = 'shadow_quote_followup:quote:91500000-0000-4000-8000-000000000001:provider_timeout';
+
+  select * into r from public.record_incident_once(
+    '91000000-0000-4000-8000-000000000001',
+    'shadow_quote_followup:quote:91500000-0000-4000-8000-000000000001:provider_timeout',
+    'P3', 'workflow_failure', 'fresh after resolve', null,
+    'quote', '91500000-0000-4000-8000-000000000001', '{}'::jsonb
+  );
+  if not r.created or r.recurrence_count <> 1 then
+    raise exception 'fresh incident after RESOLVED must be created=true with recurrence=1';
+  end if;
+end;
+$$;
+
+-- Cross-tenant rejected 42501
+do $$
+declare captured text;
+begin
+  begin
+    perform public.record_incident_once(
+      '92000000-0000-4000-8000-000000000002',
+      'attack:q:92500000-0000-4000-8000-000000000002:x',
+      'P1', 'x', 'x', null, null, null, '{}'::jsonb
+    );
+    raise exception 'cross-tenant incident was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then raise exception 'unexpected sqlstate % on cross-tenant', captured; end if;
+  end;
+end;
+$$;
+
+-- Empty fingerprint rejected 22023
+do $$
+declare captured text;
+begin
+  begin
+    perform public.record_incident_once(
+      '91000000-0000-4000-8000-000000000001', '',
+      'P3', 'x', 'x', null, null, null, '{}'::jsonb
+    );
+    raise exception 'empty fingerprint was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'unexpected sqlstate % on empty fp', captured; end if;
+  end;
+end;
+$$;
+
+-- Invalid severity rejected 22023
+do $$
+declare captured text;
+begin
+  begin
+    perform public.record_incident_once(
+      '91000000-0000-4000-8000-000000000001', 'fp:a:b:c',
+      'P9', 'x', 'x', null, null, null, '{}'::jsonb
+    );
+    raise exception 'invalid severity was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'unexpected sqlstate % on bad severity', captured; end if;
+  end;
+end;
+$$;
+
+-- retry_failed_run: happy path
+update public.automation_runs
+set status = 'FAILED', error = 'perm error', completed_at = now(),
+    locked_at = null, lock_expires_at = null, locked_by = null,
+    next_attempt_at = null
+where id = '91800000-0000-4000-8000-000000000001';
+
+do $$
+declare
+  ok boolean;
+  observed_status text;
+  observed_error text;
+begin
+  ok := public.retry_failed_run(
+    '91800000-0000-4000-8000-000000000001',
+    '91000000-0000-4000-8000-000000000001'
+  );
+  if not ok then raise exception 'retry_failed_run must return true on FAILED'; end if;
+  select status, error into observed_status, observed_error
+  from public.automation_runs where id = '91800000-0000-4000-8000-000000000001';
+  if observed_status <> 'PENDING' then raise exception 'expected PENDING, got %', observed_status; end if;
+  if observed_error is not null then raise exception 'error must be cleared, got %', observed_error; end if;
+end;
+$$;
+
+-- retry_failed_run: no-op on non-FAILED
+do $$
+declare ok boolean;
+begin
+  ok := public.retry_failed_run(
+    '91800000-0000-4000-8000-000000000001',
+    '91000000-0000-4000-8000-000000000001'
+  );
+  if ok then raise exception 'retry_failed_run on PENDING must return false'; end if;
+end;
+$$;
+
+-- retry_failed_run: cross-tenant rejected 42501
+do $$
+declare captured text;
+begin
+  begin
+    perform public.retry_failed_run(
+      '91800000-0000-4000-8000-000000000001',
+      '92000000-0000-4000-8000-000000000002'
+    );
+    raise exception 'cross-tenant retry was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then raise exception 'unexpected sqlstate % on cross-tenant retry', captured; end if;
+  end;
+end;
+$$;
+
+reset role;
+
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit and Retries/incidents assertions passed' as result;
 
 rollback;
