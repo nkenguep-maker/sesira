@@ -1397,6 +1397,194 @@ $$;
 
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling and durable idempotency assertions passed' as result;
+-- =========================================================================
+-- Shadow Mode execution support (C5)
+-- =========================================================================
+-- These assertions exercise the migration-level guarantees that Shadow
+-- Mode leans on:
+--
+--   * release_automation_run accepts an atomic output_summary payload.
+--   * list_due_quote_followup_runs projects automation_config_level so
+--     the executor can dispatch by mode without a second query.
+--   * Cross-tenant claim / release / list_due are rejected with 42501
+--     even when called from an authenticated tenant session (the fix
+--     to the pg_has_role bypass hole).
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"91100000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+
+-- Cross-tenant claim from tenant A into tenant B must raise 42501.
+do $$
+declare
+  captured text;
+begin
+  begin
+    perform public.claim_automation_run(
+      '91800000-0000-4000-8000-000000000001',
+      '92000000-0000-4000-8000-000000000002',
+      'shadow-cross-tenant-worker',
+      300
+    );
+    raise exception 'cross-tenant claim was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % rejecting cross-tenant claim', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Cross-tenant release must also raise 42501.
+do $$
+declare
+  captured text;
+begin
+  begin
+    perform public.release_automation_run(
+      '91800000-0000-4000-8000-000000000001',
+      '92000000-0000-4000-8000-000000000002',
+      'shadow-cross-tenant-worker',
+      'SUCCEEDED',
+      null,
+      null,
+      null
+    );
+    raise exception 'cross-tenant release was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % rejecting cross-tenant release', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Cross-tenant due-listing must raise 42501.
+do $$
+declare
+  captured text;
+begin
+  begin
+    perform public.list_due_quote_followup_runs(
+      '92000000-0000-4000-8000-000000000002',
+      now(),
+      10
+    );
+    raise exception 'cross-tenant list_due_quote_followup_runs was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % rejecting cross-tenant list_due', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- list_due_quote_followup_runs now projects the automation_config's
+-- `level`. Executor dispatchers rely on this to route to Shadow /
+-- Approval / Automatic without a second query.
+do $$
+declare
+  observed_level text;
+begin
+  select automation_config_level into observed_level
+  from public.list_due_quote_followup_runs(
+    '91000000-0000-4000-8000-000000000001',
+    (now() + interval '365 days'),
+    50
+  )
+  where id = '91800000-0000-4000-8000-000000000001';
+  if observed_level is null then
+    raise exception 'list_due_quote_followup_runs no longer projects automation_config_level';
+  end if;
+  if observed_level not in ('OBSERVATION', 'SHADOW', 'APPROVAL', 'AUTOMATIC') then
+    raise exception 'automation_config_level projected an unexpected value: %', observed_level;
+  end if;
+end;
+$$;
+
+-- release_automation_run must persist output_summary atomically. We
+-- claim a due run, release it with a payload, then read back the row
+-- and assert the payload landed. The payload is a Shadow-shaped
+-- decision blob.
+do $$
+declare
+  claimed boolean;
+  released boolean;
+  persisted jsonb;
+begin
+  claimed := public.claim_automation_run(
+    '91800000-0000-4000-8000-000000000001',
+    '91000000-0000-4000-8000-000000000001',
+    'shadow-output-worker',
+    300
+  );
+  if not claimed then
+    raise exception 'expected to claim run 91800000-0000-4000-8000-000000000001 for output_summary test';
+  end if;
+
+  released := public.release_automation_run(
+    '91800000-0000-4000-8000-000000000001',
+    '91000000-0000-4000-8000-000000000001',
+    'shadow-output-worker',
+    'SUCCEEDED',
+    null,
+    null,
+    jsonb_build_object(
+      'decision', jsonb_build_object('outcome', 'DUE'),
+      'provenance', jsonb_build_object(
+        'quote_id', '91500000-0000-4000-8000-000000000001',
+        'step', 1
+      ),
+      'proposed_action', jsonb_build_object(
+        'channel', 'email',
+        'recipient_email', 'client-a@example.com',
+        'subject', 'Relance DEV-042 — étape 1'
+      )
+    )
+  );
+  if not released then
+    raise exception 'expected to release run with output_summary';
+  end if;
+
+  select output_summary into persisted
+  from public.automation_runs
+  where id = '91800000-0000-4000-8000-000000000001';
+
+  if persisted is null or persisted -> 'decision' ->> 'outcome' <> 'DUE' then
+    raise exception 'release_automation_run did not persist output_summary (got %)', persisted;
+  end if;
+  if persisted -> 'proposed_action' ->> 'channel' <> 'email' then
+    raise exception 'release_automation_run did not persist nested proposed_action';
+  end if;
+end;
+$$;
+
+reset role;
+
+-- Shadow no-send invariant at the schema level: no `message.sent` event
+-- may exist inside this transaction. Shadow is the only workflow that
+-- has been exercised in the fixtures + tests above, so its own tests
+-- must not have produced any send-shaped event. This is a defense-in-
+-- depth check against a future test accidentally emitting one.
+do $$
+declare
+  sent_count integer;
+begin
+  select count(*) into sent_count
+  from public.events
+  where type = 'message.sent';
+  if sent_count <> 0 then
+    raise exception 'shadow test transaction produced % message.sent events (must be 0)', sent_count;
+  end if;
+end;
+$$;
+
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency and Shadow execution assertions passed' as result;
 
 rollback;

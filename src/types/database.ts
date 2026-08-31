@@ -1020,6 +1020,7 @@ export type Database = {
           terminal_status: string
           error_message?: string | null
           next_attempt_at?: string | null
+          target_output_summary?: Json | null
         }
         Returns: boolean
       }
@@ -1033,6 +1034,8 @@ export type Database = {
           id: string
           organization_id: string
           automation_config_id: string | null
+          automation_config_level: string
+          automation_config_config: Json
           idempotency_key: string
           scheduled_for: string | null
           next_attempt_at: string | null

@@ -20,6 +20,8 @@ export interface DueRunRow {
   id: string;
   organization_id: string;
   automation_config_id: string | null;
+  automation_config_level: string;
+  automation_config_config: unknown;
   idempotency_key: string;
   scheduled_for: string | null;
   next_attempt_at: string | null;
@@ -99,6 +101,7 @@ export async function releaseQuoteFollowupRun(
   options: {
     errorMessage?: string | null;
     nextAttemptAt?: Date | null;
+    outputSummary?: Record<string, unknown> | null;
   } = {},
 ): Promise<boolean> {
   if (terminalStatus === "PENDING" && !options.nextAttemptAt) {
@@ -115,6 +118,7 @@ export async function releaseQuoteFollowupRun(
     terminal_status: terminalStatus,
     error_message: options.errorMessage ?? null,
     next_attempt_at: options.nextAttemptAt?.toISOString() ?? null,
+    target_output_summary: (options.outputSummary ?? null) as never,
   });
 
   if (error) {
