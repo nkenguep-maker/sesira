@@ -41,7 +41,7 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
         title="Résultats"
         description="Ce que Sesira a observé, ce qu’il estime, et ce qu’il ne peut pas attribuer avec certitude."
         actions={
-          <nav aria-label="Période des résultats" className="inline-flex  border border-[var(--border)] bg-[var(--panel)] p-1">
+          <nav aria-label="Période des résultats" className="flex max-w-full flex-wrap border border-[var(--border)] bg-[var(--panel)] p-1">
             {PERIODS.map((period) => {
               const active = period.key === summary.period.key;
 
@@ -165,7 +165,7 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
           {["L’impact causal d’une relance sur une signature.", "La raison exacte d’une décision client.", "Un chiffre d’affaires généré par Sesira sans preuve causale."].map((item) => <p key={item} className="border border-[var(--line)] bg-[var(--surface)] p-4 text-sm leading-6">{item}</p>)}
         </div>
         <p className="mt-6 border-l-2 border-[var(--blue)] pl-4 text-sm font-medium">Sesira ne transforme jamais une estimation en résultat observé.</p>
-        <Link href="/app/results" className="mt-5 inline-flex text-sm font-semibold text-[var(--blue)]">Voir les rapports <span className="ml-2">→</span></Link>
+        <Link href="/app/reports" className="mt-5 inline-flex text-sm font-semibold text-[var(--blue)]">Voir les rapports <span className="ml-2">→</span></Link>
       </section>
     </div>
   );

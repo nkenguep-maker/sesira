@@ -23,9 +23,9 @@ const RUN_PRESENTATION: Record<
 
 export const AUTOMATION_LEVEL_LABELS: Record<AutomationLevel, string> = {
   OBSERVATION: "Observation",
-  SHADOW: "Observation en conditions réelles",
-  APPROVAL: "Validation par votre équipe",
-  AUTOMATIC: "Automatique",
+  SHADOW: "Il vous montre",
+  APPROVAL: "Validation",
+  AUTOMATIC: "Automatisation contrôlée",
 };
 
 export function buildAutomationCards(

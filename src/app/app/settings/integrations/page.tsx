@@ -11,7 +11,7 @@ export default async function ConnectionsPage() {
   if (!viewer) return null;
   const supabase = await createClient();
   const [integrations, automation] = await Promise.all([
-    supabase.from("integrations").select("id, provider, type, status, connected_at, last_sync_at, expires_at, error").eq("organization_id", viewer.organization.id).ilike("type", "email").order("updated_at", { ascending: false }).limit(1),
+    supabase.from("integrations").select("provider, status, last_sync_at").eq("organization_id", viewer.organization.id).ilike("type", "email").order("updated_at", { ascending: false }).limit(1),
     supabase.from("automation_configs").select("level").eq("organization_id", viewer.organization.id).eq("enabled", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   if (integrations.error) throw new Error("Impossible de vérifier l’état de vos connexions.");

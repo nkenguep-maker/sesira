@@ -12,7 +12,9 @@ const navigation = [
   { href: "/app/marketing", label: "Factures", exact: false, section: "preview" },
   { href: "/app/marketing", label: "Documents", exact: false, section: "preview" },
   { href: "/app/marketing", label: "Interventions", exact: false, section: "preview" },
-  { href: "/app/results", label: "Rapports", exact: false, section: "" },
+  { href: "/app/results", label: "Résultats", exact: false, section: "" },
+  { href: "/app/reports", label: "Rapports", exact: false, section: "" },
+  { href: "/app/automations", label: "Automatisations", exact: false, section: "" },
   { href: "/app/settings", label: "Réglages", exact: false, section: "" },
 ];
 
@@ -21,7 +23,7 @@ export function AppNavigation({ collapsed = false }: { collapsed?: boolean }) {
 
   return (
     <nav
-      className="flex gap-px overflow-x-auto border-b border-white/15 bg-[var(--ink)] py-2 lg:grid lg:grid-cols-1 lg:gap-0 lg:overflow-visible lg:border-b-0 lg:py-3"
+      className="hidden border-b border-white/15 bg-[var(--ink)] lg:grid lg:grid-cols-1 lg:gap-0 lg:border-b-0 lg:py-3"
       aria-label="Navigation principale"
     >
       {navigation.map(({ href, label, exact, section }, index) => {

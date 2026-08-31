@@ -7,9 +7,9 @@ describe("automation product view model", () => {
   it("maps the four internal levels to simple client labels", () => {
     expect(AUTOMATION_LEVEL_LABELS).toEqual({
       OBSERVATION: "Observation",
-      SHADOW: "Observation en conditions réelles",
-      APPROVAL: "Validation par votre équipe",
-      AUTOMATIC: "Automatique",
+      SHADOW: "Il vous montre",
+      APPROVAL: "Validation",
+      AUTOMATIC: "Automatisation contrôlée",
     });
   });
 

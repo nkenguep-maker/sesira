@@ -1,182 +1,42 @@
-import {
-  AlertTriangle,
-  Bot,
-  CheckCircle2,
-  ShieldCheck,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { CheckCircle2, ShieldCheck } from "lucide-react";
 
-import { EmptyState } from "@/components/sesira/empty-state";
-import { PageHeader } from "@/components/sesira/page-header";
-import { StatusBadge, type StatusTone } from "@/components/sesira/status-badge";
-import type { AutomationCard } from "@/lib/automations/contracts";
-import { AUTOMATION_LEVEL_LABELS } from "@/lib/automations/view-model";
+import type { AutomationCard, AutomationLevel } from "@/lib/automations/contracts";
 
-const HEALTH_TONES: Record<AutomationCard["health"]["tone"], StatusTone> = {
-  emerald: "emerald",
-  amber: "amber",
-  cyan: "cyan",
-  slate: "neutral",
+const modeCopy: Record<AutomationLevel, string> = {
+  OBSERVATION: "Sesira surveille. Aucune action n’est préparée pour envoi.",
+  SHADOW: "Sesira prépare ce qu’il aurait fait. Aucun message n’est envoyé.",
+  APPROVAL: "Sesira prépare les actions. Votre équipe les valide, les modifie ou les refuse avant envoi.",
+  AUTOMATIC: "Les actions autorisées peuvent être exécutées selon les règles définies. Les décisions sensibles restent humaines.",
 };
+const modes: AutomationLevel[] = ["OBSERVATION", "SHADOW", "APPROVAL", "AUTOMATIC"];
+const modeNames: Record<AutomationLevel, string> = {
+  OBSERVATION: "Observation",
+  SHADOW: "Il vous montre",
+  APPROVAL: "Validation",
+  AUTOMATIC: "Automatisation contrôlée",
+};
+const modeNumbers: Record<AutomationLevel, string> = { OBSERVATION: "01", SHADOW: "02", APPROVAL: "03", AUTOMATIC: "04" };
 
 export function AutomationsScreen({ cards }: { cards: AutomationCard[] }) {
-  return (
-    <div className="mx-auto max-w-7xl">
-      <PageHeader
-        eyebrow="Automatisations"
-        title="Un niveau de confiance clair pour chaque action."
-        description="Sesira commence par observer. Votre équipe garde la main sur tout ce qui demande du jugement, une décision commerciale ou une action sensible."
-      />
+  const current = cards[0]?.level ?? "OBSERVATION";
+  const health = cards.length ? cards.every((card) => card.health.tone === "emerald") ? "EN BON ÉTAT" : "À VÉRIFIER" : "INDISPONIBLE";
 
-      <section className="mt-8  border border-[var(--blue)] bg-[var(--blue-soft)] p-5 md:p-6">
-        <div className="flex items-start gap-3">
-          <ShieldCheck className="mt-0.5 size-5 shrink-0 text-[var(--blue)]" />
-          <div>
-            <h2 className="font-medium">Aucune action ne peut être lancée depuis cet écran.</h2>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-              Les cartes décrivent les autorisations configurées et montrent uniquement une activité
-              réellement enregistrée. Elles ne prouvent pas qu’une action externe a été exécutée.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <TrustLevels />
-
-      {cards.length ? (
-        <section className="mt-10" aria-labelledby="enabled-automations-title">
-          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-xs font-semibold tracking-[0.18em] text-[var(--blue)]">ACTIVÉES</p>
-              <h2 id="enabled-automations-title" className="mt-2 text-xl font-semibold">
-                Vos automatisations
-              </h2>
-            </div>
-            <p className="text-sm text-[var(--muted)]">
-              {cards.length} module{cards.length > 1 ? "s" : ""} visible{cards.length > 1 ? "s" : ""}
-            </p>
-          </div>
-
-          <div className="mt-5 grid gap-px border border-[var(--line)] bg-[var(--line)]">
-            {cards.map((card) => <AutomationCardView key={card.id} card={card} />)}
-          </div>
-        </section>
-      ) : (
-        <div className="mt-10">
-          <EmptyState
-            icon={Bot}
-            title="Aucune automatisation activée."
-            description="Seuls les modules activés pour votre entreprise apparaissent ici. Aucun processus n’est exécuté depuis cette page."
-          />
-        </div>
-      )}
-    </div>
-  );
+  return <div className="automation-page"><header className="automation-page-head"><p className="automation-kicker">AUTOMATISATIONS</p><h1>Automatisations</h1><p>Sesira surveille vos processus selon les règles définies avec votre entreprise.</p></header><div className="automation-summary"><Summary label="ACTIVES" value={String(cards.length)} /><Summary label="MODE ACTUEL" value={modeNames[current]} /><Summary label="SANTÉ" value={health} /><Summary label="VALIDATION" value="Indisponible" /></div><section className="automation-mode"><div><p className="automation-label">MODE ACTUEL</p><b className="automation-mode-number">{modeNumbers[current]}</b><h2>{modeNames[current]}</h2><p>{modeCopy[current]}</p></div><div className="automation-levels">{modes.map((level) => <div key={level} className={level === current ? "current" : ""}><span>{modeNumbers[level]}</span><b>{modeNames[level]}</b></div>)}</div></section><section className="automation-safety"><ShieldCheck aria-hidden="true" /><div><b>Aucune action sensible n’est modifiée depuis cet écran.</b><p>Les réglages sont présentés depuis les données de l’organisation. Le changement de mode et la suspension nécessitent une action serveur dédiée.</p></div></section>{cards.length ? <section className="automation-list"><div className="automation-section-head"><div><p className="automation-label">PROCESSUS ACTIFS</p><h2>Relance des devis</h2></div><span>{cards.length} module{cards.length > 1 ? "s" : ""}</span></div>{cards.map((card) => <AutomationCardView key={card.id} card={card} />)}</section> : <EmptyAutomation />}</div>;
 }
 
-function TrustLevels() {
-  const levels = [
-    ["Observation", "Sesira observe les informations disponibles."],
-    ["Observation en conditions réelles", "Sesira prépare ce qu’elle aurait fait, sans agir."],
-    ["Validation par votre équipe", "Votre équipe valide avant toute action autorisée."],
-    ["Automatique", "Seules les actions standard explicitement autorisées peuvent avancer."],
-  ] as const;
-
-  return (
-    <section className="mt-8 border border-[var(--ink)] bg-[var(--ink)] p-5 text-white md:p-6" aria-labelledby="trust-title">
-      <p className="sesira-eyebrow !text-[var(--blue-light)]">CONFIANCE PROGRESSIVE</p>
-      <h2 id="trust-title" className="mt-2 text-lg font-semibold">Du constat à l’action contrôlée</h2>
-      <ol className="mt-5 grid gap-px bg-white/15 md:grid-cols-2 xl:grid-cols-4">
-        {levels.map(([title, description], index) => (
-          <li key={title} className={`bg-[var(--ink)] p-4 ${index === 0 ? "text-white" : "text-white/55"}`}>
-            <p className="text-xs font-semibold text-[var(--blue-light)]">0{index + 1}</p>
-            <p className={`mt-2 text-sm ${index === 0 ? "font-semibold" : "font-medium"}`}>{title}</p>
-            <p className="mt-3 text-xs leading-5">{description}</p>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
+function Summary({ label, value }: { label: string; value: string }) {
+  return <div><span>{label}</span><b>{value}</b></div>;
 }
 
 function AutomationCardView({ card }: { card: AutomationCard }) {
-  const noRecordedResult = card.level === "OBSERVATION" || !card.activityAvailable;
-
-  return (
-    <article className="grid bg-[var(--surface)] xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="p-5 md:p-6">
-        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
-          <div className="min-w-0">
-            <h3 className="text-lg font-semibold">{card.title}</h3>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{card.description}</p>
-          </div>
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <StatusBadge tone="neutral">Activée</StatusBadge>
-            <StatusBadge tone="blue">{AUTOMATION_LEVEL_LABELS[card.level]}</StatusBadge>
-            <StatusBadge tone={HEALTH_TONES[card.health.tone]}>{card.health.label}</StatusBadge>
-          </div>
-        </div>
-
-        {card.level === "SHADOW" ? (
-          <div className="mt-5 border-l-2 border-[var(--blue)] bg-[var(--blue-soft)] p-4">
-            <p className="text-xs font-semibold tracking-wide text-[var(--blue)]">OBSERVATION EN CONDITIONS RÉELLES</p>
-            <p className="mt-2 font-medium">Sesira aurait effectué cette action.</p>
-            <p className="mt-1 text-xs leading-5 text-[var(--ink-soft)]">Action préparée uniquement. Aucun envoi n’a eu lieu.</p>
-          </div>
-        ) : null}
-
-        <div className="mt-6 grid gap-px border border-[var(--line-soft)] bg-[var(--line-soft)] sm:grid-cols-3">
-          <StatusFact icon={CheckCircle2} label="Dernière réussite" value={!card.activityAvailable ? "Information indisponible" : noRecordedResult ? "—" : card.lastSuccess ?? "—"} tone="text-[var(--blue)]" />
-          <StatusFact icon={AlertTriangle} label="Dernier problème" value={!card.activityAvailable ? "Information indisponible" : noRecordedResult ? "—" : card.lastProblem ?? "—"} tone="text-[var(--sand-text)]" />
-          <div className="bg-[var(--surface)] p-4">
-            <p className="sesira-eyebrow">Activité 30 jours</p>
-            <p className="mt-2 font-[family-name:var(--font-display)] text-xl font-semibold">{noRecordedResult ? "—" : card.recentActivity.length}</p>
-          </div>
-        </div>
-
-        {!card.activityAvailable ? (
-          <p className="mt-4 border-l-2 border-[var(--sand-line)] bg-[var(--sand)] p-3 text-xs text-[var(--sand-text)]">Activité temporairement indisponible.</p>
-        ) : !card.recentActivity.length ? (
-          <p className="mt-4 text-xs text-[var(--ink-mute)]">Aucune activité réelle enregistrée.</p>
-        ) : null}
-
-        {card.activityAvailable && card.recentActivity.length ? (
-          <section className="mt-5" aria-label={`Activité récente — ${card.title}`}>
-            <p className="sesira-eyebrow">Activité récente</p>
-            <ul className="mt-2 divide-y divide-[var(--line-soft)] border-y border-[var(--line-soft)]">
-              {card.recentActivity.map((activity) => (
-                <li key={activity.id} className="grid gap-1 py-3 text-sm sm:grid-cols-[minmax(0,1fr)_auto]">
-                  <div>
-                    <p>{activity.label}</p>
-                  </div>
-                  <p className="text-xs text-[var(--ink-mute)]">{activity.date}</p>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-      </div>
-
-      <aside className="border-t border-[var(--line-soft)] bg-[var(--paper)] p-5 md:p-6 xl:border-l xl:border-t-0">
-        <p className="sesira-eyebrow">CE QUE SESIRA PEUT FAIRE</p>
-        <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">{card.allowedAction}</p>
-        <div className="mt-6 border-t border-[var(--line-strong)] pt-5">
-          <p className="sesira-eyebrow text-[var(--ink)]">TOUJOURS DÉCIDÉ PAR VOUS</p>
-          <p className="mt-3 text-sm font-medium leading-6 text-[var(--ink)]">{card.humanJudgment}</p>
-        </div>
-      </aside>
-    </article>
-  );
+  const hasActivity = card.activityAvailable && card.recentActivity.length > 0;
+  return <article className="automation-card"><div className="automation-card-main"><div className="automation-card-title"><div><p className="automation-label">RELANCE DES DEVIS</p><h3>{card.title}</h3><p>{card.description}</p></div><span className={`automation-state ${card.health.tone === "emerald" ? "good" : "warn"}`}>{card.status === "ACTIVE" ? "ACTIF" : "INACTIF"}</span></div><div className="automation-facts"><Fact label="MODE" value={modeNames[card.level]} /><Fact label="DOSSIERS SURVEILLÉS" value="Indisponible" /><Fact label="AUJOURD’HUI" value={card.activityAvailable ? String(card.recentActivity.length) : "Indisponible"} /><Fact label="SANTÉ" value={card.health.label === "Stable" ? "EN BON ÉTAT" : card.health.label.toUpperCase()} /></div>{hasActivity ? <section className="automation-activity"><p className="automation-label">ACTIVITÉ RÉCENTE</p><ul>{card.recentActivity.map((activity) => <li key={activity.id}><span>{activity.date}</span><b>{activity.label}</b></li>)}</ul></section> : <p className="automation-muted">{card.activityAvailable ? "Aucune activité réelle enregistrée." : "Activité temporairement indisponible."}</p>}</div><aside className="automation-card-side"><p className="automation-label">CE QUE SESIRA PEUT FAIRE</p><p>{card.allowedAction}</p><div><p className="automation-label">TOUJOURS DÉCIDÉ PAR VOUS</p><p>{card.humanJudgment}</p></div><div><p className="automation-label">ARRÊTS AUTOMATIQUES</p><p>Réponse reçue · Désinscription · Plainte · Devis gagné · Devis perdu · Pause manuelle</p></div><button type="button" disabled title="La suspension nécessite une action serveur">Suspendre l’automatisation</button></aside></article>;
 }
 
-function StatusFact({ icon: Icon, label, value, tone }: { icon: LucideIcon; label: string; value: string; tone: string }) {
-  return (
-    <div className="bg-[var(--surface)] p-4">
-      <div className="flex items-center gap-2">
-        <Icon className={`size-4 ${tone}`} />
-        <p className="text-xs text-[var(--muted)]">{label}</p>
-      </div>
-      <p className="mt-2 text-sm font-medium">{value}</p>
-    </div>
-  );
+function Fact({ label, value }: { label: string; value: string }) {
+  return <div><span>{label}</span><b>{value}</b></div>;
+}
+
+function EmptyAutomation() {
+  return <section className="automation-empty"><CheckCircle2 aria-hidden="true" /><h2>Aucune automatisation active.</h2><p>Sesira peut commencer par observer le suivi de vos devis.</p><span>Configuration en cours.</span></section>;
 }

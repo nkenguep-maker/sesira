@@ -245,3 +245,47 @@ a {
     padding: 1.25rem;
   }
 }
+
+.sesira-global-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem clamp(1rem, 2.4vw, 1.75rem);
+  background: var(--sand-text);
+  color: white;
+  font-size: 0.8125rem;
+}
+
+.sesira-global-warning b {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sesira-mobile-nav {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+.sesira-mobile-nav a.active {
+  border-top: 2px solid var(--sand-text);
+  color: white;
+  font-weight: 700;
+}
+
+@media (max-width: 540px) {
+  .sesira-global-warning {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

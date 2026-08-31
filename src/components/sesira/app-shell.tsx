@@ -4,6 +4,7 @@ import { Building2, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 import type { ViewerContext } from "@/lib/auth/viewer";
 
@@ -12,12 +13,16 @@ import { AppNavigation } from "@/components/sesira/app-navigation";
 
 export function AppShell({
   viewer,
+  currentMode,
   children,
 }: {
   viewer: ViewerContext;
+  currentMode: string | null;
   children: ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const pathname = usePathname();
+  if (pathname === "/app/onboarding" || pathname.startsWith("/app/imports")) return <>{children}</>;
   return (
     <div className={`sesira-app-shell min-h-screen bg-[var(--paper)] text-[var(--ink)] lg:grid ${collapsed ? "lg:grid-cols-[72px_1fr]" : "lg:grid-cols-[236px_1fr]"}`}>
       <aside className="sesira-sidebar border-b border-white/15 bg-[var(--ink)] text-white lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:border-r-white/15">
@@ -62,7 +67,7 @@ export function AppShell({
           <div className={`${collapsed ? "hidden" : ""} mt-auto hidden border-t border-white/15 px-3 py-5 lg:block`}>
             <div className="mb-4 border-b border-white/10 px-2 pb-4">
               <p className="sesira-eyebrow !text-[var(--blue-light)]">Niveau actuel</p>
-              <p className="mt-2 flex items-center gap-2 text-xs text-white/70"><span className="sesira-status-dot size-1.5 bg-[var(--blue-light)]" />Observation</p>
+              <p className="mt-2 flex items-center gap-2 text-xs text-white/70"><span className="sesira-status-dot size-1.5 bg-[var(--blue-light)]" />{automationModeLabel(currentMode)}</p>
             </div>
             <p className="truncate px-2 text-xs text-white/50">{viewer.email}</p>
             <form action={logoutAction} className="mt-2">
@@ -75,18 +80,28 @@ export function AppShell({
         </div>
       </aside>
 
-      <main className="sesira-zone min-w-0"><AppTopbar viewer={viewer} />{children}</main>
+      <main className="sesira-zone min-w-0">
+        <AppTopbar viewer={viewer} currentMode={currentMode} />
+        {viewer.organization.status === "SUSPENDED" ? <div className="sesira-global-warning" role="status"><b>Organisation suspendue</b><span>Vos dossiers restent consultables. Les actions externes sont suspendues.</span></div> : null}
+        {children}
+      </main>
       <MobileBottomNav />
     </div>
   );
 }
 
 function MobileBottomNav() {
-  return <nav className="sesira-mobile-nav" aria-label="Navigation mobile"><Link href="/app/attention">À traiter</Link><Link href="/app/quotes">Devis</Link><Link href="/app/requests">Demandes</Link><Link href="/app/results">Rapports</Link></nav>;
+  const pathname = usePathname();
+  const items = [["/app/attention", "À traiter"], ["/app/quotes", "Devis"], ["/app/requests", "Demandes"], ["/app/reports", "Rapports"]] as const;
+  return <nav className="sesira-mobile-nav" aria-label="Navigation mobile">{items.map(([href, label]) => { const active = pathname.startsWith(href); return <Link key={href} href={href} aria-current={active ? "page" : undefined} className={active ? "active" : undefined}>{label}</Link>; })}</nav>;
 }
 
-function AppTopbar({ viewer }: { viewer: ViewerContext }) {
-  return <div className="sesira-topbar"><label className="sesira-search"><span className="sr-only">Rechercher</span><input type="search" disabled placeholder="Rechercher un client, un devis, un montant" aria-label="Recherche globale indisponible" /><span aria-hidden="true">⌕</span></label><div className="sesira-mode"><span>Mode</span><b>Observation</b><button type="button" disabled title="La suspension sera disponible avec l’action serveur dédiée">Suspendre</button></div><button type="button" disabled className="sesira-activity">Aujourd’hui · —</button><span className="sesira-user">{viewer.email ?? "Utilisateur"}</span></div>;
+function AppTopbar({ viewer, currentMode }: { viewer: ViewerContext; currentMode: string | null }) {
+  return <div className="sesira-topbar"><label className="sesira-search"><span className="sr-only">Rechercher</span><input type="search" disabled placeholder="Recherche globale indisponible" aria-label="Recherche globale indisponible" title="La recherche globale n’est pas encore disponible" /><span aria-hidden="true">⌕</span></label><div className="sesira-mode"><span>Mode</span><b>{automationModeLabel(currentMode)}</b><button type="button" disabled title="La suspension nécessite une action serveur dédiée">Suspendre</button></div><span className="sesira-activity" title="Le résumé d’activité n’est pas encore disponible">Aujourd’hui · indisponible</span><span className="sesira-user">{viewer.email ?? "Utilisateur"}</span></div>;
+}
+
+function automationModeLabel(mode: string | null): string {
+  return ({ OBSERVATION: "Observation", SHADOW: "Il vous montre", APPROVAL: "Validation", AUTOMATIC: "Automatisation contrôlée" } as Record<string, string>)[mode ?? ""] ?? "Mode non disponible";
 }
 
 function organizationStatusLabel(status: string): string {

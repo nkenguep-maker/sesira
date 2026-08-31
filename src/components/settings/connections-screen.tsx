@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type Connection = { id: string; provider: string; type: string; status: string; connected_at: string | null; last_sync_at: string | null; expires_at: string | null; error: string | null };
+type Connection = { provider: string; status: string; last_sync_at: string | null };
 const stateMap: Record<string, { label: string; tone: string; explanation: string }> = {
   CONNECTED: { label: "Connecté", tone: "good", explanation: "La connexion est enregistrée dans votre espace." },
   CONNECTING: { label: "Connexion en cours", tone: "good", explanation: "La connexion est en cours de préparation." },

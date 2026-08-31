@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const modules = [["Clients", "DISPONIBLE"], ["Demandes", "DISPONIBLE"], ["Devis", "DISPONIBLE"], ["Emails", "APERÇU"], ["Interventions", "EN DÉVELOPPEMENT"], ["Documents", "APERÇU"], ["Factures", "EN DÉVELOPPEMENT"], ["Growth", "APERÇU"]] as const;
 
@@ -25,4 +25,45 @@ function PlatformSection() { return <section className="section navy platform"><
 function FounderSection() { return <section id="fondateur" className="section paper founder"><div><p className="eyebrow">06 · QUI JE SUIS</p><h2>Un outil pensé<br /><em>depuis le terrain.</em></h2></div><div className="founder-copy"><p>Sesira est né d'une question simple : pourquoi les entreprises qui travaillent le plus dur perdent-elles encore des opportunités dans leurs propres boîtes mail ?</p><p>Je construis Sesira pour les entreprises de chauffage, climatisation et pompes à chaleur qui veulent grandir sans perdre leur façon de travailler.</p><p className="founder-signature">Paul N. Kengué<br /><small>Fondateur de Sesira</small></p></div></section>; }
 function FinalCta({ onDiagnostic }: { onDiagnostic: () => void }) { return <section className="final-cta navy"><p className="eyebrow copper">07 · COMMENCER</p><h2>Commencez par<br /><em>vos vrais devis.</em></h2><p>Le premier déploiement peut se concentrer sur vos devis ouverts avant d'étendre Sesira au reste de l'entreprise.</p><button className="landing-button" onClick={onDiagnostic}>Faire mon diagnostic · 2 minutes <b>↗</b></button></section>; }
 function LandingFooter() { return <footer className="landing-footer"><Link href="/" className="landing-logo">SESIRA<span>.</span></Link><div><span>Produit</span><a href="#fonctionnement">Comment ça marche</a><a href="#diagnostic">Le diagnostic</a></div><div><span>Accès</span><Link href="/login">Se connecter</Link></div><p>© 2026 Sesira · Suivi des devis pour entreprises CVC</p></footer>; }
-function DiagnosticDialog({ onClose }: { onClose: () => void }) { const [values, setValues] = useState({ quotes: "45", amount: "12000", margin: "30", price: "1500", installation: "1200" }); const cost = Number(values.price) * 12 + Number(values.installation); const perQuote = Number(values.amount) * Number(values.margin) / 100; const needed = perQuote ? Math.ceil(cost / perQuote) : 0; const point = Number(values.quotes) ? (needed / Number(values.quotes) / 12 * 100).toFixed(1) : "0.0"; const fit = Number(point) <= 1.5 ? "BON FIT" : Number(point) <= 3 ? "À VÉRIFIER" : "PAS ENCORE ADAPTÉ"; return <div className="dialog-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}><section className="diagnostic-dialog" role="dialog" aria-modal="true" aria-labelledby="diag-title"><button className="dialog-close" onClick={onClose} aria-label="Fermer">×</button><p className="eyebrow dark">DIAGNOSTIC · 2 MINUTES</p><h2 id="diag-title">Vos chiffres, votre seuil.</h2><p className="dialog-lede">Modifiez les hypothèses pour voir quand Sesira se rembourse.</p><div className="dialog-fields">{[["quotes", "Devis par mois"], ["amount", "Montant moyen (€)"], ["margin", "Marge (%)"], ["price", "Prix Sesira / mois (€)"], ["installation", "Installation (€)"]].map(([key, label]) => <label key={key}>{label}<input type="number" min="0" value={values[key as keyof typeof values]} onChange={(e) => setValues({ ...values, [key]: e.target.value })} /></label>)}</div><div className="dialog-result"><span>{fit}</span><strong>{needed} devis</strong><small>supplémentaires nécessaires · ≈ +{point} point de conversion</small></div>{fit === "PAS ENCORE ADAPTÉ" ? <p className="dialog-warning">Avec les chiffres indiqués, Sesira ne semble pas encore économiquement adapté à votre entreprise.</p> : null}<Link href="/diagnostic" className="text-link dark-link" onClick={onClose}>Ouvrir le diagnostic complet ↗</Link></section></div>; }
+function DiagnosticDialog({ onClose }: { onClose: () => void }) {
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const [values, setValues] = useState({ quotes: "45", amount: "12000", margin: "30", price: "1500", installation: "1200" });
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, [onClose]);
+
+  const cost = Number(values.price) * 12 + Number(values.installation);
+  const perQuote = Number(values.amount) * Number(values.margin) / 100;
+  const needed = perQuote ? Math.ceil(cost / perQuote) : 0;
+  const point = Number(values.quotes) ? (needed / Number(values.quotes) / 12 * 100).toFixed(1) : "0.0";
+  const fit = Number(point) <= 1.5 ? "BON FIT" : Number(point) <= 3 ? "À VÉRIFIER" : "PAS ENCORE ADAPTÉ";
+
+  return <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section ref={dialogRef} className="diagnostic-dialog" role="dialog" aria-modal="true" aria-labelledby="diag-title" aria-describedby="diag-description"><button ref={closeRef} className="dialog-close" onClick={onClose} aria-label="Fermer">×</button><p className="eyebrow dark">DIAGNOSTIC · 2 MINUTES</p><h2 id="diag-title">Vos chiffres, votre seuil.</h2><p className="dialog-lede" id="diag-description">Modifiez les hypothèses pour voir quand Sesira se rembourse.</p><div className="dialog-fields">{[["quotes", "Devis par mois"], ["amount", "Montant moyen (€)"], ["margin", "Marge (%)"], ["price", "Prix Sesira / mois (€)"], ["installation", "Installation (€)"]].map(([key, label]) => <label key={key}>{label}<input type="number" min="0" value={values[key as keyof typeof values]} onChange={(event) => setValues({ ...values, [key]: event.target.value })} /></label>)}</div><div className="dialog-result" aria-live="polite"><span>{fit}</span><strong>{needed} devis</strong><small>supplémentaires nécessaires · ≈ +{point} point de conversion</small></div>{fit === "PAS ENCORE ADAPTÉ" ? <p className="dialog-warning">Avec les chiffres indiqués, Sesira ne semble pas encore économiquement adapté à votre entreprise.</p> : null}<Link href="/diagnostic" className="text-link dark-link" onClick={onClose}>Ouvrir le diagnostic complet ↗</Link></section></div>;
+}
