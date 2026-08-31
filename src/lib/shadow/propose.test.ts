@@ -44,7 +44,7 @@ describe("proposeQuoteFollowupAction", () => {
 
   it("mentions the amount when present", () => {
     const proposal = proposeQuoteFollowupAction(baseInputs());
-    expect(proposal.body).toMatch(/18[  ]?450\s*EUR/);
+    expect(proposal.body).toMatch(/18\s?450\s*EUR/);
   });
 
   it("falls back to the title when reference is null or empty", () => {

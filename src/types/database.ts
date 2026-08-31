@@ -1097,6 +1097,16 @@ export type Database = {
           created: boolean
         }[]
       }
+      record_audit_log: {
+        Args: {
+          target_organization_id: string
+          target_action: string
+          target_entity_type?: string | null
+          target_entity_id?: string | null
+          target_metadata?: Json
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

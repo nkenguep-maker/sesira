@@ -25,6 +25,16 @@ export const attentionResolutionSchema = z.object({
   intent: z.enum(ATTENTION_CLOSED_STATUSES),
 });
 
+export const attentionAssignmentSchema = z.object({
+  attentionId: z.uuid(),
+  /** empty string / null → unassign */
+  assigneeId: z.uuid().or(z.literal("")).optional(),
+});
+
+export const attentionReopenSchema = z.object({
+  attentionId: z.uuid(),
+});
+
 export const manualQuoteAttentionInputSchema = z.object({
   quoteId: z.uuid(),
   title: z.string().trim().min(2).max(200),

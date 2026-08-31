@@ -43,6 +43,7 @@ interface QuoteFixture {
     | "EXPIRED";
   sent_at: string | null;
   automation_paused_at: string | null;
+  automation_pause_reason: string | null;
   opted_out_at: string | null;
   reference: string | null;
   title: string;
@@ -57,6 +58,11 @@ interface FakeState {
   insertEventOnce: {
     calls: unknown[];
     // keyed by idempotency_key
+    ledger: Map<string, { id: string; created: boolean }>;
+    nextId: number;
+  };
+  insertAttentionOnce: {
+    calls: unknown[];
     ledger: Map<string, { id: string; created: boolean }>;
     nextId: number;
   };
@@ -182,6 +188,18 @@ function makeFakeClient(state: FakeState) {
       state.insertEventOnce.ledger.set(key, { id, created: true });
       return Promise.resolve({ data: [{ id, created: true }], error: null });
     }
+    if (name === "insert_attention_once") {
+      state.insertAttentionOnce.calls.push(args);
+      const key = args.target_idempotency_key as string;
+      const existing = state.insertAttentionOnce.ledger.get(key);
+      if (existing) {
+        return Promise.resolve({ data: [{ id: existing.id, created: false }], error: null });
+      }
+      state.insertAttentionOnce.nextId += 1;
+      const id = `att-${state.insertAttentionOnce.nextId}`;
+      state.insertAttentionOnce.ledger.set(key, { id, created: true });
+      return Promise.resolve({ data: [{ id, created: true }], error: null });
+    }
     return Promise.resolve({ data: null, error: { message: `unhandled rpc ${name}` } });
   };
 
@@ -213,6 +231,7 @@ function seedEligibleFixture(state: FakeState) {
     status: "SENT",
     sent_at: "2026-08-20T09:00:00.000Z",
     automation_paused_at: null,
+    automation_pause_reason: null,
     opted_out_at: null,
     reference: "DEV-042",
     title: "Fenêtres",
@@ -235,6 +254,7 @@ beforeEach(() => {
     claim: { returns: true, calls: [] },
     release: { calls: [], returns: true },
     insertEventOnce: { calls: [], ledger: new Map(), nextId: 0 },
+    insertAttentionOnce: { calls: [], ledger: new Map(), nextId: 0 },
     runs: new Map(),
     configs: new Map(),
     quotes: new Map(),
@@ -247,10 +267,16 @@ beforeEach(() => {
 afterEach(() => {
   // Global negative invariants: no matter the scenario, Shadow must never
   // emit anything but `quote.followup_decided`, and must never call an
-  // RPC other than the three whitelisted ones.
+  // RPC other than the four whitelisted ones (claim, release,
+  // insert_event_once, insert_attention_once).
   for (const call of state.insertEventOnce.calls) {
     const c = call as { target_type: string };
     expect(c.target_type).toBe(SHADOW_EVENT_TYPE);
+  }
+  // Every Attention emitted by Shadow must carry a workflow-emitted reason
+  for (const call of state.insertAttentionOnce.calls) {
+    const c = call as { target_reason: string };
+    expect(["COMPLAINT_HOLD", "INTEGRATION_ISSUE"]).toContain(c.target_reason);
   }
   // No release call should carry a terminal_status of anything unexpected
   for (const call of state.release.calls) {
@@ -449,5 +475,128 @@ describe("executeShadowQuoteFollowupRun — kill switch invariance", () => {
     }
     expect(second.outcome).toBe(first.outcome);
     expect(second.proposedAction?.recipient_email).toBe(first.proposedAction?.recipient_email);
+  });
+});
+
+describe("executeShadowQuoteFollowupRun — Attention emission (C6)", () => {
+  it("creates a COMPLAINT_HOLD Attention when the quote is paused for a complaint", async () => {
+    seedEligibleFixture(state);
+    const quote = state.quotes.get(QUOTE_A);
+    if (!quote) throw new Error("fixture");
+    quote.automation_paused_at = "2026-08-21T00:00:00.000Z";
+    quote.automation_pause_reason = "COMPLAINT";
+
+    const result = await run(new Date("2026-08-25T10:00:00.000Z"));
+    expect(result.status).toBe("COMPLETED");
+    if (result.status !== "COMPLETED") return;
+    expect(result.stopReason).toBe("AUTOMATION_PAUSED");
+    expect(result.attention).toBeDefined();
+    expect(result.attention?.reason).toBe("COMPLAINT_HOLD");
+    expect(result.attention?.attentionCreated).toBe(true);
+    expect(result.attention?.key).toBe(`attention:shadow_complaint_hold:${QUOTE_A}`);
+
+    const releaseCall = state.release.calls[0] as {
+      target_output_summary: { attention?: { reason: string } };
+    };
+    expect(releaseCall.target_output_summary.attention?.reason).toBe("COMPLAINT_HOLD");
+  });
+
+  it("does NOT create Attention when the quote is paused for a non-complaint reason", async () => {
+    seedEligibleFixture(state);
+    const quote = state.quotes.get(QUOTE_A);
+    if (!quote) throw new Error("fixture");
+    quote.automation_paused_at = "2026-08-21T00:00:00.000Z";
+    quote.automation_pause_reason = "MANUAL";
+
+    const result = await run(new Date("2026-08-25T10:00:00.000Z"));
+    expect(result.status).toBe("COMPLETED");
+    if (result.status !== "COMPLETED") return;
+    expect(result.stopReason).toBe("AUTOMATION_PAUSED");
+    expect(result.attention).toBeUndefined();
+    expect(state.insertAttentionOnce.calls).toHaveLength(0);
+  });
+
+  it("does NOT create Attention for routine STOP reasons (opted-out, replied, won, terminal)", async () => {
+    const scenarios: Array<[string, (q: QuoteFixture) => void]> = [
+      ["opted-out", (q) => { q.opted_out_at = "2026-08-21T00:00:00.000Z"; }],
+      ["replied", (q) => { q.status = "REPLIED"; }],
+      ["won", (q) => { q.status = "WON"; }],
+      ["lost", (q) => { q.status = "LOST"; }],
+      ["expired", (q) => { q.status = "EXPIRED"; }],
+    ];
+    for (const [_label, mutate] of scenarios) {
+      // reset state between iterations
+      state.runs.clear();
+      state.configs.clear();
+      state.quotes.clear();
+      state.customers.clear();
+      state.insertAttentionOnce.calls = [];
+      state.insertAttentionOnce.ledger.clear();
+      state.insertEventOnce.calls = [];
+      state.insertEventOnce.ledger.clear();
+      state.release.calls = [];
+      seedEligibleFixture(state);
+      const quote = state.quotes.get(QUOTE_A);
+      if (!quote) throw new Error("fixture");
+      mutate(quote);
+      await run(new Date("2026-08-25T10:00:00.000Z"));
+      expect(state.insertAttentionOnce.calls, `Attention emitted for routine stop: ${_label}`).toHaveLength(0);
+    }
+  });
+
+  it("creates an INTEGRATION_ISSUE Attention when the customer has no email", async () => {
+    seedEligibleFixture(state);
+    const customer = state.customers.get(CUSTOMER_A);
+    if (!customer) throw new Error("fixture");
+    customer.email = null;
+
+    const result = await run(new Date("2026-08-25T10:00:00.000Z"));
+    expect(result.status).toBe("COMPLETED");
+    if (result.status !== "COMPLETED") return;
+    expect(result.outcome).toBe("PROPOSAL_UNAVAILABLE");
+    expect(result.proposedAction).toBeUndefined();
+    expect(result.attention).toBeDefined();
+    expect(result.attention?.reason).toBe("INTEGRATION_ISSUE");
+    expect(result.attention?.key).toBe(`attention:shadow_integration_issue:${QUOTE_A}`);
+  });
+
+  it("dedups Attention on replay — same key, created=false, no duplicate insert", async () => {
+    seedEligibleFixture(state);
+    const quote = state.quotes.get(QUOTE_A);
+    if (!quote) throw new Error("fixture");
+    quote.automation_paused_at = "2026-08-21T00:00:00.000Z";
+    quote.automation_pause_reason = "COMPLAINT";
+
+    const first = await run(new Date("2026-08-25T10:00:00.000Z"));
+
+    // Reset run for replay
+    const run1 = state.runs.get(RUN_A);
+    if (run1) {
+      run1.status = "PENDING";
+      run1.output_summary = undefined;
+    }
+    state.release.calls = [];
+
+    const second = await run(new Date("2026-08-25T10:00:00.000Z"));
+
+    if (first.status !== "COMPLETED" || second.status !== "COMPLETED") {
+      throw new Error("expected both to complete");
+    }
+    expect(first.attention?.attentionId).toBe(second.attention?.attentionId);
+    expect(first.attention?.attentionCreated).toBe(true);
+    expect(second.attention?.attentionCreated).toBe(false);
+    // Two RPC calls happened, but the ledger collapsed them to one row
+    expect(state.insertAttentionOnce.calls).toHaveLength(2);
+    expect(state.insertAttentionOnce.ledger.size).toBe(1);
+  });
+
+  it("eligible routine DUE outcome does NOT create Attention", async () => {
+    seedEligibleFixture(state);
+    const result = await run(new Date("2026-08-25T10:00:00.000Z"));
+    expect(result.status).toBe("COMPLETED");
+    if (result.status !== "COMPLETED") return;
+    expect(result.outcome).toBe("DUE");
+    expect(result.attention).toBeUndefined();
+    expect(state.insertAttentionOnce.calls).toHaveLength(0);
   });
 });

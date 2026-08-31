@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { createWorkflowAttention } from "@/lib/attention/create";
+import type { WorkflowEmittedReason } from "@/lib/attention/reason";
 import {
   DEFAULT_QUOTE_FOLLOWUP_OFFSETS_DAYS,
   QUOTE_FOLLOWUP_TEMPLATE_KEY,
@@ -75,6 +77,18 @@ export interface ShadowOutputSummary {
   };
   provenance: ShadowRunProvenance;
   proposed_action?: ProposedQuoteFollowupAction;
+  attention?: {
+    reason: WorkflowEmittedReason;
+    attention_id: string;
+    key: string;
+  };
+}
+
+export interface ShadowAttentionEmission {
+  reason: WorkflowEmittedReason;
+  attentionId: string;
+  attentionCreated: boolean;
+  key: string;
 }
 
 export interface ShadowExecutionSuccess {
@@ -85,6 +99,7 @@ export interface ShadowExecutionSuccess {
   proposedAction?: ProposedQuoteFollowupAction;
   eventId: string;
   eventCreated: boolean;
+  attention?: ShadowAttentionEmission;
 }
 
 export interface ShadowExecutionCancelled {
@@ -147,6 +162,7 @@ interface QuoteRow {
     | "EXPIRED";
   sent_at: string | null;
   automation_paused_at: string | null;
+  automation_pause_reason: string | null;
   opted_out_at: string | null;
   reference: string | null;
   title: string;
@@ -199,7 +215,7 @@ async function loadQuote(
   const { data, error } = await supabase
     .from("quotes")
     .select(
-      "id, organization_id, status, sent_at, automation_paused_at, opted_out_at, reference, title, amount, currency, customer_id",
+      "id, organization_id, status, sent_at, automation_paused_at, automation_pause_reason, opted_out_at, reference, title, amount, currency, customer_id",
     )
     .eq("id", quoteId)
     .eq("organization_id", organizationId)
@@ -243,6 +259,80 @@ async function loadAlreadyFiredSteps(
     fired.add(summary.step);
   }
   return fired;
+}
+
+/**
+ * Emit a workflow Attention when a Shadow outcome represents a real
+ * exception a human must resolve. Called from both the STOP branch
+ * (complaint hold) and the DUE branch (proposal_unavailable due to
+ * missing customer data). Returns `undefined` when the outcome is
+ * "surface nothing" — the doctrine forbids noise on routine STOPs.
+ */
+async function emitAttentionIfNeeded(
+  supabase: SupabaseServerClient,
+  args: {
+    organizationId: string;
+    quote: QuoteRow;
+    stopReason: QuoteFollowupStopReason | null;
+    proposalError: string | null;
+    provenance: ShadowRunProvenance;
+  },
+): Promise<ShadowAttentionEmission | undefined> {
+  let reason: WorkflowEmittedReason | null = null;
+  let sourceKind = "";
+  let title = "";
+  let explanation: string | null = null;
+  let suggestedAction: string | null = null;
+
+  if (
+    args.stopReason === "AUTOMATION_PAUSED"
+    && args.quote.automation_pause_reason === "COMPLAINT"
+  ) {
+    reason = "COMPLAINT_HOLD";
+    sourceKind = "shadow_complaint_hold";
+    title = `Réclamation en attente — ${args.quote.reference ?? args.quote.title}`;
+    explanation =
+      "Ce devis est en pause automatique parce qu'une réclamation a été enregistrée. Aucun envoi ne reprendra tant que la réclamation n'a pas été traitée.";
+    suggestedAction = "Contacter le client, décider de reprendre ou de clore le devis.";
+  } else if (args.proposalError === "customer_not_found" || args.proposalError === "customer has no email — cannot compose an email proposal") {
+    reason = "INTEGRATION_ISSUE";
+    sourceKind = "shadow_integration_issue";
+    title = `Coordonnées client manquantes — ${args.quote.reference ?? args.quote.title}`;
+    explanation =
+      "Le devis est éligible à une relance mais nous n'avons pas d'email valide pour le client. Aucune proposition n'a été formulée.";
+    suggestedAction = "Compléter la fiche client (email vérifié) puis rejouer la relance.";
+  }
+
+  if (!reason) return undefined;
+
+  const emission = await createWorkflowAttention({
+    organizationId: args.organizationId,
+    reason,
+    sourceKind,
+    sourceId: args.quote.id,
+    title,
+    explanation,
+    suggestedAction,
+    entity: { type: "quote", id: args.quote.id },
+    metadata: {
+      shadow_stop_reason: args.stopReason,
+      shadow_proposal_error: args.proposalError,
+      quote_status: args.quote.status,
+      quote_reference: args.quote.reference,
+    },
+    provenance: {
+      automationRunId: args.provenance.automation_run_id,
+      automationConfigId: args.provenance.automation_config_id,
+    },
+    client: supabase,
+  });
+
+  return {
+    reason,
+    attentionId: emission.id,
+    attentionCreated: emission.created,
+    key: emission.key,
+  };
 }
 
 async function releaseRunWithOutput(
@@ -426,13 +516,32 @@ export async function executeShadowQuoteFollowupRun(
         decided_at: now.toISOString(),
       },
     });
+    const attentionEmission = await emitAttentionIfNeeded(supabase, {
+      organizationId,
+      quote,
+      stopReason: decision.reason,
+      proposalError: null,
+      provenance: baseProvenance,
+    });
+
     await releaseRunWithOutput(
       supabase,
       runId,
       organizationId,
       workerId,
       "SUCCEEDED",
-      output,
+      {
+        ...output,
+        ...(attentionEmission
+          ? {
+              attention: {
+                reason: attentionEmission.reason,
+                attention_id: attentionEmission.attentionId,
+                key: attentionEmission.key,
+              },
+            }
+          : {}),
+      } as ShadowOutputSummary,
       null,
     );
     return {
@@ -442,6 +551,7 @@ export async function executeShadowQuoteFollowupRun(
       stopReason: decision.reason,
       eventId: eventResult.id,
       eventCreated: eventResult.created,
+      ...(attentionEmission ? { attention: attentionEmission } : {}),
     };
   }
 
@@ -499,13 +609,32 @@ export async function executeShadowQuoteFollowupRun(
     },
   });
 
+  const attentionEmission = await emitAttentionIfNeeded(supabase, {
+    organizationId,
+    quote,
+    stopReason: null,
+    proposalError: proposalError ?? null,
+    provenance: baseProvenance,
+  });
+
   await releaseRunWithOutput(
     supabase,
     runId,
     organizationId,
     workerId,
     "SUCCEEDED",
-    output,
+    {
+      ...output,
+      ...(attentionEmission
+        ? {
+            attention: {
+              reason: attentionEmission.reason,
+              attention_id: attentionEmission.attentionId,
+              key: attentionEmission.key,
+            },
+          }
+        : {}),
+    } as ShadowOutputSummary,
     proposalError ?? null,
   );
 
@@ -516,5 +645,6 @@ export async function executeShadowQuoteFollowupRun(
     proposedAction,
     eventId: eventResult.id,
     eventCreated: eventResult.created,
+    ...(attentionEmission ? { attention: attentionEmission } : {}),
   };
 }

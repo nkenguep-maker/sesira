@@ -1585,6 +1585,233 @@ begin
 end;
 $$;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency and Shadow execution assertions passed' as result;
+-- =========================================================================
+-- Attention state machine + record_audit_log (C6)
+-- =========================================================================
+-- These assertions run as tenant A. They exercise:
+--   * attention_items.status transition trigger rejects illegal
+--     transitions (RESOLVED -> IN_PROGRESS, etc.) with 22023 and
+--     enforces the resolved_at invariant.
+--   * record_audit_log inserts append-only rows, pins actor server-side,
+--     and rejects cross-tenant callers with 42501.
+--   * an existing attention_item can be transitioned OPEN -> IN_PROGRESS
+--     -> RESOLVED -> OPEN (reopen).
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"91100000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+
+-- Test 1: legal transition path OPEN -> IN_PROGRESS -> RESOLVED -> OPEN.
+do $$
+declare
+  observed_status text;
+  observed_resolved timestamptz;
+begin
+  update public.attention_items
+  set status = 'IN_PROGRESS'
+  where id = '91600000-0000-4000-8000-000000000001';
+  select status, resolved_at into observed_status, observed_resolved
+  from public.attention_items where id = '91600000-0000-4000-8000-000000000001';
+  if observed_status <> 'IN_PROGRESS' then
+    raise exception 'expected IN_PROGRESS, got %', observed_status;
+  end if;
+  if observed_resolved is not null then
+    raise exception 'IN_PROGRESS row must have resolved_at NULL, got %', observed_resolved;
+  end if;
+
+  update public.attention_items
+  set status = 'RESOLVED'
+  where id = '91600000-0000-4000-8000-000000000001';
+  select status, resolved_at into observed_status, observed_resolved
+  from public.attention_items where id = '91600000-0000-4000-8000-000000000001';
+  if observed_status <> 'RESOLVED' then
+    raise exception 'expected RESOLVED, got %', observed_status;
+  end if;
+  if observed_resolved is null then
+    raise exception 'RESOLVED row must have resolved_at set (defense in depth)';
+  end if;
+
+  update public.attention_items
+  set status = 'OPEN'
+  where id = '91600000-0000-4000-8000-000000000001';
+  select status, resolved_at into observed_status, observed_resolved
+  from public.attention_items where id = '91600000-0000-4000-8000-000000000001';
+  if observed_status <> 'OPEN' then
+    raise exception 'expected OPEN after reopen, got %', observed_status;
+  end if;
+  if observed_resolved is not null then
+    raise exception 'reopen must clear resolved_at (got %)', observed_resolved;
+  end if;
+end;
+$$;
+
+-- Test 2: illegal transition RESOLVED -> IN_PROGRESS raises 22023.
+do $$
+declare
+  captured text;
+begin
+  update public.attention_items
+  set status = 'RESOLVED'
+  where id = '91600000-0000-4000-8000-000000000001';
+
+  begin
+    update public.attention_items
+    set status = 'IN_PROGRESS'
+    where id = '91600000-0000-4000-8000-000000000001';
+    raise exception 'illegal RESOLVED -> IN_PROGRESS transition was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting illegal transition', captured;
+    end if;
+  end;
+
+  -- restore for downstream tests
+  update public.attention_items
+  set status = 'OPEN'
+  where id = '91600000-0000-4000-8000-000000000001';
+end;
+$$;
+
+-- Test 3: illegal transition RESOLVED -> DISMISSED (must go through OPEN).
+do $$
+declare
+  captured text;
+begin
+  update public.attention_items
+  set status = 'RESOLVED'
+  where id = '91600000-0000-4000-8000-000000000001';
+
+  begin
+    update public.attention_items
+    set status = 'DISMISSED'
+    where id = '91600000-0000-4000-8000-000000000001';
+    raise exception 'illegal RESOLVED -> DISMISSED was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting closed-to-closed', captured;
+    end if;
+  end;
+
+  update public.attention_items
+  set status = 'OPEN'
+  where id = '91600000-0000-4000-8000-000000000001';
+end;
+$$;
+
+-- Test 4: record_audit_log succeeds for a tenant caller, pins actor.
+do $$
+declare
+  new_id uuid;
+  observed_actor_type text;
+  observed_actor_id uuid;
+  observed_action text;
+begin
+  new_id := public.record_audit_log(
+    '91000000-0000-4000-8000-000000000001',
+    'attention.resolved',
+    'attention_item',
+    '91600000-0000-4000-8000-000000000001',
+    jsonb_build_object('previous_status', 'OPEN', 'next_status', 'RESOLVED')
+  );
+  if new_id is null then
+    raise exception 'record_audit_log returned no id';
+  end if;
+  select actor_type, actor_id, action into observed_actor_type, observed_actor_id, observed_action
+  from public.audit_logs where id = new_id;
+  if observed_actor_type <> 'user' then
+    raise exception 'expected actor_type=user for tenant caller, got %', observed_actor_type;
+  end if;
+  if observed_actor_id <> '91100000-0000-4000-8000-000000000001' then
+    raise exception 'expected actor_id to be pinned to auth.uid(), got %', observed_actor_id;
+  end if;
+  if observed_action <> 'attention.resolved' then
+    raise exception 'action not persisted correctly, got %', observed_action;
+  end if;
+end;
+$$;
+
+-- Test 5: record_audit_log rejects cross-tenant caller with 42501.
+do $$
+declare
+  captured text;
+begin
+  begin
+    perform public.record_audit_log(
+      '92000000-0000-4000-8000-000000000002',
+      'attention.resolved',
+      null, null, '{}'::jsonb
+    );
+    raise exception 'cross-tenant record_audit_log was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % rejecting cross-tenant audit', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Test 6: record_audit_log rejects an empty action with 22023.
+do $$
+declare
+  captured text;
+begin
+  begin
+    perform public.record_audit_log(
+      '91000000-0000-4000-8000-000000000001',
+      '',
+      null, null, '{}'::jsonb
+    );
+    raise exception 'empty action was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting empty action', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Test 7: two calls with identical inputs create TWO rows (audit is a
+-- stream, not a set — no dedup).
+do $$
+declare
+  before_count integer;
+  after_count integer;
+begin
+  select count(*) into before_count from public.audit_logs
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and action = 'attention.reopened';
+  perform public.record_audit_log(
+    '91000000-0000-4000-8000-000000000001',
+    'attention.reopened',
+    'attention_item',
+    '91600000-0000-4000-8000-000000000001',
+    '{}'::jsonb
+  );
+  perform public.record_audit_log(
+    '91000000-0000-4000-8000-000000000001',
+    'attention.reopened',
+    'attention_item',
+    '91600000-0000-4000-8000-000000000001',
+    '{}'::jsonb
+  );
+  select count(*) into after_count from public.audit_logs
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and action = 'attention.reopened';
+  if after_count - before_count <> 2 then
+    raise exception 'expected 2 new audit rows, got %', after_count - before_count;
+  end if;
+end;
+$$;
+
+reset role;
+
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution and Attention/audit assertions passed' as result;
 
 rollback;
