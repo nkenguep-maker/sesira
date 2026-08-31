@@ -1,6 +1,9 @@
-import { Building2, LogOut } from "lucide-react";
+"use client";
+
+import { Building2, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useState } from "react";
 
 import type { ViewerContext } from "@/lib/auth/viewer";
 
@@ -14,17 +17,21 @@ export function AppShell({
   viewer: ViewerContext;
   children: ReactNode;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
   return (
-    <div className="min-h-screen bg-[var(--paper)] text-[var(--ink)] lg:grid lg:grid-cols-[236px_1fr]">
-      <aside className="border-b border-white/15 bg-[var(--ink)] text-white lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:border-r-white/15">
+    <div className={`sesira-app-shell min-h-screen bg-[var(--paper)] text-[var(--ink)] lg:grid ${collapsed ? "lg:grid-cols-[72px_1fr]" : "lg:grid-cols-[236px_1fr]"}`}>
+      <aside className="sesira-sidebar border-b border-white/15 bg-[var(--ink)] text-white lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:border-r-white/15">
         <div className="flex h-full flex-col lg:min-h-screen">
-          <div className="flex h-[66px] items-center justify-between gap-3 border-b border-white/15 px-5">
+          <div className="flex h-[64px] items-center justify-between gap-3 border-b border-white/15 px-4">
             <div className="flex min-w-0 items-center gap-3">
               <div className="min-w-0">
-                <p className="font-[family-name:var(--font-display)] text-base font-bold tracking-[0.16em]">SESIRA</p>
-                <p className="text-xs text-white/50">Votre activité</p>
+                <p className="sesira-brand">SESIRA<span>.</span></p>
+                {!collapsed ? <p className="text-xs text-white/50">Votre activité</p> : null}
               </div>
             </div>
+            <button type="button" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? "Déplier le menu" : "Replier le menu"} className="sesira-collapse hidden lg:grid">
+              {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+            </button>
             <div className="flex items-center gap-2 lg:hidden">
               <Link href="/app/attention" className="inline-flex min-h-11 items-center bg-[var(--blue)] px-3 text-sm font-semibold text-white">
                 À traiter
@@ -40,7 +47,7 @@ export function AppShell({
             </div>
           </div>
 
-          <div className="hidden border-b border-white/15 px-[1.375rem] py-5 lg:block">
+          <div className={`${collapsed ? "hidden" : ""} hidden border-b border-white/15 px-[1.375rem] py-5 lg:block`}>
             <div className="flex items-start gap-3">
               <Building2 className="mt-0.5 size-4 text-[var(--blue-light)]" />
               <div className="min-w-0">
@@ -50,9 +57,9 @@ export function AppShell({
             </div>
           </div>
 
-          <AppNavigation />
+          <AppNavigation collapsed={collapsed} />
 
-          <div className="mt-auto hidden border-t border-white/15 px-3 py-5 lg:block">
+          <div className={`${collapsed ? "hidden" : ""} mt-auto hidden border-t border-white/15 px-3 py-5 lg:block`}>
             <div className="mb-4 border-b border-white/10 px-2 pb-4">
               <p className="sesira-eyebrow !text-[var(--blue-light)]">Niveau actuel</p>
               <p className="mt-2 flex items-center gap-2 text-xs text-white/70"><span className="sesira-status-dot size-1.5 bg-[var(--blue-light)]" />Observation</p>
@@ -68,9 +75,18 @@ export function AppShell({
         </div>
       </aside>
 
-      <main className="sesira-page min-w-0">{children}</main>
+      <main className="sesira-zone min-w-0"><AppTopbar viewer={viewer} />{children}</main>
+      <MobileBottomNav />
     </div>
   );
+}
+
+function MobileBottomNav() {
+  return <nav className="sesira-mobile-nav" aria-label="Navigation mobile"><Link href="/app/attention">À traiter</Link><Link href="/app/quotes">Devis</Link><Link href="/app/requests">Demandes</Link><Link href="/app/results">Rapports</Link></nav>;
+}
+
+function AppTopbar({ viewer }: { viewer: ViewerContext }) {
+  return <div className="sesira-topbar"><label className="sesira-search"><span className="sr-only">Rechercher</span><input type="search" disabled placeholder="Rechercher un client, un devis, un montant" aria-label="Recherche globale indisponible" /><span aria-hidden="true">⌕</span></label><div className="sesira-mode"><span>Mode</span><b>Observation</b><button type="button" disabled title="La suspension sera disponible avec l’action serveur dédiée">Suspendre</button></div><button type="button" disabled className="sesira-activity">Aujourd’hui · —</button><span className="sesira-user">{viewer.email ?? "Utilisateur"}</span></div>;
 }
 
 function organizationStatusLabel(status: string): string {

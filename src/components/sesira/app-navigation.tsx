@@ -1,32 +1,22 @@
 "use client";
 
-import {
-  Activity,
-  AlertCircle,
-  Bot,
-  FileText,
-  ChartNoAxesCombined,
-  LayoutDashboard,
-  Megaphone,
-  Settings,
-  Users,
-} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navigation = [
-  { href: "/app", label: "Accueil", icon: LayoutDashboard, exact: true },
-  { href: "/app/attention", label: "À traiter", icon: AlertCircle },
-  { href: "/app/requests", label: "Demandes", icon: FileText },
-  { href: "/app/quotes", label: "Devis", icon: Activity },
-  { href: "/app/customers", label: "Clients", icon: Users },
-  { href: "/app/marketing", label: "Marketing", icon: Megaphone },
-  { href: "/app/results", label: "Résultats", icon: ChartNoAxesCombined },
-  { href: "/app/automations", label: "Automatisations", icon: Bot },
-  { href: "/app/settings", label: "Réglages", icon: Settings },
+  { href: "/app/attention", label: "À traiter", exact: false, section: "" },
+  { href: "/app/quotes", label: "Devis", exact: false, section: "" },
+  { href: "/app/requests", label: "Demandes", exact: false, section: "" },
+  { href: "/app/customers", label: "Clients", exact: false, section: "" },
+  { href: "/app/marketing", label: "E-mails", exact: false, section: "preview" },
+  { href: "/app/marketing", label: "Factures", exact: false, section: "preview" },
+  { href: "/app/marketing", label: "Documents", exact: false, section: "preview" },
+  { href: "/app/marketing", label: "Interventions", exact: false, section: "preview" },
+  { href: "/app/results", label: "Rapports", exact: false, section: "" },
+  { href: "/app/settings", label: "Réglages", exact: false, section: "" },
 ];
 
-export function AppNavigation() {
+export function AppNavigation({ collapsed = false }: { collapsed?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -34,23 +24,20 @@ export function AppNavigation() {
       className="flex gap-px overflow-x-auto border-b border-white/15 bg-[var(--ink)] py-2 lg:grid lg:grid-cols-1 lg:gap-0 lg:overflow-visible lg:border-b-0 lg:py-3"
       aria-label="Navigation principale"
     >
-      {navigation.map(({ href, label, icon: Icon, exact }) => {
-        const active = exact ? pathname === href : pathname.startsWith(href);
+      {navigation.map(({ href, label, exact, section }, index) => {
+        const preview = section === "preview";
+        const active = !preview && (exact ? pathname === href : pathname.startsWith(href));
 
         return (
-          <Link
-            key={href}
-            href={href}
+          <Link key={`${label}-${index}`} href={preview ? "/app/marketing" : href}
             aria-current={active ? "page" : undefined}
-            className={`flex min-h-11 shrink-0 items-center gap-3 px-[1.375rem] py-2.5 text-sm transition lg:shrink ${
+            title={collapsed ? label : undefined}
+            className={`sesira-nav-item flex min-h-10 shrink-0 items-center gap-3 px-[1.375rem] py-2.5 text-sm transition lg:shrink ${collapsed ? "lg:justify-center lg:px-2" : ""} ${
               active
-                ? "bg-[var(--blue)] font-semibold text-white"
-                : "text-white/65 hover:bg-white/5 hover:text-white"
+                ? "active"
+                : preview ? "preview" : "text-white/65 hover:bg-white/5 hover:text-white"
             }`}
-          >
-            <Icon className={`size-4 ${active ? "text-white" : "text-white/45"}`} />
-            {label}
-          </Link>
+          ><span className="sesira-nav-mark" aria-hidden="true">{active ? "•" : "·"}</span>{collapsed ? <span className="sr-only">{label}</span> : <><span className="mono">{label}</span>{preview ? <small>APERÇU</small> : null}</>}</Link>
         );
       })}
     </nav>
