@@ -1,4 +1,4 @@
-export const RESULTS_PERIOD_KEYS = ["30d", "90d", "12m"] as const;
+export const RESULTS_PERIOD_KEYS = ["7d", "month", "30d", "90d", "12m"] as const;
 
 export type ResultsPeriodKey = (typeof RESULTS_PERIOD_KEYS)[number];
 

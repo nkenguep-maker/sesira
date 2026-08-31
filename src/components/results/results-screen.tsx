@@ -10,9 +10,10 @@ import type {
 import { formatResultsEstimate } from "@/lib/results/format";
 
 const PERIODS: Array<{ key: ResultsPeriodKey; label: string }> = [
+  { key: "7d", label: "Cette semaine" },
+  { key: "month", label: "Ce mois" },
   { key: "30d", label: "30 jours" },
   { key: "90d", label: "90 jours" },
-  { key: "12m", label: "12 mois" },
 ];
 
 const STATE_MESSAGES = {
@@ -37,8 +38,8 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
     <div className="mx-auto max-w-7xl">
       <PageHeader
         eyebrow="Résultats"
-        title="Ce que Sesira rend visible."
-        description="Les faits observés restent séparés des projections. Aucun montant estimé n’est présenté comme un revenu généré."
+        title="Résultats"
+        description="Ce que Sesira a observé, ce qu’il estime, et ce qu’il ne peut pas attribuer avec certitude."
         actions={
           <nav aria-label="Période des résultats" className="inline-flex  border border-[var(--border)] bg-[var(--panel)] p-1">
             {PERIODS.map((period) => {
@@ -76,7 +77,7 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
         </section>
       ) : null}
 
-      <section className="mt-10" aria-labelledby="observed-title">
+      <section className="results-observed mt-10" aria-labelledby="observed-title">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <p className="sesira-eyebrow">OBSERVÉ</p>
@@ -88,18 +89,18 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
           <p className="text-sm text-[var(--muted)]">Période : {summary.period.label}</p>
         </div>
 
-        <div className="mt-5 grid gap-px border border-[var(--line)] bg-[var(--line)] sm:grid-cols-2 xl:grid-cols-5">
+        <div className="results-metric-grid mt-5 grid gap-px border border-[var(--line)] bg-[var(--line)] sm:grid-cols-2 xl:grid-cols-5">
           {summary.observed.map((metric) => (
             <ObservedCard key={metric.key} metric={metric} />
           ))}
         </div>
       </section>
 
-      <section className="mt-10 border border-[var(--sand-line)] bg-[var(--sand)] p-5 md:p-7" aria-labelledby="estimated-title">
+      <section className="results-estimated mt-10 border border-[var(--sand-line)] bg-[var(--sand)] p-5 md:p-7" aria-labelledby="estimated-title">
         <div className="max-w-3xl">
           <p className="sesira-eyebrow !text-[var(--sand-text)]">ESTIMATION</p>
           <h2 id="estimated-title" className="mt-2 text-xl font-semibold">
-            Potentiel calculé avec prudence
+            Estimations séparées des résultats
           </h2>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
             Ces valeurs projettent un potentiel à partir de l’activité observée. Ce ne sont pas des
@@ -155,6 +156,16 @@ export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
             ))}
           </ul>
         </div>
+      </section>
+
+      <section className="results-unknown mt-6 border border-[var(--line)] bg-[var(--paper)] p-6 md:p-8" aria-labelledby="unknown-title">
+        <p className="sesira-eyebrow">INCONNU</p>
+        <h2 id="unknown-title" className="mt-2 text-xl font-semibold">Ce que Sesira ne sait pas attribuer.</h2>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          {["L’impact causal d’une relance sur une signature.", "La raison exacte d’une décision client.", "Un chiffre d’affaires généré par Sesira sans preuve causale."].map((item) => <p key={item} className="border border-[var(--line)] bg-[var(--surface)] p-4 text-sm leading-6">{item}</p>)}
+        </div>
+        <p className="mt-6 border-l-2 border-[var(--blue)] pl-4 text-sm font-medium">Sesira ne transforme jamais une estimation en résultat observé.</p>
+        <Link href="/app/results" className="mt-5 inline-flex text-sm font-semibold text-[var(--blue)]">Voir les rapports <span className="ml-2">→</span></Link>
       </section>
     </div>
   );

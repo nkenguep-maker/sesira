@@ -5,6 +5,8 @@ import {
 } from "@/lib/results/contracts";
 
 const PERIOD_LABELS: Record<ResultsPeriodKey, string> = {
+  "7d": "Cette semaine",
+  month: "Ce mois",
   "30d": "30 jours",
   "90d": "90 jours",
   "12m": "12 mois",
@@ -22,6 +24,11 @@ export function buildResultsPeriod(key: ResultsPeriodKey, now = new Date()): Res
 
   if (key === "12m") {
     start.setUTCFullYear(start.getUTCFullYear() - 1);
+  } else if (key === "month") {
+    start.setUTCDate(1);
+    start.setUTCHours(0, 0, 0, 0);
+  } else if (key === "7d") {
+    start.setUTCDate(start.getUTCDate() - 7);
   } else {
     start.setUTCDate(start.getUTCDate() - (key === "90d" ? 90 : 30));
   }
