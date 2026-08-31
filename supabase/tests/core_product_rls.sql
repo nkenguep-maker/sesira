@@ -1106,8 +1106,297 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- Durable workflow idempotency — insert-once helpers
+-- =========================================================================
+-- Still running as tenant A (authenticated). These assertions exercise:
+--   * insert_event_once: replay of the same (org, idempotency_key) does
+--     NOT create a second row and returns created=false.
+--   * insert_attention_once: same guarantee, plus proof that a differing
+--     title on the replay does not defeat dedup (title is a mutable
+--     business value, not part of the identity).
+--   * organization isolation: a caller cannot invoke a helper for a
+--     foreign org, even if it knows a foreign key.
+--   * empty / null idempotency_key is rejected (a caller that skipped
+--     the key builder must not silently insert an unkeyed row).
+--   * partial unique index still allows multiple rows with NULL keys
+--     (manual attention items must remain insertable).
+
+do $$
+declare
+  first_result   record;
+  replay_result  record;
+  raw_count      integer;
+begin
+  select id, created into first_result
+  from public.insert_event_once(
+    '91000000-0000-4000-8000-000000000001',
+    'test_event:quote:91500000-0000-4000-8000-000000000001:replay',
+    'quote.followup_decided',
+    'CORE_WORKER',
+    'quote',
+    '91500000-0000-4000-8000-000000000001',
+    jsonb_build_object('decision', 'DUE', 'step', 1)
+  );
+  if not first_result.created then
+    raise exception 'first insert_event_once must set created=true';
+  end if;
+
+  select id, created into replay_result
+  from public.insert_event_once(
+    '91000000-0000-4000-8000-000000000001',
+    'test_event:quote:91500000-0000-4000-8000-000000000001:replay',
+    'quote.followup_decided',
+    'CORE_WORKER',
+    'quote',
+    '91500000-0000-4000-8000-000000000001',
+    -- Deliberately different payload — payload is NOT part of identity.
+    jsonb_build_object('decision', 'DUE', 'step', 1, 'replayed_at', extract(epoch from now()))
+  );
+  if replay_result.created then
+    raise exception 'replay insert_event_once must set created=false';
+  end if;
+  if replay_result.id is distinct from first_result.id then
+    raise exception 'replay must observe the original row id';
+  end if;
+
+  select count(*) into raw_count
+  from public.events
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and idempotency_key = 'test_event:quote:91500000-0000-4000-8000-000000000001:replay';
+  if raw_count <> 1 then
+    raise exception 'duplicate events row after replay (got %)', raw_count;
+  end if;
+end;
+$$;
+
+do $$
+declare
+  first_id    uuid;
+  replay_row  record;
+  raw_count   integer;
+begin
+  select id into first_id
+  from public.insert_attention_once(
+    '91000000-0000-4000-8000-000000000001',
+    'test_attention:quote_reply:abcdef01-2345-6789-abcd-ef0123456789',
+    'SALES',
+    'MANUAL_REVIEW',
+    'Le client a répondu au devis.',
+    'NORMAL',
+    'quote',
+    '91500000-0000-4000-8000-000000000001'
+  );
+  if first_id is null then
+    raise exception 'first insert_attention_once must return an id';
+  end if;
+
+  select id, created into replay_row
+  from public.insert_attention_once(
+    '91000000-0000-4000-8000-000000000001',
+    'test_attention:quote_reply:abcdef01-2345-6789-abcd-ef0123456789',
+    'SALES',
+    'MANUAL_REVIEW',
+    -- Different title on the replay — mutable business value, dedup
+    -- must not care.
+    'Une réponse client à traiter.',
+    'HIGH',
+    'quote',
+    '91500000-0000-4000-8000-000000000001'
+  );
+  if replay_row.created then
+    raise exception 'attention replay must set created=false';
+  end if;
+  if replay_row.id is distinct from first_id then
+    raise exception 'attention replay must observe the original row id';
+  end if;
+
+  select count(*) into raw_count
+  from public.attention_items
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and idempotency_key = 'test_attention:quote_reply:abcdef01-2345-6789-abcd-ef0123456789';
+  if raw_count <> 1 then
+    raise exception 'duplicate attention_items row after replay (got %)', raw_count;
+  end if;
+end;
+$$;
+
+do $$
+declare
+  captured_state text;
+begin
+  begin
+    perform public.insert_event_once(
+      '92000000-0000-4000-8000-000000000002',
+      'test_event:foreign',
+      'quote.followup_decided',
+      'CORE_WORKER',
+      null, null, '{}'::jsonb
+    );
+    raise exception 'foreign-org insert_event_once was not rejected';
+  exception when others then
+    captured_state := sqlstate;
+    if captured_state <> '42501' then
+      raise exception 'unexpected sqlstate % rejecting foreign insert', captured_state;
+    end if;
+  end;
+end;
+$$;
+
+do $$
+declare
+  captured_state text;
+begin
+  begin
+    perform public.insert_event_once(
+      '91000000-0000-4000-8000-000000000001',
+      '',
+      'quote.followup_decided',
+      'CORE_WORKER',
+      null, null, '{}'::jsonb
+    );
+    raise exception 'empty idempotency_key was not rejected';
+  exception when others then
+    captured_state := sqlstate;
+    if captured_state <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting empty key', captured_state;
+    end if;
+  end;
+end;
+$$;
+
+-- Manual attention (no idempotency_key) must remain insertable and the
+-- partial unique index must NOT collapse two NULL-key rows.
+do $$
+declare
+  first_id  uuid;
+  second_id uuid;
+begin
+  insert into public.attention_items (
+    organization_id, category, reason, title
+  ) values (
+    '91000000-0000-4000-8000-000000000001', 'SALES', 'MANUAL_REVIEW',
+    'Manual attention A'
+  ) returning id into first_id;
+
+  insert into public.attention_items (
+    organization_id, category, reason, title
+  ) values (
+    '91000000-0000-4000-8000-000000000001', 'SALES', 'MANUAL_REVIEW',
+    'Manual attention B'
+  ) returning id into second_id;
+
+  if first_id = second_id then
+    raise exception 'partial unique index collapsed two null-key rows';
+  end if;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety and follow-up scheduling assertions passed' as result;
+-- =========================================================================
+-- Provider delivery receipts — service_role-only replay
+-- =========================================================================
+-- Switch to service_role for the receipt helper: only the webhook
+-- receiver may record receipts. Tenant callers are rejected. The helper
+-- reads the role from `auth.role()` (JWT `role` claim), so we forward
+-- the claim in addition to switching the DB role.
+set local role service_role;
+select set_config(
+  'request.jwt.claims',
+  '{"role":"service_role"}',
+  true
+);
+
+do $$
+declare
+  first_row  record;
+  replay_row record;
+  raw_count  integer;
+begin
+  select id, created into first_row
+  from public.record_provider_delivery(
+    '91000000-0000-4000-8000-000000000001',
+    'resend',
+    'evt_replay_test_1',
+    'email.delivered',
+    'message',
+    '91500000-0000-4000-8000-000000000001',
+    jsonb_build_object('status', 'delivered'),
+    now()
+  );
+  if not first_row.created then
+    raise exception 'first record_provider_delivery must set created=true';
+  end if;
+
+  select id, created into replay_row
+  from public.record_provider_delivery(
+    '91000000-0000-4000-8000-000000000001',
+    'resend',
+    'evt_replay_test_1',
+    'email.delivered',
+    'message',
+    '91500000-0000-4000-8000-000000000001',
+    -- Different payload — provider identity remains the dedup key.
+    jsonb_build_object('status', 'delivered', 'retried', true),
+    now()
+  );
+  if replay_row.created then
+    raise exception 'record_provider_delivery replay must set created=false';
+  end if;
+  if replay_row.id is distinct from first_row.id then
+    raise exception 'record_provider_delivery replay must observe the original row id';
+  end if;
+
+  select count(*) into raw_count
+  from public.provider_delivery_receipts
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and provider = 'resend'
+    and provider_event_id = 'evt_replay_test_1';
+  if raw_count <> 1 then
+    raise exception 'duplicate provider_delivery_receipts row after replay (got %)', raw_count;
+  end if;
+end;
+$$;
+
+reset role;
+
+-- Tenant caller trying to record a receipt must be rejected. Re-enter
+-- the tenant-A authenticated session first.
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object(
+    'sub', '91100000-0000-4000-8000-000000000001'::text,
+    'role', 'authenticated'
+  )::text,
+  true
+);
+
+do $$
+declare
+  captured_state text;
+begin
+  begin
+    perform public.record_provider_delivery(
+      '91000000-0000-4000-8000-000000000001',
+      'resend',
+      'evt_forbidden',
+      'email.delivered',
+      null, null, '{}'::jsonb, now()
+    );
+    raise exception 'tenant caller was allowed to record a provider receipt';
+  exception when others then
+    captured_state := sqlstate;
+    if captured_state <> '42501' then
+      raise exception 'unexpected sqlstate % rejecting tenant receipt', captured_state;
+    end if;
+  end;
+end;
+$$;
+
+reset role;
+
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling and durable idempotency assertions passed' as result;
 
 rollback;

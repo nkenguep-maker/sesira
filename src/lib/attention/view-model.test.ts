@@ -28,6 +28,7 @@ function row(overrides: Partial<AttentionRow>): AttentionRow {
     assigned_user_id: assigneeId,
     due_at: "2026-08-24T09:00:00.000Z",
     resolved_at: null,
+    idempotency_key: null,
     metadata: {},
     created_at: "2026-08-23T09:00:00.000Z",
     updated_at: "2026-08-23T09:00:00.000Z",

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { quoteFollowupDecisionKey } from "@/lib/idempotency/keys";
+
 /**
  * Default quote follow-up schedule: J+3, J+7, J+14 days after the quote
  * was sent. Values are day offsets applied to `quotes.sent_at` in UTC.
@@ -82,10 +84,7 @@ export function nextQuoteFollowupStep(
  * runs.
  */
 export function quoteFollowupIdempotencyKey(quoteId: string, step: number): string {
-  if (!Number.isInteger(step) || step < 1) {
-    throw new RangeError(`quoteFollowupIdempotencyKey: step must be a positive integer (got ${step})`);
-  }
-  return `quote_followup:${quoteId}:step:${step}`;
+  return quoteFollowupDecisionKey(quoteId, step);
 }
 
 /**

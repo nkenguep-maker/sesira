@@ -98,6 +98,7 @@ export type Database = {
           entity_type: string | null
           explanation: string | null
           id: string
+          idempotency_key: string | null
           metadata: Json
           organization_id: string
           priority: string
@@ -117,6 +118,7 @@ export type Database = {
           entity_type?: string | null
           explanation?: string | null
           id?: string
+          idempotency_key?: string | null
           metadata?: Json
           organization_id: string
           priority?: string
@@ -136,6 +138,7 @@ export type Database = {
           entity_type?: string | null
           explanation?: string | null
           id?: string
+          idempotency_key?: string | null
           metadata?: Json
           organization_id?: string
           priority?: string
@@ -388,6 +391,7 @@ export type Database = {
           entity_id: string | null
           entity_type: string | null
           id: string
+          idempotency_key: string | null
           organization_id: string
           payload: Json
           source: string
@@ -398,6 +402,7 @@ export type Database = {
           entity_id?: string | null
           entity_type?: string | null
           id?: string
+          idempotency_key?: string | null
           organization_id: string
           payload?: Json
           source: string
@@ -408,6 +413,7 @@ export type Database = {
           entity_id?: string | null
           entity_type?: string | null
           id?: string
+          idempotency_key?: string | null
           organization_id?: string
           payload?: Json
           source?: string
@@ -734,6 +740,53 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_delivery_receipts: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          organization_id: string
+          payload: Json
+          provider: string
+          provider_event_id: string
+          received_at: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          organization_id: string
+          payload?: Json
+          provider: string
+          provider_event_id: string
+          received_at?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          organization_id?: string
+          payload?: Json
+          provider?: string
+          provider_event_id?: string
+          received_at?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_delivery_receipts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotes: {
         Row: {
           amount: number | null
@@ -987,6 +1040,58 @@ export type Database = {
           attempt_count: number
           quote_id: string
           step: number
+        }[]
+      }
+      insert_event_once: {
+        Args: {
+          target_organization_id: string
+          target_idempotency_key: string
+          target_type: string
+          target_source: string
+          target_entity_type?: string | null
+          target_entity_id?: string | null
+          target_payload?: Json
+        }
+        Returns: {
+          id: string
+          created: boolean
+        }[]
+      }
+      insert_attention_once: {
+        Args: {
+          target_organization_id: string
+          target_idempotency_key: string
+          target_category: string
+          target_reason: string
+          target_title: string
+          target_priority?: string
+          target_entity_type?: string | null
+          target_entity_id?: string | null
+          target_explanation?: string | null
+          target_suggested_action?: string | null
+          target_assigned_user_id?: string | null
+          target_due_at?: string | null
+          target_metadata?: Json
+        }
+        Returns: {
+          id: string
+          created: boolean
+        }[]
+      }
+      record_provider_delivery: {
+        Args: {
+          target_organization_id: string
+          target_provider: string
+          target_provider_event_id: string
+          target_event_type: string
+          target_related_entity_type?: string | null
+          target_related_entity_id?: string | null
+          target_payload?: Json
+          target_received_at?: string | null
+        }
+        Returns: {
+          id: string
+          created: boolean
         }[]
       }
     }
