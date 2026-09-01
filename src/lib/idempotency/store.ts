@@ -1,6 +1,9 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
 
 /**
  * Result shape shared by every replay-safe insert. `created` distinguishes
@@ -40,6 +43,8 @@ export interface InsertEventOnceInput {
   entityType?: string | null;
   entityId?: string | null;
   payload?: Record<string, unknown> | null;
+  /** Reuse a deterministic/server client when the caller already owns one. */
+  client?: SupabaseClient<Database>;
 }
 
 /**
@@ -54,7 +59,7 @@ export interface InsertEventOnceInput {
 export async function insertEventOnce(
   input: InsertEventOnceInput,
 ): Promise<InsertOnceResult> {
-  const supabase = await createClient();
+  const supabase = input.client ?? (await createClient());
   const { data, error } = await supabase.rpc("insert_event_once", {
     target_organization_id: input.organizationId,
     target_idempotency_key: input.idempotencyKey,
@@ -81,6 +86,8 @@ export interface InsertAttentionOnceInput {
   assignedUserId?: string | null;
   dueAt?: string | null;
   metadata?: Record<string, unknown> | null;
+  /** Reuse a deterministic/server client when the caller already owns one. */
+  client?: SupabaseClient<Database>;
 }
 
 /**
@@ -91,7 +98,7 @@ export interface InsertAttentionOnceInput {
 export async function insertAttentionOnce(
   input: InsertAttentionOnceInput,
 ): Promise<InsertOnceResult> {
-  const supabase = await createClient();
+  const supabase = input.client ?? (await createClient());
   const { data, error } = await supabase.rpc("insert_attention_once", {
     target_organization_id: input.organizationId,
     target_idempotency_key: input.idempotencyKey,
@@ -119,6 +126,8 @@ export interface RecordProviderDeliveryInput {
   relatedEntityId?: string | null;
   payload?: Record<string, unknown> | null;
   receivedAt?: Date | null;
+  /** Reuse a deterministic/server client when the caller already owns one. */
+  client?: SupabaseClient<Database>;
 }
 
 /**
@@ -130,7 +139,7 @@ export interface RecordProviderDeliveryInput {
 export async function recordProviderDelivery(
   input: RecordProviderDeliveryInput,
 ): Promise<InsertOnceResult> {
-  const supabase = await createClient();
+  const supabase = input.client ?? (await createClient());
   const { data, error } = await supabase.rpc("record_provider_delivery", {
     target_organization_id: input.organizationId,
     target_provider: input.provider,
