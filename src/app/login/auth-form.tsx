@@ -2,16 +2,38 @@
 
 import { useActionState, useState } from "react";
 
-import { loginAction, signupAction, type AuthActionState } from "./actions";
+import { loginAction, requestPasswordResetAction, signupAction, type AuthActionState } from "./actions";
 
 const initialState: AuthActionState = {};
 
 export function AuthForm() {
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "recovery">("login");
   const [loginState, loginFormAction, loginPending] = useActionState(loginAction, initialState);
   const [signupState, signupFormAction, signupPending] = useActionState(signupAction, initialState);
-  const state = mode === "login" ? loginState : signupState;
-  const pending = mode === "login" ? loginPending : signupPending;
+  const [recoveryState, recoveryFormAction, recoveryPending] = useActionState(requestPasswordResetAction, initialState);
+  const state = mode === "login" ? loginState : mode === "signup" ? signupState : recoveryState;
+  const pending = mode === "login" ? loginPending : mode === "signup" ? signupPending : recoveryPending;
+
+  if (mode === "recovery") {
+    return (
+      <div className="border border-[var(--line)] bg-[var(--surface)] p-7 md:p-9">
+        <button type="button" onClick={() => setMode("login")} className="mb-7 text-sm font-semibold text-[var(--blue)] hover:underline">
+          ← Retour à la connexion
+        </button>
+        <h2 className="font-[family-name:var(--font-display)] text-3xl text-[var(--ink)]">Mot de passe oublié</h2>
+        <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+          Indiquez l’adresse de votre compte. Nous vous enverrons un lien pour choisir un nouveau mot de passe.
+        </p>
+        <form action={recoveryFormAction} className="mt-7 space-y-5">
+          <Field label="Email professionnel" name="email" type="email" autoComplete="email" />
+          <AuthMessage state={state} />
+          <button type="submit" disabled={pending} className="w-full bg-[var(--brand)] px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60">
+            {pending ? "Envoi en cours…" : "Recevoir le lien"}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="border border-[var(--line)] bg-[var(--surface)] p-7 md:p-9">
@@ -46,17 +68,13 @@ export function AuthForm() {
           autoComplete={mode === "login" ? "current-password" : "new-password"}
         />
 
-        {state.error ? (
-          <p role="alert" className=" border border-[var(--danger)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">
-            {state.error}
-          </p>
+        {mode === "login" ? (
+          <button type="button" onClick={() => setMode("recovery")} className="text-sm font-semibold text-[var(--blue)] hover:underline">
+            Mot de passe oublié ?
+          </button>
         ) : null}
 
-        {state.success ? (
-          <p className=" border border-[var(--blue)] bg-[var(--blue-soft)] px-4 py-3 text-sm text-[var(--blue)]">
-            {state.success}
-          </p>
-        ) : null}
+        <AuthMessage state={state} />
 
         <button
           type="submit"
@@ -68,6 +86,18 @@ export function AuthForm() {
       </form>
     </div>
   );
+}
+
+function AuthMessage({ state }: { state: AuthActionState }) {
+  if (state.error) {
+    return <p role="alert" className="border border-[var(--danger)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">{state.error}</p>;
+  }
+
+  if (state.success) {
+    return <p role="status" className="border border-[var(--blue)] bg-[var(--blue-soft)] px-4 py-3 text-sm text-[var(--blue)]">{state.success}</p>;
+  }
+
+  return null;
 }
 
 function Field({

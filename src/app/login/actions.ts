@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { getSiteOrigin } from "@/lib/auth/site-origin";
 
 export type AuthActionState = {
   error?: string;
@@ -18,6 +19,10 @@ const loginSchema = z.object({
 const signupSchema = loginSchema.extend({
   fullName: z.string().trim().min(2).max(120),
   organizationName: z.string().trim().min(2).max(160),
+});
+
+const recoverySchema = z.object({
+  email: z.email(),
 });
 
 export async function loginAction(
@@ -63,6 +68,7 @@ export async function signupAction(
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
+      emailRedirectTo: `${getSiteOrigin()}/auth/confirm?next=/app`,
       data: {
         full_name: parsed.data.fullName,
         organization_name: parsed.data.organizationName,
@@ -79,4 +85,32 @@ export async function signupAction(
   }
 
   redirect("/app");
+}
+
+export async function requestPasswordResetAction(
+  _previousState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const parsed = recoverySchema.safeParse({ email: formData.get("email") });
+
+  if (!parsed.success) {
+    return { error: "Saisissez une adresse email valide." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${getSiteOrigin()}/auth/confirm?next=/update-password`,
+  });
+
+  if (error) {
+    console.error("[auth:password-recovery] request failed", {
+      code: error.code,
+      status: error.status,
+    });
+    return { error: "Impossible d’envoyer le lien pour le moment. Réessayez dans quelques minutes." };
+  }
+
+  return {
+    success: "Si un compte correspond à cette adresse, un lien de réinitialisation vient d’être envoyé.",
+  };
 }
