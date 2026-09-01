@@ -1,27 +1,45 @@
-# SESIRA UI
+# SESIRA
 
-Frontend-only SESIRA workspace, prepared for integration with the existing SESIRA core.
+SESIRA is being assembled in two layers:
 
-## Included
+- **UI** — canonical frontend and interaction system in this repository
+- **Core** — authentication, Supabase, persistence, business logic and integrations, to be merged into the UI without visual regression
+
+## UI status
+
+Implemented:
 
 - Public landing page
-- Login UI
-- Password update UI
+- Login and password-recovery entry
+- New-password screen with client-side confirmation validation
 - Authenticated application shell
 - Dashboard
-- Onboarding V1 with 6 steps: Entreprise, Équipe, Données, E-mail, Suivi, Observation
 - Clients
 - Devis
 - Suivi
 - Équipe
 - Intégrations
 - Paramètres
-- Responsive states and accessible interaction foundations
-- Honest empty states: no fabricated business data or fake integration success
+- Responsive foundations
+- Onboarding V1 with 6 steps: Entreprise, Équipe, Données, E-mail, Suivi, Observation
+- Onboarding draft preserved across all six UI steps
+- Honest empty/unconnected states — no fabricated business data
 
-## Integration boundary
+## Core integration boundary
 
-This repository intentionally contains UI only. Authentication, Supabase calls, persistence, quote data, organization data, members, integrations and tracking should be wired to the SESIRA core instead of being simulated here.
+The typed UI contracts live in:
+
+`src/lib/core/ui-contracts.ts`
+
+The integration instructions for the incoming core live in:
+
+`docs/CORE_HANDOFF.md`
+
+The core should map its own domain/database models to these UI DTOs instead of replacing the canonical SESIRA screens.
+
+## Environment
+
+Copy `.env.example` to `.env.local` locally and populate real values there. Never commit `.env.local` or secrets.
 
 ## Run
 
@@ -29,3 +47,18 @@ This repository intentionally contains UI only. Authentication, Supabase calls, 
 npm install
 npm run dev
 ```
+
+Useful checks:
+
+```bash
+npm run typecheck
+npm run build
+```
+
+## Integration principles
+
+- Server-side authorization is mandatory for protected data/actions.
+- No fake success states.
+- No demo customer, quote, member, revenue or integration data in production code.
+- Preserve the SESIRA naming and visual system.
+- Keep backend/domain models independent from UI DTOs.
