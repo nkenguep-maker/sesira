@@ -2226,8 +2226,164 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C10 — Inbound reply matching: record_inbound_message + mark_quote_replied
+-- =========================================================================
+-- record_inbound_message and mark_quote_replied are service_role-only.
+-- Authenticated tenant callers must be rejected. As service_role, the
+-- happy path inserts a message row, transitions the quote, and stays
+-- idempotent under replay.
+
+-- Authenticated caller rejected on record_inbound_message (42501).
+do $$
+declare captured text;
+begin
+  begin
+    perform public.record_inbound_message(
+      '91000000-0000-4000-8000-000000000001',
+      'inbound:resend:evt_forbidden',
+      'resend', 'msg_forbidden', null,
+      '91500000-0000-4000-8000-000000000001', null,
+      'attacker@example.com', 'Re: Devis', 'body',
+      'msg_original', array[]::text[], '{}'::jsonb, now()
+    );
+    raise exception 'authenticated record_inbound_message was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % on authenticated record_inbound_message', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Authenticated caller rejected on mark_quote_replied (42501).
+do $$
+declare captured text;
+begin
+  begin
+    perform public.mark_quote_replied(
+      '91000000-0000-4000-8000-000000000001',
+      '91500000-0000-4000-8000-000000000001'
+    );
+    raise exception 'authenticated mark_quote_replied was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % on authenticated mark_quote_replied', captured;
+    end if;
+  end;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit and Retries/incidents assertions passed' as result;
+-- Switch to service_role for the happy-path assertions on C10 RPCs.
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+do $$
+declare
+  first_row  record;
+  replay_row record;
+  raw_count  integer;
+  quote_id   uuid := '91500000-0000-4000-8000-00000000c010';
+  captured   text;
+begin
+  -- Seed a fresh SENT quote to transition.
+  insert into public.quotes (id, organization_id, customer_id, request_id, title, amount, status)
+  values (quote_id, '91000000-0000-4000-8000-000000000001',
+          '91300000-0000-4000-8000-000000000001', null,
+          'C10 seed quote', 1000.00, 'DRAFT');
+  update public.quotes set status = 'SENT', sent_at = now() where id = quote_id;
+
+  -- (i) record_inbound_message inserts once.
+  select id, created into first_row
+  from public.record_inbound_message(
+    '91000000-0000-4000-8000-000000000001',
+    'inbound:resend:evt_c10_alpha',
+    'resend', 'inbound_msg_alpha', null, quote_id, null,
+    'customer@example.com', 'Re: Devis', 'Merci pour le devis',
+    'msg_original_alpha', array['msg_original_alpha']::text[],
+    jsonb_build_object('Message-ID', '<inbound_msg_alpha@example.com>'),
+    now()
+  );
+  if not first_row.created then
+    raise exception 'first record_inbound_message must set created=true';
+  end if;
+
+  -- Replay observes the original id.
+  select id, created into replay_row
+  from public.record_inbound_message(
+    '91000000-0000-4000-8000-000000000001',
+    'inbound:resend:evt_c10_alpha',
+    'resend', 'inbound_msg_alpha', null, quote_id, null,
+    'customer@example.com', 'Re: Devis (replay)', 'different body',
+    'msg_original_alpha', array['msg_original_alpha']::text[],
+    '{}'::jsonb, now()
+  );
+  if replay_row.created then
+    raise exception 'replay record_inbound_message must set created=false';
+  end if;
+  if replay_row.id is distinct from first_row.id then
+    raise exception 'replay must observe the original row id';
+  end if;
+
+  select count(*) into raw_count from public.messages
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and idempotency_key = 'inbound:resend:evt_c10_alpha';
+  if raw_count <> 1 then
+    raise exception 'duplicate messages row after replay (got %)', raw_count;
+  end if;
+
+  -- (ii) mark_quote_replied SENT -> REPLIED once, replay returns false.
+  if not public.mark_quote_replied(
+    '91000000-0000-4000-8000-000000000001', quote_id
+  ) then
+    raise exception 'mark_quote_replied should return true on first call';
+  end if;
+  if public.mark_quote_replied(
+    '91000000-0000-4000-8000-000000000001', quote_id
+  ) then
+    raise exception 'mark_quote_replied replay on REPLIED row must return false';
+  end if;
+
+  select status into captured from public.quotes where id = quote_id;
+  if captured is distinct from 'REPLIED' then
+    raise exception 'quote should be REPLIED (got %)', captured;
+  end if;
+
+  -- (iii) Empty idempotency_key rejected 22023.
+  begin
+    perform public.record_inbound_message(
+      '91000000-0000-4000-8000-000000000001', '',
+      'resend', 'msg_empty', null, quote_id, null,
+      'x@x', 'x', 'x', null, null, '{}'::jsonb, now()
+    );
+    raise exception 'empty idempotency_key was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % on empty inbound key', captured;
+    end if;
+  end;
+
+  -- (iv) mark_quote_replied on a WON quote rejected 22023.
+  update public.quotes set status = 'WON' where id = quote_id;
+  begin
+    perform public.mark_quote_replied('91000000-0000-4000-8000-000000000001', quote_id);
+    raise exception 'mark_quote_replied on WON was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % on WON transition', captured;
+    end if;
+  end;
+end;
+$$;
+
+reset role;
+
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents and C10 inbound reply assertions passed' as result;
 
 rollback;

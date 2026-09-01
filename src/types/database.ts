@@ -547,12 +547,16 @@ export type Database = {
           customer_id: string | null
           direction: string
           id: string
+          idempotency_key: string | null
+          in_reply_to: string | null
           intent: string | null
           metadata: Json
           organization_id: string
           provider_message_id: string | null
           quote_id: string | null
+          raw_headers: Json
           received_at: string | null
+          references_headers: string[] | null
           request_id: string | null
           sent_at: string | null
           status: string
@@ -568,12 +572,16 @@ export type Database = {
           customer_id?: string | null
           direction: string
           id?: string
+          idempotency_key?: string | null
+          in_reply_to?: string | null
           intent?: string | null
           metadata?: Json
           organization_id: string
           provider_message_id?: string | null
           quote_id?: string | null
+          raw_headers?: Json
           received_at?: string | null
+          references_headers?: string[] | null
           request_id?: string | null
           sent_at?: string | null
           status?: string
@@ -589,12 +597,16 @@ export type Database = {
           customer_id?: string | null
           direction?: string
           id?: string
+          idempotency_key?: string | null
+          in_reply_to?: string | null
           intent?: string | null
           metadata?: Json
           organization_id?: string
           provider_message_id?: string | null
           quote_id?: string | null
+          raw_headers?: Json
           received_at?: string | null
+          references_headers?: string[] | null
           request_id?: string | null
           sent_at?: string | null
           status?: string
@@ -1213,6 +1225,35 @@ export type Database = {
           target_message_id: string
           target_error_class: string
           target_error_message: string
+        }
+        Returns: boolean
+      }
+      record_inbound_message: {
+        Args: {
+          target_organization_id: string
+          target_idempotency_key: string
+          target_provider: string
+          target_provider_message_id: string
+          target_customer_id: string | null
+          target_quote_id: string | null
+          target_request_id: string | null
+          target_from_email: string
+          target_subject: string
+          target_body_text: string
+          target_in_reply_to: string | null
+          target_references_headers: string[] | null
+          target_raw_headers: Json | null
+          target_received_at: string | null
+        }
+        Returns: {
+          id: string
+          created: boolean
+        }[]
+      }
+      mark_quote_replied: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
         }
         Returns: boolean
       }
