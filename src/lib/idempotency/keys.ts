@@ -154,6 +154,29 @@ export function externalEffectKey(
 }
 
 /**
+ * Outbound message intent — one row per (kind, entity, step) send
+ * attempt. E.g. the first send of quote follow-up step 2:
+ *   outboundMessageIntentKey("quote_followup", quoteId, 2)
+ *
+ * Format: `outbound:{kind}:{entityId}:{step}`
+ *
+ * The `step` (or discriminator) is required to distinguish successive
+ * legitimate sends against the same entity (step 1, step 2, ...).
+ * Never derived from the subject / body / recipient — those are
+ * mutable business values and would defeat replay safety.
+ */
+export function outboundMessageIntentKey(
+  kind: string,
+  entityId: string,
+  step: number,
+): string {
+  assertNonEmpty("kind", kind, 64);
+  assertUuid("entityId", entityId);
+  assertPositiveInteger("step", step);
+  return `outbound:${kind}:${entityId}:${step}`;
+}
+
+/**
  * Types of identifiers a key builder MAY accept. Used by the store
  * layer to keep the surface area explicit — a call site that mixes
  * a mutable value into a key trips a type error.

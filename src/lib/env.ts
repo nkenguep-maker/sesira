@@ -7,6 +7,9 @@ const publicEnvSchema = z.object({
 
 const serverEnvSchema = publicEnvSchema.extend({
   EXTERNAL_ACTIONS_ENABLED: z.enum(["true", "false"]).default("false"),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().email().optional(),
+  EMAIL_REPLY_TO: z.string().email().optional(),
 });
 
 export const publicEnv = publicEnvSchema.parse({
@@ -17,4 +20,7 @@ export const publicEnv = publicEnvSchema.parse({
 export const serverEnv = serverEnvSchema.parse({
   ...publicEnv,
   EXTERNAL_ACTIONS_ENABLED: process.env.EXTERNAL_ACTIONS_ENABLED,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  EMAIL_FROM: process.env.EMAIL_FROM,
+  EMAIL_REPLY_TO: process.env.EMAIL_REPLY_TO,
 });

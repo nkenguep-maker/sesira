@@ -1352,6 +1352,178 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- Outbound message boundary — C9 record_intent / mark_sent / mark_failed
+-- =========================================================================
+-- Still running as tenant A (authenticated). These assertions exercise:
+--   * record_outbound_message_intent — replay dedup by
+--     (org, idempotency_key), foreign-org caller rejected, empty key
+--     rejected.
+--   * mark_outbound_message_sent — QUEUED -> SENT transition, replay
+--     returns false, cross-tenant caller rejected.
+--   * mark_outbound_message_failed — QUEUED -> FAILED transition,
+--     error_class enforced, cross-tenant caller rejected.
+--
+-- Fixture: none — every test row is inserted via record_intent and
+-- addressed by the returned id. All rows sit under tenant A so they
+-- roll back with the outer transaction.
+
+do $$
+declare
+  first_row   record;
+  replay_row  record;
+  cross_row   record;
+  raw_count   integer;
+  captured    text;
+begin
+  -- (i) record_outbound_message_intent creates a QUEUED row once.
+  select id, created into first_row
+  from public.record_outbound_message_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'outbound:quote_followup:91500000-0000-4000-8000-000000000001:step:1',
+    null,
+    'resend',
+    'email',
+    'to@example.com',
+    'from@example.com',
+    null,
+    'Hello',
+    repeat('0', 64)
+  );
+  if not first_row.created then
+    raise exception 'first record_outbound_message_intent must set created=true';
+  end if;
+
+  -- Replay with a different subject / body_hash observes the original id.
+  select id, created into replay_row
+  from public.record_outbound_message_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'outbound:quote_followup:91500000-0000-4000-8000-000000000001:step:1',
+    null,
+    'resend',
+    'email',
+    'to@example.com',
+    'from@example.com',
+    null,
+    'Different subject',
+    repeat('1', 64)
+  );
+  if replay_row.created then
+    raise exception 'replay record_outbound_message_intent must set created=false';
+  end if;
+  if replay_row.id is distinct from first_row.id then
+    raise exception 'replay must observe the original row id';
+  end if;
+
+  select count(*) into raw_count
+  from public.outbound_messages
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and idempotency_key = 'outbound:quote_followup:91500000-0000-4000-8000-000000000001:step:1';
+  if raw_count <> 1 then
+    raise exception 'duplicate outbound_messages row after replay (got %)', raw_count;
+  end if;
+
+  -- (ii) mark_outbound_message_sent moves QUEUED -> SENT once.
+  if not public.mark_outbound_message_sent(
+    '91000000-0000-4000-8000-000000000001',
+    first_row.id,
+    'resend_msg_c9_alpha'
+  ) then
+    raise exception 'mark_outbound_message_sent should return true on first call';
+  end if;
+  if public.mark_outbound_message_sent(
+    '91000000-0000-4000-8000-000000000001',
+    first_row.id,
+    'resend_msg_c9_alpha'
+  ) then
+    raise exception 'mark_outbound_message_sent replay on SENT row must return false';
+  end if;
+
+  -- Verify the row transitioned correctly.
+  select provider_message_id into captured
+  from public.outbound_messages where id = first_row.id;
+  if captured is distinct from 'resend_msg_c9_alpha' then
+    raise exception 'provider_message_id not persisted (got %)', captured;
+  end if;
+
+  -- (iii) mark_outbound_message_failed on a fresh QUEUED row.
+  select id, created into cross_row
+  from public.record_outbound_message_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'outbound:quote_followup:91500000-0000-4000-8000-000000000002:step:1',
+    null,
+    'resend',
+    'email',
+    'to2@example.com',
+    'from@example.com',
+    null,
+    'Second',
+    repeat('a', 64)
+  );
+  if not cross_row.created then
+    raise exception 'second record_outbound_message_intent must set created=true';
+  end if;
+  if not public.mark_outbound_message_failed(
+    '91000000-0000-4000-8000-000000000001',
+    cross_row.id,
+    'PERMANENT',
+    'resend: HTTP 422 — invalid recipient'
+  ) then
+    raise exception 'mark_outbound_message_failed should return true on QUEUED row';
+  end if;
+
+  -- (iv) mark_outbound_message_failed rejects an unknown error_class (22023).
+  begin
+    perform public.mark_outbound_message_failed(
+      '91000000-0000-4000-8000-000000000001',
+      cross_row.id,
+      'WHATEVER',
+      'invalid class'
+    );
+    raise exception 'mark_outbound_message_failed with invalid class was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting invalid error_class', captured;
+    end if;
+  end;
+
+  -- (v) empty idempotency_key rejected (22023).
+  begin
+    perform public.record_outbound_message_intent(
+      '91000000-0000-4000-8000-000000000001',
+      '',
+      null, 'resend', 'email',
+      'to@example.com', 'from@example.com', null,
+      'x', repeat('0', 64)
+    );
+    raise exception 'empty idempotency_key was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting empty key', captured;
+    end if;
+  end;
+
+  -- (vi) foreign-org caller rejected (42501). Tenant A tries to touch tenant B.
+  begin
+    perform public.record_outbound_message_intent(
+      '92000000-0000-4000-8000-000000000002',
+      'outbound:foreign:step:1',
+      null, 'resend', 'email',
+      'to@example.com', 'from@example.com', null,
+      'x', repeat('0', 64)
+    );
+    raise exception 'foreign-org record_outbound_message_intent was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % rejecting foreign call', captured;
+    end if;
+  end;
+end;
+$$;
+
 reset role;
 
 -- =========================================================================

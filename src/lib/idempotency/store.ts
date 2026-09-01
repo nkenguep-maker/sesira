@@ -143,3 +143,94 @@ export async function recordProviderDelivery(
   });
   return unwrap("recordProviderDelivery", data as RpcRow[] | null, error);
 }
+
+export interface RecordOutboundMessageIntentInput {
+  organizationId: string;
+  idempotencyKey: string;
+  integrationId: string | null;
+  providerName: string;
+  channel: "email";
+  toEmail: string;
+  fromEmail: string;
+  replyTo: string | null;
+  subject: string;
+  bodyHash: string;
+}
+
+/**
+ * Record an outbound message send *intent* exactly once. The returned
+ * `created` flag decides whether the caller should proceed to the
+ * provider (`created=true`) or short-circuit as a replay
+ * (`created=false`). Never call the provider before this returns.
+ *
+ * See C9 header in `20260905000000_outbound_message_boundary.sql` for
+ * the boundary contract.
+ */
+export async function recordOutboundMessageIntent(
+  input: RecordOutboundMessageIntentInput,
+): Promise<InsertOnceResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("record_outbound_message_intent", {
+    target_organization_id: input.organizationId,
+    target_idempotency_key: input.idempotencyKey,
+    target_integration_id: input.integrationId,
+    target_provider: input.providerName,
+    target_channel: input.channel,
+    target_to_email: input.toEmail,
+    target_from_email: input.fromEmail,
+    target_reply_to: input.replyTo,
+    target_subject: input.subject,
+    target_body_hash: input.bodyHash,
+  });
+  return unwrap("recordOutboundMessageIntent", data as RpcRow[] | null, error);
+}
+
+export interface MarkOutboundMessageSentInput {
+  organizationId: string;
+  messageId: string;
+  providerMessageId: string;
+}
+
+/**
+ * Transition a QUEUED outbound_messages row to SENT. Returns true iff
+ * exactly one row transitioned — a replay on an already-SENT row
+ * returns false without side effect.
+ */
+export async function markOutboundMessageSent(
+  input: MarkOutboundMessageSentInput,
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("mark_outbound_message_sent", {
+    target_organization_id: input.organizationId,
+    target_message_id: input.messageId,
+    target_provider_message_id: input.providerMessageId,
+  });
+  if (error) throw new Error(`markOutboundMessageSent: ${error.message}`);
+  return data === true;
+}
+
+export interface MarkOutboundMessageFailedInput {
+  organizationId: string;
+  messageId: string;
+  errorClass: "TRANSIENT" | "PERMANENT";
+  errorMessage: string;
+}
+
+/**
+ * Transition a QUEUED outbound_messages row to FAILED. The error class
+ * mirrors the retry runner (TRANSIENT vs PERMANENT). Returns true iff
+ * exactly one row transitioned.
+ */
+export async function markOutboundMessageFailed(
+  input: MarkOutboundMessageFailedInput,
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("mark_outbound_message_failed", {
+    target_organization_id: input.organizationId,
+    target_message_id: input.messageId,
+    target_error_class: input.errorClass,
+    target_error_message: input.errorMessage,
+  });
+  if (error) throw new Error(`markOutboundMessageFailed: ${error.message}`);
+  return data === true;
+}

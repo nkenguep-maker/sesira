@@ -716,6 +716,90 @@ export type Database = {
         }
         Relationships: []
       }
+      outbound_messages: {
+        Row: {
+          attempt_count: number
+          body_hash: string
+          channel: string
+          created_at: string
+          error_class: string | null
+          error_message: string | null
+          failed_at: string | null
+          from_email: string
+          id: string
+          idempotency_key: string
+          integration_id: string | null
+          organization_id: string
+          provider: string
+          provider_message_id: string | null
+          reply_to: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          to_email: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          body_hash: string
+          channel?: string
+          created_at?: string
+          error_class?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          from_email: string
+          id?: string
+          idempotency_key: string
+          integration_id?: string | null
+          organization_id: string
+          provider: string
+          provider_message_id?: string | null
+          reply_to?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          to_email: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          body_hash?: string
+          channel?: string
+          created_at?: string
+          error_class?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          from_email?: string
+          id?: string
+          idempotency_key?: string
+          integration_id?: string | null
+          organization_id?: string
+          provider?: string
+          provider_message_id?: string | null
+          reply_to?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          to_email?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_messages_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1096,6 +1180,41 @@ export type Database = {
           id: string
           created: boolean
         }[]
+      }
+      record_outbound_message_intent: {
+        Args: {
+          target_organization_id: string
+          target_idempotency_key: string
+          target_integration_id: string | null
+          target_provider: string
+          target_channel: string
+          target_to_email: string
+          target_from_email: string
+          target_reply_to: string | null
+          target_subject: string
+          target_body_hash: string
+        }
+        Returns: {
+          id: string
+          created: boolean
+        }[]
+      }
+      mark_outbound_message_sent: {
+        Args: {
+          target_organization_id: string
+          target_message_id: string
+          target_provider_message_id: string
+        }
+        Returns: boolean
+      }
+      mark_outbound_message_failed: {
+        Args: {
+          target_organization_id: string
+          target_message_id: string
+          target_error_class: string
+          target_error_message: string
+        }
+        Returns: boolean
       }
       record_audit_log: {
         Args: {
