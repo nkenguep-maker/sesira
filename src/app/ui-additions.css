@@ -1,0 +1,21 @@
+.form-error {
+  margin: -2px 0 2px;
+  color: #a83c32;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.onboarding-rail nav button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.onboarding-rail nav button:disabled:hover {
+  transform: none;
+}
+
+.notice-card code,
+.completion-state code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.88em;
+}
