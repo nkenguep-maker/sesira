@@ -6,15 +6,12 @@ import type { ResultsSummary } from "@/lib/results/contracts";
 import { buildEstimatedMetrics } from "@/lib/results/summary";
 
 describe("ResultsScreen", () => {
-  it("keeps observed, estimated and hypothesis labels explicit with zero values", () => {
+  it("affiche l’état vide approuvé sans KPI de démonstration", () => {
     const html = renderToStaticMarkup(<ResultsScreen summary={summary("EMPTY")} />);
 
-    expect(html).toContain("OBSERVÉ");
-    expect(html).toContain("ESTIMATION");
-    expect(html).toContain("HYPOTHÈSE");
-    expect(html).toContain("Aucune activité observée");
-    expect(html).toContain("Ce ne sont pas des revenus générés");
-    expect(html).toContain(">0<");
+    expect(html).toContain("Pas encore assez de données");
+    expect(html).toContain("Ce que Sesira ne saura jamais attribuer");
+    expect(html).not.toContain("results-ref-heroes");
   });
 
   it("renders partial data without converting unavailable values to zero", () => {
@@ -28,8 +25,8 @@ describe("ResultsScreen", () => {
     const html = renderToStaticMarkup(<ResultsScreen summary={partial} />);
 
     expect(html).toContain("Certains résultats sont temporairement indisponibles");
-    expect(html).toContain("Indisponible");
-    expect(html).toContain("À établir");
+    expect(html).toContain("Donnée indisponible");
+    expect(html).toContain("Estimé");
   });
 
   it("renders the estimated-only state and responsive period controls", () => {
@@ -41,10 +38,9 @@ describe("ResultsScreen", () => {
     }));
     const html = renderToStaticMarkup(<ResultsScreen summary={estimatedOnly} />);
 
-    expect(html).toContain("Estimations disponibles, observation en attente");
+    expect(html).toContain("Certains résultats sont temporairement indisponibles");
     expect(html).toContain("period=90d");
-    expect(html).toContain("sm:grid-cols-2");
-    expect(html).toContain("xl:grid-cols-5");
+    expect(html).toContain("Ce que Sesira ne sait pas attribuer");
   });
 });
 

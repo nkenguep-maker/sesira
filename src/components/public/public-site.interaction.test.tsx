@@ -20,7 +20,7 @@ describe("PublicSite diagnostic dialog", () => {
   it("gère le focus, Escape et la restauration du déclencheur", async () => {
     const root = createRoot(container);
     await act(async () => root.render(<PublicSite />));
-    const trigger = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent?.includes("Faire mon diagnostic"));
+    const trigger = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent?.includes("Faire le calcul"));
     expect(trigger).toBeDefined();
     trigger?.focus();
     await act(async () => trigger?.click());

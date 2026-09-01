@@ -1,187 +1,83 @@
-import { ArrowRight, CircleHelp, Info } from "lucide-react";
 import Link from "next/link";
 
-import { PageHeader } from "@/components/sesira/page-header";
-import type {
-  ObservedMetric,
-  ResultsPeriodKey,
-  ResultsSummary,
-} from "@/lib/results/contracts";
+/* eslint-disable react/no-unescaped-entities */
+
+import { StandaloneHeader } from "@/components/sesira/standalone-header";
+import type { ObservedMetric, ResultsPeriodKey, ResultsSummary } from "@/lib/results/contracts";
 import { formatResultsEstimate } from "@/lib/results/format";
 
 const PERIODS: Array<{ key: ResultsPeriodKey; label: string }> = [
   { key: "7d", label: "Cette semaine" },
   { key: "month", label: "Ce mois" },
   { key: "30d", label: "30 jours" },
-  { key: "90d", label: "90 jours" },
+  { key: "90d", label: "Période personnalisée" },
 ];
 
-const STATE_MESSAGES = {
-  EMPTY: {
-    title: "Aucune activité observée sur cette période.",
-    description: "Les premiers résultats apparaîtront dès que votre équipe utilisera Sesira.",
-  },
-  PARTIAL: {
-    title: "Certains résultats sont temporairement indisponibles.",
-    description: "Une donnée manquante n’est jamais remplacée par zéro.",
-  },
-  ESTIMATED_ONLY: {
-    title: "Estimations disponibles, observation en attente.",
-    description: "Ces projections restent séparées des résultats réellement enregistrés.",
-  },
-} as const;
-
 export function ResultsScreen({ summary }: { summary: ResultsSummary }) {
-  const stateMessage = summary.state === "READY" ? null : STATE_MESSAGES[summary.state];
-
   return (
-    <div className="mx-auto max-w-7xl">
-      <PageHeader
-        eyebrow="Résultats"
-        title="Résultats"
-        description="Ce que Sesira a observé, ce qu’il estime, et ce qu’il ne peut pas attribuer avec certitude."
-        actions={
-          <nav aria-label="Période des résultats" className="flex max-w-full flex-wrap border border-[var(--border)] bg-[var(--panel)] p-1">
-            {PERIODS.map((period) => {
-              const active = period.key === summary.period.key;
-
-              return (
-                <Link
-                  key={period.key}
-                  href={`/app/results?period=${period.key}`}
-                  aria-current={active ? "page" : undefined}
-                  className={` px-3 py-2 text-sm transition sm:px-4 ${
-                    active
-                      ? "bg-[var(--blue-soft)] font-medium text-[var(--blue)]"
-                      : "text-[var(--muted)] hover:text-[var(--blue)]"
-                  }`}
-                >
-                  {period.label}
-                </Link>
-              );
-            })}
-          </nav>
-        }
-      />
-
-      {stateMessage ? (
-        <section
-          className="mt-8 flex items-start gap-3  border border-[var(--blue)] bg-[var(--blue-soft)] p-5"
-          aria-live="polite"
-        >
-          <Info className="mt-0.5 size-5 shrink-0 text-[var(--blue)]" />
-          <div>
-            <h2 className="font-medium">{stateMessage.title}</h2>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{stateMessage.description}</p>
-          </div>
-        </section>
-      ) : null}
-
-      <section className="results-observed mt-10" aria-labelledby="observed-title">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-          <div>
-            <p className="sesira-eyebrow">OBSERVÉ</p>
-            <h2 id="observed-title" className="mt-2 text-xl font-semibold">
-              Activité réelle
-            </h2>
-            <p className="mt-1 text-[0.84375rem] text-[var(--ink-soft)]">Compté dans le système, pas estimé.</p>
-          </div>
-          <p className="text-sm text-[var(--muted)]">Période : {summary.period.label}</p>
-        </div>
-
-        <div className="results-metric-grid mt-5 grid gap-px border border-[var(--line)] bg-[var(--line)] sm:grid-cols-2 xl:grid-cols-5">
-          {summary.observed.map((metric) => (
-            <ObservedCard key={metric.key} metric={metric} />
-          ))}
-        </div>
-      </section>
-
-      <section className="results-estimated mt-10 border border-[var(--sand-line)] bg-[var(--sand)] p-5 md:p-7" aria-labelledby="estimated-title">
-        <div className="max-w-3xl">
-          <p className="sesira-eyebrow !text-[var(--sand-text)]">ESTIMATION</p>
-          <h2 id="estimated-title" className="mt-2 text-xl font-semibold">
-            Estimations séparées des résultats
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            Ces valeurs projettent un potentiel à partir de l’activité observée. Ce ne sont pas des
-            revenus générés.
-          </p>
-        </div>
-
-        <div className="mt-5 grid gap-px border border-[var(--sand-line)] bg-[var(--sand-line)] md:grid-cols-2 xl:grid-cols-5">
-          {summary.estimated.map((metric) => (
-            <article
-              key={metric.key}
-              className="flex min-h-48 flex-col bg-[var(--sand)] p-5"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="bg-[var(--sand-badge)] px-2.5 py-1 text-xs font-semibold tracking-[0.1em] text-[var(--sand-text)]">
-                  HYPOTHÈSE
-                </span>
-              </div>
-              <p className="mt-5 text-sm leading-5 text-[var(--muted)]">{metric.label}</p>
-              <p className="mt-3 [overflow-wrap:anywhere] text-3xl font-semibold tracking-tight tabular-nums">
-                {formatResultsEstimate(metric.estimate)}
-              </p>
-              <p className="mt-auto pt-5 text-xs leading-5 text-[var(--muted)]">{metric.context}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-6 border border-[var(--sand-line)] bg-[var(--surface)] p-6 md:p-8">
-        <div className="grid gap-7 lg:grid-cols-[0.8fr_1.2fr]">
-          <div>
-            <div className="flex items-center gap-2 text-[var(--sand-text)]">
-              <CircleHelp className="size-4" />
-              <p className="text-xs font-semibold tracking-[0.18em]">HYPOTHÈSE</p>
-            </div>
-            <h2 className="mt-3 text-xl font-semibold">Comment lire ces estimations</h2>
-            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              Les hypothèses sont visibles, modérées et appliquées uniquement aux actions réellement
-              comptées. Le gain commercial et le retour par euro resteront à établir tant que les
-              données disponibles ne permettent pas une attribution fiable.
-            </p>
-            <p className="mt-4 text-sm font-semibold text-[var(--sand-text)]">Ces montants ne sont pas un chiffre d’affaires déjà réalisé.</p>
-          </div>
-          <ul className="grid gap-3 sm:grid-cols-2" aria-label="Hypothèses utilisées">
-            {summary.hypotheses.map((hypothesis) => (
-              <li
-                key={hypothesis}
-                className="flex items-start gap-3 border border-[var(--sand-line)] bg-[var(--sand)] px-4 py-3 text-sm leading-6"
-              >
-                <ArrowRight className="mt-1 size-3.5 shrink-0 text-[var(--sand-text)]" />
-                {hypothesis}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className="results-unknown mt-6 border border-[var(--line)] bg-[var(--paper)] p-6 md:p-8" aria-labelledby="unknown-title">
-        <p className="sesira-eyebrow">INCONNU</p>
-        <h2 id="unknown-title" className="mt-2 text-xl font-semibold">Ce que Sesira ne sait pas attribuer.</h2>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          {["L’impact causal d’une relance sur une signature.", "La raison exacte d’une décision client.", "Un chiffre d’affaires généré par Sesira sans preuve causale."].map((item) => <p key={item} className="border border-[var(--line)] bg-[var(--surface)] p-4 text-sm leading-6">{item}</p>)}
-        </div>
-        <p className="mt-6 border-l-2 border-[var(--blue)] pl-4 text-sm font-medium">Sesira ne transforme jamais une estimation en résultat observé.</p>
-        <Link href="/app/reports" className="mt-5 inline-flex text-sm font-semibold text-[var(--blue)]">Voir les rapports <span className="ml-2">→</span></Link>
-      </section>
+    <div className="standalone-page results-ref">
+      <StandaloneHeader label="Résultats" />
+      <main>
+        <h1>Résultats</h1>
+        <p className="results-ref-lede">Ce que Sesira a observé, ce qu'il estime, et ce qu'il ne peut pas attribuer avec certitude.</p>
+        {summary.state === "EMPTY" ? <EmptyResults /> : <ResultsData summary={summary} />}
+      </main>
     </div>
   );
 }
 
-function ObservedCard({ metric }: { metric: ObservedMetric }) {
-  const available = metric.availability === "AVAILABLE";
+function EmptyResults() {
+  return (
+    <section className="results-ref-empty" aria-live="polite">
+      <h2>Pas encore assez de données.</h2>
+      <p>Sesira commence par observer vos dossiers. Les premiers résultats apparaîtront ici lorsque des événements réels auront été enregistrés.</p>
+      <div><b>Ce que Sesira ne saura jamais attribuer</b><p>L'effet exact d'une relance sur une signature, la raison réelle d'une décision client, et le chiffre d'affaires « généré » sans preuve. Ces limites resteront affichées, même quand les chiffres arriveront.</p></div>
+    </section>
+  );
+}
+
+function ResultsData({ summary }: { summary: ResultsSummary }) {
+  const available = summary.observed.filter((metric) => metric.availability === "AVAILABLE");
+  const unavailable = summary.observed.filter((metric) => metric.availability === "UNAVAILABLE");
+  const estimate = summary.estimated.find((metric) => metric.estimate.value !== null);
 
   return (
-    <article className="flex min-h-44 flex-col bg-[var(--surface)] p-5">
-      <span className="sesira-eyebrow">OBSERVÉ</span>
-      <p className="mt-5 text-sm leading-5 text-[var(--muted)]">{metric.label}</p>
-      <p className={`mt-3 font-[family-name:var(--font-display)] font-semibold tracking-[-0.03em] ${available ? "text-4xl" : "text-xl text-[var(--ink)]"}`}>
-        {available ? metric.value : "Indisponible"}
-      </p>
-      <p className="mt-auto pt-4 text-xs leading-5 text-[var(--muted)]">{metric.context}</p>
-    </article>
+    <>
+      <div className="results-ref-periods">
+        <nav aria-label="Période">{PERIODS.map((period) => <Link key={period.key} href={`/app/results?period=${period.key}`} aria-current={period.key === summary.period.key ? "page" : undefined}>{period.label}</Link>)}</nav>
+        <span>Période : {summary.period.label}</span>
+      </div>
+      {summary.state === "PARTIAL" || summary.state === "ESTIMATED_ONLY" ? <div className="results-ref-partial"><b>Certains résultats sont temporairement indisponibles.</b><p>Une donnée manquante n'est jamais remplacée par zéro.</p></div> : null}
+      <section className="results-ref-section observed" aria-labelledby="results-observed">
+        <header><h2 id="results-observed">Observé</h2><span>enregistré, daté, vérifiable</span></header>
+        {available.length ? <><div className="results-ref-heroes">{available.slice(0, 4).map((metric) => <ObservedHero key={metric.key} metric={metric} />)}</div>{available.length > 4 ? <div className="results-ref-secondary">{available.slice(4).map((metric) => <ObservedSmall key={metric.key} metric={metric} />)}</div> : null}</> : <p className="results-ref-unavailable">Aucune donnée observée disponible pour cette période.</p>}
+        {unavailable.length ? <div className="results-ref-missing">{unavailable.map((metric) => <p key={metric.key}><span>{metric.label}</span><b>Donnée indisponible</b></p>)}</div> : null}
+      </section>
+      <section className="results-ref-section estimated" aria-labelledby="results-estimated">
+        <header><h2 id="results-estimated">Estimé</h2><span>calculé à partir d'hypothèses affichées</span></header>
+        {estimate ? <div className="results-ref-estimate"><strong>{formatResultsEstimate(estimate.estimate)}</strong><small>Estimation</small><p>{estimate.context}</p>{summary.hypotheses.length ? <p>Base : {summary.hypotheses.join(" · ")}</p> : null}</div> : <div className="results-ref-no-estimate"><b>Aucune estimation disponible.</b><p>Sesira affichera ici le temps potentiellement récupéré lorsqu'une méthode de calcul aura été configurée avec votre entreprise.</p></div>}
+      </section>
+      <UnknownResults />
+      <Link className="results-ref-reports" href="/app/reports">Voir les rapports</Link>
+    </>
+  );
+}
+
+function ObservedHero({ metric }: { metric: ObservedMetric }) {
+  return <div><strong>{metric.value ?? 0}</strong><span>{metric.label}</span></div>;
+}
+
+function ObservedSmall({ metric }: { metric: ObservedMetric }) {
+  return <div><strong>{metric.value ?? 0}</strong><span>{metric.label}</span></div>;
+}
+
+function UnknownResults() {
+  return (
+    <section className="results-ref-section unknown" aria-labelledby="results-unknown">
+      <header><h2 id="results-unknown">Inconnu</h2></header>
+      <h3>Ce que Sesira ne sait pas attribuer.</h3>
+      <div><p>L'impact causal d'une relance sur une signature.</p><p>La raison exacte d'une décision client.</p><p>Le chiffre d'affaires « généré » par Sesira sans preuve causale.</p></div>
+      <strong>Sesira ne transforme jamais une estimation en résultat observé.</strong>
+    </section>
   );
 }

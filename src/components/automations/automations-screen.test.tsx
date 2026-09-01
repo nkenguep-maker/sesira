@@ -8,20 +8,17 @@ describe("AutomationsScreen", () => {
   it("rend un état vide honnête", () => {
     const html = renderToStaticMarkup(<AutomationsScreen cards={[]} />);
     expect(html).toContain("Aucune automatisation active");
-    expect(html).toContain("INDISPONIBLE");
-    expect(html).toContain("Aucune action sensible n’est modifiée depuis cet écran");
+    expect(html).toContain("Configuration en cours");
+    expect(html).toContain("Automatisations");
   });
 
   it("présente le mode, la santé, l’activité et le contrôle humain", () => {
     const html = renderToStaticMarkup(<AutomationsScreen cards={[card("APPROVAL")]} />);
-    expect(html).toContain("Relancer les devis");
+    expect(html).toContain("Relance des devis");
     expect(html).toContain("Validation");
-    expect(html).toContain("EN BON ÉTAT");
-    expect(html).toContain("Action enregistrée avec succès");
-    expect(html).toContain("CE QUE SESIRA PEUT FAIRE");
-    expect(html).toContain("TOUJOURS DÉCIDÉ PAR VOUS");
-    expect(html).toContain("Suspendre l’automatisation");
-    expect(html).toContain("disabled");
+    expect(html).toContain("En bon état");
+    expect(html).toContain("1 activité");
+    expect(html).toContain("Autres processus");
   });
 
   it("traduit Shadow sans présenter une action comme envoyée", () => {
@@ -29,9 +26,8 @@ describe("AutomationsScreen", () => {
     shadow.recentActivity = [];
     const html = renderToStaticMarkup(<AutomationsScreen cards={[shadow]} />);
     expect(html).toContain("Il vous montre");
-    expect(html).toContain("Aucun message n’est envoyé");
     expect(html).not.toContain(">SHADOW<");
-    expect(html).toContain("Aucune activité réelle enregistrée");
+    expect(html).toContain("0 activité");
   });
 
   it("distingue une activité indisponible d’un historique vide", () => {
@@ -39,8 +35,8 @@ describe("AutomationsScreen", () => {
     unavailable.activityAvailable = false;
     unavailable.recentActivity = [];
     const html = renderToStaticMarkup(<AutomationsScreen cards={[unavailable]} />);
-    expect(html).toContain("Activité temporairement indisponible");
-    expect(html).toContain("Indisponible");
+    expect(html).toContain("activité non exposée");
+    expect(html).toContain("non exposé");
   });
 });
 

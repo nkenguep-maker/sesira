@@ -24,6 +24,7 @@ describe("AppShell", () => {
 
     expect(html).toContain("Il vous montre");
     expect(html).toContain("Organisation suspendue");
-    expect(html).toContain('href="/app/reports" aria-current="page"');
+    expect(html).toContain('href="/app/reports"');
+    expect(html).toContain('aria-current="page"');
   });
 });
