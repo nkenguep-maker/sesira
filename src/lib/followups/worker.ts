@@ -65,14 +65,19 @@ export async function listDueQuoteFollowupRuns(
  * Atomic compare-and-set claim. Returns TRUE iff this call now holds
  * the lease. Two concurrent callers observe at most one TRUE for the
  * same run. Reclaims RUNNING runs whose lease has expired.
+ *
+ * `client` is optional so request handlers keep using the normal
+ * cookie-aware Supabase client, while deterministic workers/tests can
+ * reuse the same injected client for claim + reads + release.
  */
 export async function claimQuoteFollowupRun(
   runId: string,
   organizationId: string,
   workerId: string,
   leaseSeconds: number = DEFAULT_FOLLOWUP_LEASE_SECONDS,
+  client?: SupabaseClient<Database>,
 ): Promise<boolean> {
-  const supabase = await createClient();
+  const supabase = client ?? (await createClient());
   const { data, error } = await supabase.rpc("claim_automation_run", {
     target_run_id: runId,
     target_organization_id: organizationId,
