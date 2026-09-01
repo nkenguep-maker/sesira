@@ -119,9 +119,7 @@ export function proposeQuoteFollowupAction(
   inputs: QuoteProposalInputs,
 ): ProposedQuoteFollowupAction {
   if (!inputs.customerEmail || inputs.customerEmail.trim().length === 0) {
-    throw new Error(
-      "proposeQuoteFollowupAction: customer has no email — cannot compose an email proposal",
-    );
+    throw new Error("customer has no email — cannot compose an email proposal");
   }
   const subject = renderSubject(inputs);
   const body = renderBody(inputs);
