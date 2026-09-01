@@ -24,8 +24,8 @@ export default function HomePage() {
             <a href="#produit" className="text-link">Voir le système <span>↘</span></a>
           </div>
         </div>
-        <div className="hero-system" aria-label="Aperçu de l'application SESIRA">
-          <div className="system-top"><span>SESIRA / AUJOURD'HUI</span><span className="live-dot">ACTIF</span></div>
+        <div className="hero-system" aria-label="Aperçu de l’application SESIRA">
+          <div className="system-top"><span>SESIRA / AUJOURD’HUI</span><span className="live-dot">ACTIF</span></div>
           <div className="system-grid">
             <div className="system-score"><small>À traiter</small><strong>—</strong><span>Les données apparaîtront après connexion.</span></div>
             <div className="system-list">
@@ -49,8 +49,8 @@ export default function HomePage() {
       </section>
 
       <section id="methode" className="landing-section dark-section">
-        <div className="section-intro"><span className="eyebrow">02 · MÉTHODE</span><h2>Connecter d'abord.<br />Automatiser ensuite.</h2></div>
-        <p className="method-copy">SESIRA n'invente pas vos données. L'application affiche ce qui est réellement connecté et signale clairement ce qui ne l'est pas encore.</p>
+        <div className="section-intro"><span className="eyebrow">02 · MÉTHODE</span><h2>Connecter d’abord.<br />Automatiser ensuite.</h2></div>
+        <p className="method-copy">SESIRA n’invente pas vos données. L’application affiche ce qui est réellement connecté et signale clairement ce qui ne l’est pas encore.</p>
       </section>
 
       <footer className="landing-footer"><SesiraLogo /><span>© 2026 SESIRA</span><Link href="/login">Connexion</Link></footer>

@@ -159,12 +159,12 @@ export function OnboardingExperience() {
         <div className="onboarding-card">
           {readyToSave ? (
             <div className="completion-state">
-              <span className="eyebrow">PRÊT POUR LE CORE · {completedFields}/12 CHAMPS RENSEIGNÉS</span>
+              <span className="eyebrow">PRÊT À ENREGISTRER · {completedFields}/12 CHAMPS RENSEIGNÉS</span>
               <h1>La configuration est prête à être enregistrée.</h1>
-              <p>Votre saisie a été conservée dans l'interface pendant ce parcours. Aucun backend n'a été appelé : Claude Code pourra brancher <code>saveOnboardingDraft</code> sur le core SESIRA.</p>
+              <p>Votre saisie a été conservée dans l’interface pendant ce parcours. La persistance onboarding n’est pas encore branchée à une action du core ; aucun faux succès n’est affiché.</p>
               <div className="onboarding-actions">
                 <button type="button" className="button ghost" onClick={() => { setStep(steps.length - 1); setReadyToSave(false); }}>Modifier</button>
-                <Link href="/app" className="button primary">Retour à la vue d'ensemble</Link>
+                <Link href="/app" className="button primary">Retour à la vue d’ensemble</Link>
               </div>
             </div>
           ) : (
