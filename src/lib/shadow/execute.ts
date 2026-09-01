@@ -392,7 +392,13 @@ export async function executeShadowQuoteFollowupRun(
   const leaseSeconds = params.leaseSeconds ?? DEFAULT_FOLLOWUP_LEASE_SECONDS;
   const supabase = params.client ?? (await createClient());
 
-  const claimed = await claimQuoteFollowupRun(runId, organizationId, workerId, leaseSeconds);
+  const claimed = await claimQuoteFollowupRun(
+    runId,
+    organizationId,
+    workerId,
+    leaseSeconds,
+    supabase,
+  );
   if (!claimed) {
     return { status: "SKIPPED", runId, reason: "CLAIM_LOST" };
   }
@@ -515,6 +521,7 @@ export async function executeShadowQuoteFollowupRun(
         automation_run_id: runId,
         decided_at: now.toISOString(),
       },
+      client: supabase,
     });
     const attentionEmission = await emitAttentionIfNeeded(supabase, {
       organizationId,
@@ -607,6 +614,7 @@ export async function executeShadowQuoteFollowupRun(
         ? { proposed_action: proposedAction }
         : { proposal_error: proposalError }),
     },
+    client: supabase,
   });
 
   const attentionEmission = await emitAttentionIfNeeded(supabase, {
