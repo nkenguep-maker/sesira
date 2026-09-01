@@ -694,6 +694,66 @@ $$;
 -- Fixture: two automation_configs and PENDING automation_runs — one per
 -- tenant plus stop-guard rows on tenant A. Runs use fixed UUIDs so we
 -- can assert deterministically.
+--
+-- The fixture below relies on the partial unique index installed by
+-- 20260904 (automation_configs_org_template_active_idx) — it inserts
+-- one enabled=true row plus one enabled=false row for the same
+-- (org, template_key), which the pre-fix hard unique would have
+-- rejected. The block that follows asserts the two partial-unique
+-- invariants explicitly, on a probe template_key disjoint from the
+-- main fixture so the primary due-runs assertions are unaffected.
+
+do $$
+declare
+  captured_state text;
+  disabled_a uuid;
+  disabled_b uuid;
+begin
+  -- (i) Two enabled=true rows for the same (org, template_key) must be
+  --     rejected — otherwise list_due_quote_followup_runs would
+  --     ambiguate its active-config lookup.
+  insert into public.automation_configs (id, organization_id, template_key, template_version, enabled, level)
+  values ('91700000-0000-4000-8000-0000000000aa',
+          '91000000-0000-4000-8000-000000000001',
+          'quote_partial_probe', 1, true, 'AUTOMATIC');
+  begin
+    insert into public.automation_configs (id, organization_id, template_key, template_version, enabled, level)
+    values ('91700000-0000-4000-8000-0000000000ab',
+            '91000000-0000-4000-8000-000000000001',
+            'quote_partial_probe', 1, true, 'AUTOMATIC');
+    raise exception 'second enabled=true row for same (org, template_key) was not rejected';
+  exception when others then
+    captured_state := sqlstate;
+    if captured_state <> '23505' then
+      raise exception 'unexpected sqlstate % rejecting second enabled=true config', captured_state;
+    end if;
+  end;
+
+  -- (ii) Unlimited enabled=false variants for the same (org, template_key)
+  --      are allowed — the audit trail of prior configs is preserved
+  --      without having to hard-delete them.
+  insert into public.automation_configs (id, organization_id, template_key, template_version, enabled, level)
+  values ('91700000-0000-4000-8000-0000000000ac',
+          '91000000-0000-4000-8000-000000000001',
+          'quote_partial_probe', 1, false, 'AUTOMATIC')
+  returning id into disabled_a;
+
+  insert into public.automation_configs (id, organization_id, template_key, template_version, enabled, level)
+  values ('91700000-0000-4000-8000-0000000000ad',
+          '91000000-0000-4000-8000-000000000001',
+          'quote_partial_probe', 1, false, 'AUTOMATIC')
+  returning id into disabled_b;
+
+  if disabled_a is null or disabled_b is null or disabled_a = disabled_b then
+    raise exception 'partial unique must allow multiple enabled=false rows for same (org, template_key)';
+  end if;
+
+  -- Cleanup so the fixture below stays deterministic.
+  delete from public.automation_configs
+   where template_key = 'quote_partial_probe'
+     and organization_id = '91000000-0000-4000-8000-000000000001';
+end;
+$$;
 
 insert into public.automation_configs (id, organization_id, template_key, template_version, enabled, level)
 values
