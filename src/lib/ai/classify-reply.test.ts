@@ -12,6 +12,10 @@ interface FakeState {
   runNextId: number;
   denormCalls: Array<Record<string, unknown>>;
   denormReturns: boolean;
+  objectionCalls: Array<Record<string, unknown>>;
+  attentionCalls: Array<Record<string, unknown>>;
+  attentionLedger: Map<string, string>;
+  attentionNextId: number;
 }
 
 function makeState(): FakeState {
@@ -21,6 +25,10 @@ function makeState(): FakeState {
     runNextId: 0,
     denormCalls: [],
     denormReturns: true,
+    objectionCalls: [],
+    attentionCalls: [],
+    attentionLedger: new Map(),
+    attentionNextId: 0,
   };
 }
 
@@ -42,6 +50,22 @@ function makeFakeClient(state: FakeState) {
       if (name === "record_message_classification") {
         state.denormCalls.push(args);
         return Promise.resolve({ data: state.denormReturns, error: null });
+      }
+      if (name === "sync_commercial_objection_from_ai") {
+        state.objectionCalls.push(args);
+        return Promise.resolve({ data: true, error: null });
+      }
+      if (name === "insert_attention_once") {
+        state.attentionCalls.push(args);
+        const key = `${args.target_organization_id}|${args.target_idempotency_key}`;
+        const existing = state.attentionLedger.get(key);
+        if (existing) {
+          return Promise.resolve({ data: [{ id: existing, created: false }], error: null });
+        }
+        state.attentionNextId += 1;
+        const id = `attention-${state.attentionNextId}`;
+        state.attentionLedger.set(key, id);
+        return Promise.resolve({ data: [{ id, created: true }], error: null });
       }
       return Promise.resolve({ data: null, error: { message: `unhandled rpc ${name}` } });
     },
@@ -96,9 +120,10 @@ describe("classifyMessageReply", () => {
     expect(state.runCalls).toHaveLength(1);
     expect(state.runCalls[0].target_status).toBe("SUCCEEDED");
     expect(state.denormCalls).toHaveLength(1);
+    expect(state.attentionCalls).toHaveLength(0);
   });
 
-  it("records but does not denormalize when confidence is below threshold", async () => {
+  it("records but does not denormalize when confidence is below threshold and emits review Attention", async () => {
     const provider = makeProvider({
       status: "SUCCEEDED",
       classification: { intent: "OTHER", confidence: 0.3, summary: "meh" },
@@ -115,6 +140,8 @@ describe("classifyMessageReply", () => {
     if (result.status !== "CLASSIFIED") return;
     expect(result.denormalized).toBe(false);
     expect(state.denormCalls).toHaveLength(0);
+    expect(state.attentionCalls).toHaveLength(1);
+    expect(state.attentionCalls[0].target_reason).toBe("LOW_AI_CONFIDENCE");
   });
 
   it("persists a FAILED ai_run when the provider returns TRANSIENT", async () => {
@@ -135,9 +162,10 @@ describe("classifyMessageReply", () => {
     expect(state.runCalls[0].target_status).toBe("FAILED");
     expect((state.runCalls[0].target_error as string)).toContain("TRANSIENT");
     expect(state.denormCalls).toHaveLength(0);
+    expect(state.attentionCalls).toHaveLength(0);
   });
 
-  it("flags the run as SUCCESS with sensitive=true for COMPLAINT / PRICE_OBJECTION", async () => {
+  it("flags sensitive reply classifications and emits a human decision Attention", async () => {
     const provider = makeProvider({
       status: "SUCCEEDED",
       classification: {
@@ -157,6 +185,42 @@ describe("classifyMessageReply", () => {
     expect(result.status).toBe("CLASSIFIED");
     if (result.status !== "CLASSIFIED") return;
     expect(result.sensitive).toBe(true);
+    expect(state.attentionCalls).toHaveLength(1);
+    expect(state.attentionCalls[0].target_reason).toBe("OBJECTION_NEEDS_REVIEW");
+    expect(state.attentionCalls[0].target_priority).toBe("HIGH");
+  });
+
+  it("syncs an explicit structured objection with its evidence and confidence", async () => {
+    const provider = makeProvider({
+      status: "SUCCEEDED",
+      classification: {
+        intent: "REQUEST_INFO",
+        confidence: 0.9,
+        summary: "Le client demande si la mise en service peut être faite en novembre.",
+        objection: {
+          kind: "TIMING",
+          confidence: 0.82,
+          summary: "Le calendrier proposé est trop tôt.",
+          evidence: "Le client demande explicitement novembre.",
+        },
+      },
+      model: "test-model",
+      inputTokens: null,
+      outputTokens: null,
+      latencyMs: 100,
+    });
+    const result = await classifyMessageReply(
+      { organizationId: ORG, messageId: MESSAGE, subject: "x", body: "y", provider },
+      { client: client as never },
+    );
+    expect(result.status).toBe("CLASSIFIED");
+    expect(state.objectionCalls).toHaveLength(1);
+    expect(state.objectionCalls[0]).toMatchObject({
+      target_kind: "TIMING",
+      target_confidence: 0.82,
+      target_summary: "Le calendrier proposé est trop tôt.",
+    });
+    expect(state.attentionCalls).toHaveLength(0);
   });
 
   it("skips denormalization silently when the message was already classified (replay)", async () => {
@@ -168,13 +232,10 @@ describe("classifyMessageReply", () => {
       outputTokens: null,
       latencyMs: 100,
     });
-    // First call succeeds and denormalizes.
     await classifyMessageReply(
       { organizationId: ORG, messageId: MESSAGE, subject: "x", body: "y", provider },
       { client: client as never },
     );
-    // Second call: run is a replay (created=false) AND record_message_classification
-    //   returns false (row already classified).
     state.denormReturns = false;
     const result = await classifyMessageReply(
       { organizationId: ORG, messageId: MESSAGE, subject: "x", body: "y", provider },
