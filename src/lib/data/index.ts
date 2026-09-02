@@ -42,3 +42,12 @@ export { getQuoteResultsSummary } from "./results";
 
 export type { EmailConnectionReadiness, AutomationReadiness } from "./readiness";
 export { getEmailConnectionReadiness, getAutomationReadiness } from "./readiness";
+
+export type {
+  ApprovalRateWindow, ShadowProposalCount, SendVsReplyRatio,
+  ComplaintAndOptOutCounts, IncidentTrendDay,
+} from "./evidence";
+export {
+  getApprovalRateWindow, getShadowProposalCount, getSendVsReplyRatio,
+  getComplaintAndOptOutCounts, getIncidentTrend,
+} from "./evidence";
