@@ -125,10 +125,10 @@ export default function HomePage() {
           <p>Le produit doit répondre à une question simple le matin : qu’est ce qui mérite vraiment que je m’en occupe aujourd’hui ?</p>
         </div>
         <div className="cvc-product-frame">
-          <div className="cvc-product-top"><strong>MARDI · 08:17</strong><span>À regarder aujourd’hui · 3</span></div>
+          <div className="cvc-product-top"><strong>MARDI · 08:17</strong><span>À regarder aujourd’hui · 3 · EXEMPLE</span></div>
           <article><div><span>DEVIS</span><strong>18 450 € · Sophie Lefèvre</strong><p>Cliente intéressée, mais prix jugé élevé.</p></div><b>À vous de décider</b></article>
           <article><div><span>DEVIS</span><strong>9 800 € · Dupont SARL</strong><p>Aucune réponse depuis 6 jours. Relance prête.</p></div><b>Relance à valider</b></article>
-          <article><div><span>FACTURE</span><strong>4 850 € · Résidence Les Tilleuls</strong><p>En retard et sans réponse au premier rappel.</p></div><b>À vérifier</b></article>
+          <article><div><span>DEMANDE CLIENT</span><strong>Martin Dupont · intervention</strong><p>Un nouveau message attend une réponse et reste relié au dossier client.</p></div><b>À traiter</b></article>
         </div>
       </section>
 
