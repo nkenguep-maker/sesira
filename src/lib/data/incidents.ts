@@ -9,7 +9,7 @@ import { safeClient } from "@/lib/data/safe-client";
 
 export type OpenIncidentRow = {
   id: string;
-  fingerprint: string;
+  fingerprint: string | null;
   severity: string;
   category: string;
   title: string;
@@ -17,8 +17,8 @@ export type OpenIncidentRow = {
   entityType: string | null;
   entityId: string | null;
   recurrenceCount: number;
-  firstSeenAt: string;
-  lastSeenAt: string;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
   status: string;
 };
 
