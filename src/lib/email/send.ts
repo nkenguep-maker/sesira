@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
   assertGuardedEmailAllowed,
@@ -12,6 +13,7 @@ import {
   markOutboundMessageSent,
   recordOutboundMessageIntent,
 } from "@/lib/idempotency/store";
+import type { Database } from "@/types/database";
 
 export type SendGuardedEmailInput = {
   organizationId: string;
@@ -29,9 +31,11 @@ export type SendGuardedEmailInput = {
    * Optional guard override — used by tests and by future higher-level
    * orchestrators that want to short-circuit without touching env vars.
    * Production callers should not pass this; the default resolves the
-   * live `serverEnv` + `VERCEL_ENV`.
+   * live process environment at the boundary.
    */
   policy?: GuardedEmailPolicy;
+  /** Reuse the caller-owned Supabase client across the whole transaction seam. */
+  client?: SupabaseClient<Database>;
 };
 
 export type SendGuardedEmailResult =
@@ -86,6 +90,7 @@ export async function sendGuardedEmail(
     replyTo: input.replyTo ?? null,
     subject: input.subject,
     bodyHash,
+    client: input.client,
   });
   if (!intent.created) {
     return { status: "REPLAY", messageId: intent.id };
@@ -106,6 +111,7 @@ export async function sendGuardedEmail(
       organizationId: input.organizationId,
       messageId: intent.id,
       providerMessageId: result.providerMessageId,
+      client: input.client,
     });
     return {
       status: "SENT",
@@ -119,6 +125,7 @@ export async function sendGuardedEmail(
     messageId: intent.id,
     errorClass: result.errorClass,
     errorMessage: result.errorMessage,
+    client: input.client,
   });
   return {
     status: "FAILED",
