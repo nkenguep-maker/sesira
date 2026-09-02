@@ -453,6 +453,125 @@ export type Database = {
           },
         ]
       }
+      imports: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          initiator_user_id: string | null
+          kind: string
+          metadata: Json
+          organization_id: string
+          row_count_error: number
+          row_count_ok: number
+          row_count_total: number
+          source_filename: string
+          source_size_bytes: number | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          initiator_user_id?: string | null
+          kind: string
+          metadata?: Json
+          organization_id: string
+          row_count_error?: number
+          row_count_ok?: number
+          row_count_total?: number
+          source_filename: string
+          source_size_bytes?: number | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          initiator_user_id?: string | null
+          kind?: string
+          metadata?: Json
+          organization_id?: string
+          row_count_error?: number
+          row_count_ok?: number
+          row_count_total?: number
+          source_filename?: string
+          source_size_bytes?: number | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_rows: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          error_message: string | null
+          external_id: string | null
+          id: string
+          import_id: string
+          organization_id: string
+          raw_payload: Json
+          row_index: number
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          import_id: string
+          organization_id: string
+          raw_payload?: Json
+          row_index: number
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          import_id?: string
+          organization_id?: string
+          raw_payload?: Json
+          row_index?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_rows_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_rows_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidents: {
         Row: {
           category: string
@@ -1398,6 +1517,64 @@ export type Database = {
           target_note: string | null
         }
         Returns: boolean
+      }
+      create_organization_with_owner: {
+        Args: {
+          target_name: string
+          target_sector_key: string
+          target_slug: string
+          target_owner_user_id: string
+        }
+        Returns: {
+          organization_id: string
+          membership_id: string
+        }[]
+      }
+      record_import_started: {
+        Args: {
+          target_organization_id: string
+          target_kind: string
+          target_source_filename: string
+          target_source_size_bytes: number | null
+          target_initiator_user_id: string
+        }
+        Returns: string
+      }
+      record_import_row_ok: {
+        Args: {
+          target_organization_id: string
+          target_import_id: string
+          target_row_index: number
+          target_external_id: string | null
+          target_entity_type: string | null
+          target_entity_id: string | null
+        }
+        Returns: string
+      }
+      record_import_row_error: {
+        Args: {
+          target_organization_id: string
+          target_import_id: string
+          target_row_index: number
+          target_error_message: string
+          target_raw_payload: Json | null
+        }
+        Returns: string
+      }
+      finalize_import: {
+        Args: {
+          target_organization_id: string
+          target_import_id: string
+          target_status: string
+          target_error: string | null
+        }
+        Returns: boolean
+      }
+      export_organization_snapshot: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: Json
       }
       record_audit_log: {
         Args: {
