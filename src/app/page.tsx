@@ -32,7 +32,7 @@ export default function HomePage() {
             <div className="system-list">
               <div><span>Clients</span><b>non connecté</b></div>
               <div><span>Devis</span><b>non connecté</b></div>
-              <div><span>E-mail</span><b>à configurer</b></div>
+              <div><span>Email</span><b>à configurer</b></div>
               <div><span>Suivi</span><b>à configurer</b></div>
             </div>
           </div>
@@ -45,7 +45,7 @@ export default function HomePage() {
         <div className="feature-grid">
           <article><span>01</span><h3>Voir</h3><p>Une vue opérationnelle nette, sans multiplier les tableaux et les outils.</p></article>
           <article><span>02</span><h3>Décider</h3><p>Les priorités importantes remontent avant le bruit quotidien.</p></article>
-          <article><span>03</span><h3>Suivre</h3><p>Clients, devis, e-mails et actions restent reliés au même contexte.</p></article>
+          <article><span>03</span><h3>Suivre</h3><p>Clients, devis, emails et actions restent reliés au même contexte.</p></article>
         </div>
       </section>
 
@@ -68,11 +68,11 @@ export default function HomePage() {
             <p className="method-copy">
               Je n’ai pas voulu créer un logiciel de plus à ouvrir chaque matin. Je veux construire un système qui comprend ce qui est en cours dans l’entreprise, relie les informations utiles, repère ce qui risque d’être oublié et remet la bonne action devant la bonne personne au bon moment. Ensuite seulement, quand le contexte est suffisamment clair, SESIRA peut automatiser une partie du travail. Le but reste le même : moins de choses qui se perdent, moins de décisions prises à l’aveugle et une entreprise plus simple à piloter.
             </p>
-            <div className="founder-signature">
-              <strong>Paul Nkengue</strong>
-              <span>Fondateur de SESIRA</span>
-              <small>Sales operator B2B en Europe · Plus de 450 opportunités conclues · President’s Club 2025</small>
-            </div>
+            <p className="method-copy">
+              <strong>Paul Nkengue</strong><br />
+              Fondateur de SESIRA<br />
+              <span className="eyebrow">Plus de 450 opportunités conclues en B2B · President’s Club 2025 · Expérience terrain auprès de PME européennes</span>
+            </p>
           </div>
         </div>
       </section>
