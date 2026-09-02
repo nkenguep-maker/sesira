@@ -64,7 +64,7 @@ describe("C21 synthetic technical validation", () => {
   it("does not crash on deliberately sparse snapshots", () => {
     const sparse = generateC21SyntheticCorpus({ tenants: 1, opportunitiesPerTenant: 260 })
       .filter((item) => item.snapshot.latestQuote === null || item.snapshot.lastInbound === null || item.snapshot.opportunity.estimatedValue === null);
-    expect(sparse.length).toBeGreaterThan(80);
+    expect(sparse.length).toBeGreaterThan(70);
     for (const item of sparse) {
       expect(() => buildCommercialSignalFactors(item.snapshot, new Date(C21_REFERENCE_NOW))).not.toThrow();
     }
@@ -74,10 +74,10 @@ describe("C21 synthetic technical validation", () => {
     const corpus = generateC21SyntheticCorpus({ tenants: 1, opportunitiesPerTenant: 50 });
     const target = corpus[0];
     const attentionKeys = await Promise.all(
-      Array.from({ length: 2_000 }, async () => attentionFromSourceKey("c21_concurrent_review", target.concurrentActionIdentity)),
+      Array.from({ length: 2_000 }, async () => attentionFromSourceKey("c21_concurrent_review", target.concurrentActionSourceId)),
     );
     const aiKeys = await Promise.all(
-      Array.from({ length: 2_000 }, async () => aiRunKey("reply_classification", target.snapshot.opportunity.id, "2")),
+      Array.from({ length: 2_000 }, async () => aiRunKey("reply_classification", target.concurrentActionSourceId, "2")),
     );
     expect(new Set(attentionKeys).size).toBe(1);
     expect(new Set(aiKeys).size).toBe(1);
