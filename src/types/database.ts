@@ -106,7 +106,10 @@ export type Database = {
           organization_id: string
           priority: string
           reason: string
+          resolution_kind: string | null
+          resolution_note: string | null
           resolved_at: string | null
+          resolved_by_user_id: string | null
           status: string
           suggested_action: string | null
           title: string
@@ -126,7 +129,10 @@ export type Database = {
           organization_id: string
           priority?: string
           reason: string
+          resolution_kind?: string | null
+          resolution_note?: string | null
           resolved_at?: string | null
+          resolved_by_user_id?: string | null
           status?: string
           suggested_action?: string | null
           title: string
@@ -146,7 +152,10 @@ export type Database = {
           organization_id?: string
           priority?: string
           reason?: string
+          resolution_kind?: string | null
+          resolution_note?: string | null
           resolved_at?: string | null
+          resolved_by_user_id?: string | null
           status?: string
           suggested_action?: string | null
           title?: string
@@ -1342,6 +1351,51 @@ export type Database = {
           target_organization_id: string
           target_approver_user_id: string
           target_comment: string | null
+        }
+        Returns: boolean
+      }
+      resolve_attention_item: {
+        Args: {
+          target_organization_id: string
+          target_item_id: string
+          target_operator_user_id: string
+          target_note: string | null
+        }
+        Returns: boolean
+      }
+      dismiss_attention_item: {
+        Args: {
+          target_organization_id: string
+          target_item_id: string
+          target_operator_user_id: string
+          target_note: string | null
+        }
+        Returns: boolean
+      }
+      arm_message_for_reclassification: {
+        Args: {
+          target_organization_id: string
+          target_message_id: string
+          target_operator_user_id: string
+          target_reason: string | null
+        }
+        Returns: boolean
+      }
+      resume_quote_automation: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+          target_operator_user_id: string
+          target_note: string | null
+        }
+        Returns: boolean
+      }
+      retry_failed_run_manual: {
+        Args: {
+          target_organization_id: string
+          target_run_id: string
+          target_operator_user_id: string
+          target_note: string | null
         }
         Returns: boolean
       }
