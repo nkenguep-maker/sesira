@@ -70,6 +70,10 @@ function makeState(overrides: Partial<FakeState> = {}): FakeState {
   };
 }
 
+function fakeMessageUuid(sequence: number): string {
+  return `91700000-0000-4000-8000-${sequence.toString().padStart(12, "0")}`;
+}
+
 function makeFakeClient(state: FakeState) {
   return {
     from(table: string) {
@@ -106,7 +110,7 @@ function makeFakeClient(state: FakeState) {
           return Promise.resolve({ data: [{ id: existing, created: false }], error: null });
         }
         state.messageNextId += 1;
-        const id = `msg-${state.messageNextId}`;
+        const id = fakeMessageUuid(state.messageNextId);
         state.messageLedger.set(key, id);
         return Promise.resolve({ data: [{ id, created: true }], error: null });
       }
