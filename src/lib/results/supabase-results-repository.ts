@@ -30,7 +30,7 @@ const METRIC_DEFINITIONS: Record<ObservedMetricKey, Pick<ObservedMetric, "label"
   },
   attention_open: {
     label: "Éléments à traiter",
-    context: "Ouverts à ce jour",
+    context: "Ouverts et arrivés à échéance à ce jour",
   },
   attention_resolved: {
     label: "Éléments résolus",
@@ -43,6 +43,7 @@ export function createSupabaseResultsRepository(
 ): ResultsRepository {
   return {
     async getSummary({ organizationId, period }) {
+      const nowIso = new Date().toISOString();
       const [requests, quotesCreated, quotesSent, attentionOpen, attentionResolved] = await Promise.all([
         supabase
           .from("requests")
@@ -67,7 +68,8 @@ export function createSupabaseResultsRepository(
           .from("attention_items")
           .select("id", { count: "exact", head: true })
           .eq("organization_id", organizationId)
-          .in("status", ["OPEN", "IN_PROGRESS"]),
+          .in("status", ["OPEN", "IN_PROGRESS"])
+          .or(`due_at.is.null,due_at.lte.${nowIso}`),
         supabase
           .from("attention_items")
           .select("id", { count: "exact", head: true })
