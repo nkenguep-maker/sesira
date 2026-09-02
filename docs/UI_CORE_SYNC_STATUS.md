@@ -1,21 +1,21 @@
 # Core / Product UI synchronization status
 
-Current target: align Product/UI with Core through C18 before any new production promotion.
+Current synchronized code-verification level: C19 / U19.
 
-## Observed Core
+## Verified checkpoint
 
-Highest implementation milestone observed: C18.
+C0 through C19: canonical `npm run verify` PASS on the combined Product/UI branch at `65402918266ed8fff16611889af9be20e4e7c29b`.
 
-C19 through C40: not implemented on the observed Core branch.
+U0 through U19: Product/UI capability is implemented on the same checkpoint and the canonical build verification is green.
 
-## Gate
+C19/U19 adds organization-configurable value policies and sold-not-scheduled handling. No universal CVC value threshold is encoded.
 
-Core integration verification: PENDING
+## Current target
 
-Product/UI aligned through U18: PENDING
+C20 / U20: explainable behavior signals and advanced commercial objections.
 
-Canonical verification on combined head: PENDING
+## Production gate
 
-Browser smoke on combined head: PENDING
+Production promotion remains BLOCKED while work continues beyond the last synchronized checkpoint. A production deployment may only be promoted from a head where Core and Product/UI verified levels are equal and all required gates for that level pass.
 
-Production promotion: BLOCKED until all preceding gates pass.
+Browser smoke for the new milestone set remains required before any production promotion.

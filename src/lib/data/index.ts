@@ -1,6 +1,5 @@
 /** SESIRA server read-model seam. */
 export { safeClient } from "./safe-client";
-
 export type { AttentionInboxRow, AttentionCountsByPriority } from "./attention";
 export { getAttentionInbox, getAttentionCountsByPriority } from "./attention";
 export type { PendingApprovalRow } from "./approvals";
@@ -26,5 +25,7 @@ export { getOpportunitiesFeed, getOpportunityDetail } from "./opportunities";
 export type { SoldNotScheduledPolicy } from "@/lib/value-policies/contracts";
 export type { OpportunityOperationalState } from "./value-policies";
 export { getSoldNotScheduledPolicy, getOpportunityOperationalState } from "./value-policies";
+export type { OpportunityCommercialSnapshot } from "@/lib/commercial/signals";
+export { getOpportunityCommercialSnapshot } from "./commercial-signals";
 export type { CustomerListRow, QuoteListRow, OrganizationMemberRow, OrganizationSettingsRow } from "./core-ui";
 export { getCustomerList, getQuoteList, getOrganizationMembers, getOrganizationSettings } from "./core-ui";
