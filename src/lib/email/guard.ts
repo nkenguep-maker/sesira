@@ -4,7 +4,6 @@ import {
   areExternalActionsEnabled,
   type DeploymentEnvironment,
 } from "@/lib/automation/external-actions";
-import { serverEnv } from "@/lib/env";
 
 /**
  * Guard state for the outbound email boundary. Emitted by the tests
@@ -16,9 +15,19 @@ export type GuardedEmailPolicy = {
   deploymentEnvironment: DeploymentEnvironment;
 };
 
+/**
+ * Read the outbound policy at the instant the boundary is evaluated.
+ *
+ * Do not reuse the module-level parsed serverEnv value here: long-lived
+ * processes and deterministic tests may change the kill switch between
+ * invocations. Reading process.env directly keeps the boundary fail-closed
+ * while ensuring the value used for the decision is the value that is
+ * actually configured at send time.
+ */
 export function readGuardedEmailPolicy(): GuardedEmailPolicy {
   return {
-    configuredValue: serverEnv.EXTERNAL_ACTIONS_ENABLED,
+    configuredValue:
+      process.env.EXTERNAL_ACTIONS_ENABLED === "true" ? "true" : "false",
     deploymentEnvironment: process.env.VERCEL_ENV as DeploymentEnvironment,
   };
 }
