@@ -72,7 +72,7 @@ export default function HomePage() {
             <p className="method-copy">
               <strong>Paul Nkengue</strong><br />
               Fondateur de SESIRA<br />
-              <span className="eyebrow">Plus de 450 opportunités conclues en B2B · President’s Club 2025 · Expérience terrain auprès de PME européennes</span>
+              <span className="eyebrow">Mathématicien · Expert en vente B2B</span>
             </p>
           </div>
         </div>
