@@ -7,11 +7,11 @@ Read this file first on any new Claude Code session; resume from
 ## Current status
 
 - **Branch**: `claude/core-workflows`
-- **HEAD**: `4ff4370` (C23 quote drafting + reactivation)
+- **HEAD**: `50f53fc` (C24 commercial core maturity audit)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
-- **Driver phase**: WAVE 2 in progress
-- **NEXT_MILESTONE**: `C24 — COMMERCIAL CORE MATURITY`
+- **Driver phase**: WAVE 3 (Operations) starting
+- **NEXT_MILESTONE**: `C25 — INTERVENTIONS CORE`
 
 ## Milestone log
 
@@ -37,6 +37,7 @@ Read this file first on any new Claude Code session; resume from
 | C22 | `4919950` | DONE | Speed-to-lead |
 | CI  | `e85044a` | DONE | Extend verify.yml to claude/ branches |
 | C23 | `4ff4370` | DONE | Quote drafting gates + reactivation candidates |
+| C24 | `50f53fc` | DONE | Commercial core maturity audit — MATURE (no fix) |
 
 ## BASELINE_FAILURE
 

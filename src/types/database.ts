@@ -1946,6 +1946,23 @@ export type Database = {
           dormant_days: number
         }[]
       }
+      schedule_intervention: {
+        Args: {
+          target_organization_id: string
+          target_intervention_id: string
+          target_scheduled_at: string
+          target_duration_minutes: number | null
+        }
+        Returns: boolean
+      }
+      complete_intervention: {
+        Args: {
+          target_organization_id: string
+          target_intervention_id: string
+          target_notes: string | null
+        }
+        Returns: boolean
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string
