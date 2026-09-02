@@ -9,9 +9,10 @@ export default function HomePage() {
         <div className="landing-nav-links">
           <a href="#produit">Produit</a>
           <a href="#methode">Méthode</a>
+          <Link href="/diagnostic">Diagnostic</Link>
           <a href="#fondateur">Fondateur</a>
           <Link className="button ghost small" href="/login">Connexion</Link>
-          <Link className="button primary small" href="/login">Ouvrir SESIRA</Link>
+          <Link className="button primary small" href="/diagnostic">Faire le diagnostic</Link>
         </div>
       </nav>
 
@@ -21,8 +22,8 @@ export default function HomePage() {
           <h1>Votre entreprise,<br /><em>enfin lisible.</em></h1>
           <p>SESIRA réunit vos clients, vos devis, votre suivi et vos opérations dans un système simple à lire et simple à piloter.</p>
           <div className="hero-actions">
-            <Link href="/login" className="button primary">Entrer dans SESIRA</Link>
-            <a href="#produit" className="text-link">Voir le système <span>↘</span></a>
+            <Link href="/diagnostic" className="button primary">Faire le diagnostic</Link>
+            <Link href="/login" className="text-link">Ouvrir SESIRA <span>↘</span></Link>
           </div>
         </div>
         <div className="hero-system" aria-label="Aperçu de l’application SESIRA">
@@ -77,7 +78,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="landing-footer"><SesiraLogo /><span>© 2026 SESIRA</span><Link href="/login">Connexion</Link></footer>
+      <footer className="landing-footer"><SesiraLogo /><span>© 2026 SESIRA</span><Link href="/diagnostic">Diagnostic</Link><Link href="/login">Connexion</Link></footer>
     </main>
   );
 }
