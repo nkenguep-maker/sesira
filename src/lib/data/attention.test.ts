@@ -28,13 +28,17 @@ function makeFakeClient() {
   return {
     from(table: string) {
       if (table !== "attention_items") throw new Error(`unexpected table ${table}`);
+      const result = () => ({ data: state.rows, error: state.error });
       const chain = {
         _op: "select" as string,
         select: () => chain,
         eq: () => chain,
         in: () => chain,
         order: () => chain,
-        limit: () => Promise.resolve({ data: state.rows, error: state.error }),
+        limit: () => Promise.resolve(result()),
+        then: (
+          resolve: (value: { data: AttentionRow[]; error: { message: string } | null }) => void,
+        ) => Promise.resolve(resolve(result())),
       };
       return chain;
     },
@@ -45,7 +49,6 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => makeFakeClient()),
 }));
 
-// Import AFTER the mock is registered.
 import {
   getAttentionCountsByPriority,
   getAttentionInbox,
