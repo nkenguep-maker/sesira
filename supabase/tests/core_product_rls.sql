@@ -694,6 +694,66 @@ $$;
 -- Fixture: two automation_configs and PENDING automation_runs — one per
 -- tenant plus stop-guard rows on tenant A. Runs use fixed UUIDs so we
 -- can assert deterministically.
+--
+-- The fixture below relies on the partial unique index installed by
+-- 20260904 (automation_configs_org_template_active_idx) — it inserts
+-- one enabled=true row plus one enabled=false row for the same
+-- (org, template_key), which the pre-fix hard unique would have
+-- rejected. The block that follows asserts the two partial-unique
+-- invariants explicitly, on a probe template_key disjoint from the
+-- main fixture so the primary due-runs assertions are unaffected.
+
+do $$
+declare
+  captured_state text;
+  disabled_a uuid;
+  disabled_b uuid;
+begin
+  -- (i) Two enabled=true rows for the same (org, template_key) must be
+  --     rejected — otherwise list_due_quote_followup_runs would
+  --     ambiguate its active-config lookup.
+  insert into public.automation_configs (id, organization_id, template_key, template_version, enabled, level)
+  values ('91700000-0000-4000-8000-0000000000aa',
+          '91000000-0000-4000-8000-000000000001',
+          'quote_partial_probe', 1, true, 'AUTOMATIC');
+  begin
+    insert into public.automation_configs (id, organization_id, template_key, template_version, enabled, level)
+    values ('91700000-0000-4000-8000-0000000000ab',
+            '91000000-0000-4000-8000-000000000001',
+            'quote_partial_probe', 1, true, 'AUTOMATIC');
+    raise exception 'second enabled=true row for same (org, template_key) was not rejected';
+  exception when others then
+    captured_state := sqlstate;
+    if captured_state <> '23505' then
+      raise exception 'unexpected sqlstate % rejecting second enabled=true config', captured_state;
+    end if;
+  end;
+
+  -- (ii) Unlimited enabled=false variants for the same (org, template_key)
+  --      are allowed — the audit trail of prior configs is preserved
+  --      without having to hard-delete them.
+  insert into public.automation_configs (id, organization_id, template_key, template_version, enabled, level)
+  values ('91700000-0000-4000-8000-0000000000ac',
+          '91000000-0000-4000-8000-000000000001',
+          'quote_partial_probe', 1, false, 'AUTOMATIC')
+  returning id into disabled_a;
+
+  insert into public.automation_configs (id, organization_id, template_key, template_version, enabled, level)
+  values ('91700000-0000-4000-8000-0000000000ad',
+          '91000000-0000-4000-8000-000000000001',
+          'quote_partial_probe', 1, false, 'AUTOMATIC')
+  returning id into disabled_b;
+
+  if disabled_a is null or disabled_b is null or disabled_a = disabled_b then
+    raise exception 'partial unique must allow multiple enabled=false rows for same (org, template_key)';
+  end if;
+
+  -- Cleanup so the fixture below stays deterministic.
+  delete from public.automation_configs
+   where template_key = 'quote_partial_probe'
+     and organization_id = '91000000-0000-4000-8000-000000000001';
+end;
+$$;
 
 insert into public.automation_configs (id, organization_id, template_key, template_version, enabled, level)
 values
@@ -1289,6 +1349,178 @@ begin
   if first_id = second_id then
     raise exception 'partial unique index collapsed two null-key rows';
   end if;
+end;
+$$;
+
+-- =========================================================================
+-- Outbound message boundary — C9 record_intent / mark_sent / mark_failed
+-- =========================================================================
+-- Still running as tenant A (authenticated). These assertions exercise:
+--   * record_outbound_message_intent — replay dedup by
+--     (org, idempotency_key), foreign-org caller rejected, empty key
+--     rejected.
+--   * mark_outbound_message_sent — QUEUED -> SENT transition, replay
+--     returns false, cross-tenant caller rejected.
+--   * mark_outbound_message_failed — QUEUED -> FAILED transition,
+--     error_class enforced, cross-tenant caller rejected.
+--
+-- Fixture: none — every test row is inserted via record_intent and
+-- addressed by the returned id. All rows sit under tenant A so they
+-- roll back with the outer transaction.
+
+do $$
+declare
+  first_row   record;
+  replay_row  record;
+  cross_row   record;
+  raw_count   integer;
+  captured    text;
+begin
+  -- (i) record_outbound_message_intent creates a QUEUED row once.
+  select id, created into first_row
+  from public.record_outbound_message_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'outbound:quote_followup:91500000-0000-4000-8000-000000000001:step:1',
+    null,
+    'resend',
+    'email',
+    'to@example.com',
+    'from@example.com',
+    null,
+    'Hello',
+    repeat('0', 64)
+  );
+  if not first_row.created then
+    raise exception 'first record_outbound_message_intent must set created=true';
+  end if;
+
+  -- Replay with a different subject / body_hash observes the original id.
+  select id, created into replay_row
+  from public.record_outbound_message_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'outbound:quote_followup:91500000-0000-4000-8000-000000000001:step:1',
+    null,
+    'resend',
+    'email',
+    'to@example.com',
+    'from@example.com',
+    null,
+    'Different subject',
+    repeat('1', 64)
+  );
+  if replay_row.created then
+    raise exception 'replay record_outbound_message_intent must set created=false';
+  end if;
+  if replay_row.id is distinct from first_row.id then
+    raise exception 'replay must observe the original row id';
+  end if;
+
+  select count(*) into raw_count
+  from public.outbound_messages
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and idempotency_key = 'outbound:quote_followup:91500000-0000-4000-8000-000000000001:step:1';
+  if raw_count <> 1 then
+    raise exception 'duplicate outbound_messages row after replay (got %)', raw_count;
+  end if;
+
+  -- (ii) mark_outbound_message_sent moves QUEUED -> SENT once.
+  if not public.mark_outbound_message_sent(
+    '91000000-0000-4000-8000-000000000001',
+    first_row.id,
+    'resend_msg_c9_alpha'
+  ) then
+    raise exception 'mark_outbound_message_sent should return true on first call';
+  end if;
+  if public.mark_outbound_message_sent(
+    '91000000-0000-4000-8000-000000000001',
+    first_row.id,
+    'resend_msg_c9_alpha'
+  ) then
+    raise exception 'mark_outbound_message_sent replay on SENT row must return false';
+  end if;
+
+  -- Verify the row transitioned correctly.
+  select provider_message_id into captured
+  from public.outbound_messages where id = first_row.id;
+  if captured is distinct from 'resend_msg_c9_alpha' then
+    raise exception 'provider_message_id not persisted (got %)', captured;
+  end if;
+
+  -- (iii) mark_outbound_message_failed on a fresh QUEUED row.
+  select id, created into cross_row
+  from public.record_outbound_message_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'outbound:quote_followup:91500000-0000-4000-8000-000000000002:step:1',
+    null,
+    'resend',
+    'email',
+    'to2@example.com',
+    'from@example.com',
+    null,
+    'Second',
+    repeat('a', 64)
+  );
+  if not cross_row.created then
+    raise exception 'second record_outbound_message_intent must set created=true';
+  end if;
+  if not public.mark_outbound_message_failed(
+    '91000000-0000-4000-8000-000000000001',
+    cross_row.id,
+    'PERMANENT',
+    'resend: HTTP 422 — invalid recipient'
+  ) then
+    raise exception 'mark_outbound_message_failed should return true on QUEUED row';
+  end if;
+
+  -- (iv) mark_outbound_message_failed rejects an unknown error_class (22023).
+  begin
+    perform public.mark_outbound_message_failed(
+      '91000000-0000-4000-8000-000000000001',
+      cross_row.id,
+      'WHATEVER',
+      'invalid class'
+    );
+    raise exception 'mark_outbound_message_failed with invalid class was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting invalid error_class', captured;
+    end if;
+  end;
+
+  -- (v) empty idempotency_key rejected (22023).
+  begin
+    perform public.record_outbound_message_intent(
+      '91000000-0000-4000-8000-000000000001',
+      '',
+      null, 'resend', 'email',
+      'to@example.com', 'from@example.com', null,
+      'x', repeat('0', 64)
+    );
+    raise exception 'empty idempotency_key was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting empty key', captured;
+    end if;
+  end;
+
+  -- (vi) foreign-org caller rejected (42501). Tenant A tries to touch tenant B.
+  begin
+    perform public.record_outbound_message_intent(
+      '92000000-0000-4000-8000-000000000002',
+      'outbound:foreign:step:1',
+      null, 'resend', 'email',
+      'to@example.com', 'from@example.com', null,
+      'x', repeat('0', 64)
+    );
+    raise exception 'foreign-org record_outbound_message_intent was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % rejecting foreign call', captured;
+    end if;
+  end;
 end;
 $$;
 
@@ -1994,8 +2226,731 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C10 — Inbound reply matching: record_inbound_message + mark_quote_replied
+-- =========================================================================
+-- record_inbound_message and mark_quote_replied are service_role-only.
+-- Authenticated tenant callers must be rejected. As service_role, the
+-- happy path inserts a message row, transitions the quote, and stays
+-- idempotent under replay.
+
+-- Authenticated caller rejected on record_inbound_message (42501).
+do $$
+declare captured text;
+begin
+  begin
+    perform public.record_inbound_message(
+      '91000000-0000-4000-8000-000000000001',
+      'inbound:resend:evt_forbidden',
+      'resend', 'msg_forbidden', null,
+      '91500000-0000-4000-8000-000000000001', null,
+      'attacker@example.com', 'Re: Devis', 'body',
+      'msg_original', array[]::text[], '{}'::jsonb, now()
+    );
+    raise exception 'authenticated record_inbound_message was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % on authenticated record_inbound_message', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Authenticated caller rejected on mark_quote_replied (42501).
+do $$
+declare captured text;
+begin
+  begin
+    perform public.mark_quote_replied(
+      '91000000-0000-4000-8000-000000000001',
+      '91500000-0000-4000-8000-000000000001'
+    );
+    raise exception 'authenticated mark_quote_replied was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % on authenticated mark_quote_replied', captured;
+    end if;
+  end;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit and Retries/incidents assertions passed' as result;
+-- Switch to service_role for the happy-path assertions on C10 RPCs.
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+do $$
+declare
+  first_row  record;
+  replay_row record;
+  raw_count  integer;
+  quote_id   uuid := '91500000-0000-4000-8000-00000000c010';
+  captured   text;
+begin
+  -- Seed a fresh SENT quote to transition.
+  insert into public.quotes (id, organization_id, customer_id, request_id, title, amount, status)
+  values (quote_id, '91000000-0000-4000-8000-000000000001',
+          '91300000-0000-4000-8000-000000000001', null,
+          'C10 seed quote', 1000.00, 'DRAFT');
+  update public.quotes set status = 'SENT', sent_at = now() where id = quote_id;
+
+  -- (i) record_inbound_message inserts once.
+  select id, created into first_row
+  from public.record_inbound_message(
+    '91000000-0000-4000-8000-000000000001',
+    'inbound:resend:evt_c10_alpha',
+    'resend', 'inbound_msg_alpha', null, quote_id, null,
+    'customer@example.com', 'Re: Devis', 'Merci pour le devis',
+    'msg_original_alpha', array['msg_original_alpha']::text[],
+    jsonb_build_object('Message-ID', '<inbound_msg_alpha@example.com>'),
+    now()
+  );
+  if not first_row.created then
+    raise exception 'first record_inbound_message must set created=true';
+  end if;
+
+  -- Replay observes the original id.
+  select id, created into replay_row
+  from public.record_inbound_message(
+    '91000000-0000-4000-8000-000000000001',
+    'inbound:resend:evt_c10_alpha',
+    'resend', 'inbound_msg_alpha', null, quote_id, null,
+    'customer@example.com', 'Re: Devis (replay)', 'different body',
+    'msg_original_alpha', array['msg_original_alpha']::text[],
+    '{}'::jsonb, now()
+  );
+  if replay_row.created then
+    raise exception 'replay record_inbound_message must set created=false';
+  end if;
+  if replay_row.id is distinct from first_row.id then
+    raise exception 'replay must observe the original row id';
+  end if;
+
+  select count(*) into raw_count from public.messages
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and idempotency_key = 'inbound:resend:evt_c10_alpha';
+  if raw_count <> 1 then
+    raise exception 'duplicate messages row after replay (got %)', raw_count;
+  end if;
+
+  -- (ii) mark_quote_replied SENT -> REPLIED once, replay returns false.
+  if not public.mark_quote_replied(
+    '91000000-0000-4000-8000-000000000001', quote_id
+  ) then
+    raise exception 'mark_quote_replied should return true on first call';
+  end if;
+  if public.mark_quote_replied(
+    '91000000-0000-4000-8000-000000000001', quote_id
+  ) then
+    raise exception 'mark_quote_replied replay on REPLIED row must return false';
+  end if;
+
+  select status into captured from public.quotes where id = quote_id;
+  if captured is distinct from 'REPLIED' then
+    raise exception 'quote should be REPLIED (got %)', captured;
+  end if;
+
+  -- (iii) Empty idempotency_key rejected 22023.
+  begin
+    perform public.record_inbound_message(
+      '91000000-0000-4000-8000-000000000001', '',
+      'resend', 'msg_empty', null, quote_id, null,
+      'x@x', 'x', 'x', null, null, '{}'::jsonb, now()
+    );
+    raise exception 'empty idempotency_key was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % on empty inbound key', captured;
+    end if;
+  end;
+
+  -- (iv) mark_quote_replied on a WON quote rejected 22023.
+  update public.quotes set status = 'WON' where id = quote_id;
+  begin
+    perform public.mark_quote_replied('91000000-0000-4000-8000-000000000001', quote_id);
+    raise exception 'mark_quote_replied on WON was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % on WON transition', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- =========================================================================
+-- C11 — Reply classification: insert_ai_run_once + record_message_classification
+-- =========================================================================
+-- insert_ai_run_once is callable by authenticated (tenant-scoped) and
+-- service_role. record_message_classification is service_role only.
+
+do $$
+declare
+  first_row  record;
+  replay_row record;
+  raw_count  integer;
+  message_id uuid;
+  captured   text;
+begin
+  -- Seed a fresh inbound message to classify.
+  insert into public.messages (
+    organization_id, direction, channel, status,
+    quote_id, provider_message_id, subject, body_text,
+    idempotency_key, received_at
+  )
+  values (
+    '91000000-0000-4000-8000-000000000001', 'INBOUND', 'EMAIL', 'RECEIVED',
+    '91500000-0000-4000-8000-00000000c010',
+    'inbound_msg_alpha_c11', 'Re: Devis', 'OK pour moi',
+    'inbound:resend:evt_c11_seed', now()
+  )
+  returning id into message_id;
+
+  -- (i) insert_ai_run_once inserts a SUCCEEDED run.
+  select id, created into first_row
+  from public.insert_ai_run_once(
+    '91000000-0000-4000-8000-000000000001',
+    'ai:reply_classification:' || message_id::text || ':v1',
+    'reply_classification', 'message', message_id,
+    'claude', 'claude-haiku-4-5-20251001', '1',
+    jsonb_build_object('message_id', message_id::text),
+    jsonb_build_object('intent', 'ACCEPTED_QUOTE', 'confidence', 0.9, 'summary', 'OK'),
+    0.9, null, 'SUCCEEDED', 500, 120, 40, null, null
+  );
+  if not first_row.created then
+    raise exception 'first insert_ai_run_once must set created=true';
+  end if;
+
+  -- Replay observes the original id.
+  select id, created into replay_row
+  from public.insert_ai_run_once(
+    '91000000-0000-4000-8000-000000000001',
+    'ai:reply_classification:' || message_id::text || ':v1',
+    'reply_classification', 'message', message_id,
+    'claude', 'claude-haiku-4-5-20251001', '1',
+    '{}'::jsonb, '{}'::jsonb, 0.5, null, 'SUCCEEDED', 100, null, null, null, null
+  );
+  if replay_row.created then
+    raise exception 'replay insert_ai_run_once must set created=false';
+  end if;
+  if replay_row.id is distinct from first_row.id then
+    raise exception 'replay must observe the original ai_run id';
+  end if;
+
+  select count(*) into raw_count from public.ai_runs
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and idempotency_key = 'ai:reply_classification:' || message_id::text || ':v1';
+  if raw_count <> 1 then
+    raise exception 'duplicate ai_runs row after replay (got %)', raw_count;
+  end if;
+
+  -- (ii) Empty key rejected 22023.
+  begin
+    perform public.insert_ai_run_once(
+      '91000000-0000-4000-8000-000000000001', '',
+      'reply_classification', null, null,
+      'claude', 'x', '1', '{}'::jsonb, null, null, null, 'SUCCEEDED',
+      100, null, null, null, null
+    );
+    raise exception 'empty ai_run key was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting empty ai_run key', captured;
+    end if;
+  end;
+
+  -- (iii) Invalid status rejected 22023.
+  begin
+    perform public.insert_ai_run_once(
+      '91000000-0000-4000-8000-000000000001',
+      'ai:reply_classification:' || message_id::text || ':bad',
+      'reply_classification', null, null,
+      'claude', 'x', '1', '{}'::jsonb, null, null, null, 'WEIRD',
+      100, null, null, null, null
+    );
+    raise exception 'invalid ai_run status was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting invalid ai_run status', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Authenticated caller must NOT be able to call record_message_classification (42501).
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  jsonb_build_object(
+    'sub', '91100000-0000-4000-8000-000000000001',
+    'role', 'authenticated'
+  )::text,
+  true);
+
+do $$
+declare captured text;
+begin
+  begin
+    perform public.record_message_classification(
+      '91000000-0000-4000-8000-000000000001',
+      '00000000-0000-0000-0000-000000000000',
+      'OTHER', 0.5
+    );
+    raise exception 'authenticated record_message_classification was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % on authenticated record_message_classification', captured;
+    end if;
+  end;
+end;
+$$;
+
+reset role;
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+-- record_message_classification happy path + idempotence.
+do $$
+declare
+  message_id uuid;
+  transitioned boolean;
+  captured    text;
+begin
+  select id into message_id from public.messages
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and idempotency_key = 'inbound:resend:evt_c11_seed'
+  limit 1;
+
+  transitioned := public.record_message_classification(
+    '91000000-0000-4000-8000-000000000001', message_id, 'ACCEPTED_QUOTE', 0.9
+  );
+  if not transitioned then
+    raise exception 'first record_message_classification should return true';
+  end if;
+  if public.record_message_classification(
+    '91000000-0000-4000-8000-000000000001', message_id, 'ACCEPTED_QUOTE', 0.9
+  ) then
+    raise exception 'replay record_message_classification must return false';
+  end if;
+
+  select intent into captured from public.messages where id = message_id;
+  if captured is distinct from 'ACCEPTED_QUOTE' then
+    raise exception 'intent should be ACCEPTED_QUOTE (got %)', captured;
+  end if;
+
+  -- Invalid confidence range rejected 22023.
+  begin
+    perform public.record_message_classification(
+      '91000000-0000-4000-8000-000000000001', message_id, 'OTHER', 1.5
+    );
+    raise exception 'confidence>1 was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % on bad confidence', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- =========================================================================
+-- C12 — Approval-based controlled sending
+-- =========================================================================
+-- approve_automation_run_pending_approval / reject_automation_run_pending_approval
+-- are SECURITY DEFINER. Both enforce ACTIVE membership on caller AND
+-- approver, and only transition rows in WAITING_FOR_APPROVAL with
+-- approval_decision IS NULL.
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  jsonb_build_object(
+    'sub', '91100000-0000-4000-8000-000000000001',
+    'role', 'authenticated'
+  )::text,
+  true);
+
+do $$
+declare
+  run_id_approve  uuid := '91800000-0000-4000-8000-c12000000001';
+  run_id_reject   uuid := '91800000-0000-4000-8000-c12000000002';
+  captured   text;
+  affected   boolean;
+begin
+  -- Seed two runs in WAITING_FOR_APPROVAL for tenant A.
+  insert into public.automation_runs (
+    id, organization_id, automation_config_id, idempotency_key,
+    status, scheduled_for, input_summary, output_summary
+  )
+  values
+    (run_id_approve, '91000000-0000-4000-8000-000000000001',
+     '91700000-0000-4000-8000-000000000001',
+     'quote_followup:91500000-0000-4000-8000-c12000000000:step:1',
+     'WAITING_FOR_APPROVAL', now(),
+     jsonb_build_object('quote_id', '91500000-0000-4000-8000-c12000000000', 'step', 1),
+     jsonb_build_object('proposed_action', jsonb_build_object('subject', 'Relance'))),
+    (run_id_reject, '91000000-0000-4000-8000-000000000001',
+     '91700000-0000-4000-8000-000000000001',
+     'quote_followup:91500000-0000-4000-8000-c12000000001:step:1',
+     'WAITING_FOR_APPROVAL', now(),
+     jsonb_build_object('quote_id', '91500000-0000-4000-8000-c12000000001', 'step', 1),
+     jsonb_build_object('proposed_action', jsonb_build_object('subject', 'Relance')));
+
+  -- (i) Foreign-org caller rejected 42501.
+  begin
+    perform public.approve_automation_run_pending_approval(
+      run_id_approve, '92000000-0000-4000-8000-000000000002',
+      '91100000-0000-4000-8000-000000000001', 'x', 'w', 300
+    );
+    raise exception 'foreign-org approve was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % on foreign-org approve', captured;
+    end if;
+  end;
+
+  -- (ii) Approver not ACTIVE member rejected 42501.
+  begin
+    perform public.approve_automation_run_pending_approval(
+      run_id_approve, '91000000-0000-4000-8000-000000000001',
+      '00000000-0000-0000-0000-000000000000', 'x', 'w', 300
+    );
+    raise exception 'inactive approver was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % on inactive approver', captured;
+    end if;
+  end;
+
+  -- (iii) Happy path approve: WAITING_FOR_APPROVAL -> RUNNING + approval columns.
+  affected := public.approve_automation_run_pending_approval(
+    run_id_approve, '91000000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001', 'OK', 'approver-worker', 300
+  );
+  if not affected then
+    raise exception 'happy-path approve should return true';
+  end if;
+
+  declare s text; d text; l text; begin
+    select status, approval_decision, locked_by into s, d, l
+    from public.automation_runs where id = run_id_approve;
+    if s is distinct from 'RUNNING' then
+      raise exception 'approved run status expected RUNNING (got %)', s;
+    end if;
+    if d is distinct from 'APPROVED' then
+      raise exception 'approved decision expected APPROVED (got %)', d;
+    end if;
+    if l is distinct from 'approver-worker' then
+      raise exception 'approved run locked_by expected approver-worker (got %)', l;
+    end if;
+  end;
+
+  -- (iv) Replay approve on already-resolved run returns false.
+  if public.approve_automation_run_pending_approval(
+    run_id_approve, '91000000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001', 'OK', 'approver-worker', 300
+  ) then
+    raise exception 'replay approve should return false';
+  end if;
+
+  -- (v) Happy path reject: WAITING_FOR_APPROVAL -> CANCELLED + rejection columns.
+  affected := public.reject_automation_run_pending_approval(
+    run_id_reject, '91000000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001', 'trop tôt'
+  );
+  if not affected then
+    raise exception 'happy-path reject should return true';
+  end if;
+
+  declare s text; d text; c text; begin
+    select status, approval_decision, approval_comment into s, d, c
+    from public.automation_runs where id = run_id_reject;
+    if s is distinct from 'CANCELLED' then
+      raise exception 'rejected run status expected CANCELLED (got %)', s;
+    end if;
+    if d is distinct from 'REJECTED' then
+      raise exception 'rejected decision expected REJECTED (got %)', d;
+    end if;
+    if c is distinct from 'trop tôt' then
+      raise exception 'rejected comment expected `trop tôt` (got %)', c;
+    end if;
+  end;
+end;
+$$;
+
+-- =========================================================================
+-- C14 — End-to-end happy path (C7 → C9 → C10 → C11 → C12 chained)
+-- =========================================================================
+-- This block simulates the full workflow a single quote goes through:
+--
+--   1. C9 outbound send: record intent → mark sent → row in
+--      outbound_messages, provider_message_id linked to the quote via
+--      the idempotency_key.
+--   2. C10 inbound reply: service_role record_inbound_message with
+--      the same provider_message_id in In-Reply-To → mark_quote_replied
+--      transitions SENT → REPLIED.
+--   3. C11 classification: insert_ai_run_once + record_message_classification
+--      denormalize `intent` and `confidence` on the inbound message.
+--   4. C12 approval: a fresh WAITING_FOR_APPROVAL run staged for the
+--      same quote → approve_automation_run_pending_approval →
+--      RUNNING with fresh dispatcher lease.
+--
+-- Every step re-runs to assert idempotency (no duplicate rows, no
+-- side effect on replay). Terminal state is a single (quote,
+-- outbound_message, inbound_message, ai_run, approved automation_run)
+-- quintuple.
+
+-- We start as authenticated tenant A.
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  jsonb_build_object(
+    'sub', '91100000-0000-4000-8000-000000000001',
+    'role', 'authenticated'
+  )::text,
+  true);
+
+do $$
+declare
+  quote_id      uuid := '91500000-0000-4000-8000-c14e2ec14000';
+  outbound_key  text := 'outbound:quote_followup:91500000-0000-4000-8000-c14e2ec14000:step:1';
+  provider_msg  text := 'resend_msg_e2e_c14_alpha';
+  intent_row    record;
+  intent_replay record;
+begin
+  -- Seed a fresh SENT quote for tenant A.
+  insert into public.quotes (id, organization_id, customer_id, request_id, title, amount, status)
+  values (quote_id, '91000000-0000-4000-8000-000000000001',
+          '91300000-0000-4000-8000-000000000001', null,
+          'C14 E2E seed quote', 2500.00, 'DRAFT');
+  update public.quotes set status = 'SENT', sent_at = now() where id = quote_id;
+
+  -- (C9) record_outbound_message_intent — first call created.
+  select id, created into intent_row from public.record_outbound_message_intent(
+    '91000000-0000-4000-8000-000000000001',
+    outbound_key, null, 'resend', 'email',
+    'customer@example.com', 'sesira@example.com', null,
+    'Relance C14 étape 1', repeat('c', 64)
+  );
+  if not intent_row.created then
+    raise exception 'C14: first outbound intent must be created';
+  end if;
+
+  -- (C9) Replay observes the original id.
+  select id, created into intent_replay from public.record_outbound_message_intent(
+    '91000000-0000-4000-8000-000000000001',
+    outbound_key, null, 'resend', 'email',
+    'customer@example.com', 'sesira@example.com', null,
+    'Different subject', repeat('d', 64)
+  );
+  if intent_replay.created then
+    raise exception 'C14: replay outbound intent must not be created';
+  end if;
+  if intent_replay.id is distinct from intent_row.id then
+    raise exception 'C14: replay must observe original outbound id';
+  end if;
+
+  -- (C9) mark_outbound_message_sent transitions QUEUED → SENT once.
+  if not public.mark_outbound_message_sent(
+    '91000000-0000-4000-8000-000000000001', intent_row.id, provider_msg
+  ) then
+    raise exception 'C14: mark_sent should transition on first call';
+  end if;
+  if public.mark_outbound_message_sent(
+    '91000000-0000-4000-8000-000000000001', intent_row.id, provider_msg
+  ) then
+    raise exception 'C14: mark_sent replay on SENT row must return false';
+  end if;
+end;
+$$;
+
+reset role;
+
+-- (C10) Inbound reply → record_inbound_message + mark_quote_replied.
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+do $$
+declare
+  quote_id     uuid := '91500000-0000-4000-8000-c14e2ec14000';
+  outbound_key text := 'outbound:quote_followup:91500000-0000-4000-8000-c14e2ec14000:step:1';
+  provider_msg text := 'resend_msg_e2e_c14_alpha';
+  inbound_row  record;
+  inbound_replay record;
+  ai_row       record;
+  ai_replay    record;
+  message_id   uuid;
+  transitioned boolean;
+  s            text;
+  intent       text;
+  conf         numeric;
+begin
+  -- (C10) Insert inbound row keyed on the provider event id.
+  select id, created into inbound_row from public.record_inbound_message(
+    '91000000-0000-4000-8000-000000000001',
+    'inbound:resend:evt_c14_e2e',
+    'resend', 'inbound_c14_msg', null, quote_id, null,
+    'customer@example.com', 'Re: Relance C14', 'Merci, on peut discuter la semaine prochaine.',
+    provider_msg, array[provider_msg]::text[],
+    jsonb_build_object('Message-ID', '<inbound_c14_msg@example.com>'),
+    now()
+  );
+  if not inbound_row.created then
+    raise exception 'C14: first inbound insert must be created';
+  end if;
+  message_id := inbound_row.id;
+
+  -- (C10) Replay of the same event → created=false, same id, single row.
+  select id, created into inbound_replay from public.record_inbound_message(
+    '91000000-0000-4000-8000-000000000001',
+    'inbound:resend:evt_c14_e2e',
+    'resend', 'inbound_c14_msg', null, quote_id, null,
+    'customer@example.com', 'Re: Relance C14 replay', 'replayed body',
+    provider_msg, array[provider_msg]::text[], '{}'::jsonb, now()
+  );
+  if inbound_replay.created or inbound_replay.id is distinct from message_id then
+    raise exception 'C14: inbound replay must observe original id, created=false';
+  end if;
+
+  -- (C10) mark_quote_replied transitions SENT → REPLIED.
+  transitioned := public.mark_quote_replied(
+    '91000000-0000-4000-8000-000000000001', quote_id
+  );
+  if not transitioned then
+    raise exception 'C14: mark_quote_replied should transition SENT → REPLIED';
+  end if;
+  if public.mark_quote_replied(
+    '91000000-0000-4000-8000-000000000001', quote_id
+  ) then
+    raise exception 'C14: mark_quote_replied replay on REPLIED must return false';
+  end if;
+  select status into s from public.quotes where id = quote_id;
+  if s is distinct from 'REPLIED' then
+    raise exception 'C14: quote should be REPLIED (got %)', s;
+  end if;
+
+  -- (C11) insert_ai_run_once + record_message_classification.
+  select id, created into ai_row from public.insert_ai_run_once(
+    '91000000-0000-4000-8000-000000000001',
+    'ai:reply_classification:' || message_id::text || ':v1',
+    'reply_classification', 'message', message_id,
+    'claude', 'claude-haiku-4-5-20251001', '1',
+    jsonb_build_object('message_id', message_id::text),
+    jsonb_build_object(
+      'intent', 'ACCEPTED_QUOTE',
+      'confidence', 0.88,
+      'summary', 'Client OK, veut planifier'
+    ),
+    0.88, null, 'SUCCEEDED', 620, 145, 55, null, null
+  );
+  if not ai_row.created then
+    raise exception 'C14: first ai_run must be created';
+  end if;
+  select id, created into ai_replay from public.insert_ai_run_once(
+    '91000000-0000-4000-8000-000000000001',
+    'ai:reply_classification:' || message_id::text || ':v1',
+    'reply_classification', 'message', message_id,
+    'claude', 'claude-haiku-4-5-20251001', '1',
+    '{}'::jsonb, '{}'::jsonb, 0.9, null, 'SUCCEEDED', 100, null, null, null, null
+  );
+  if ai_replay.created or ai_replay.id is distinct from ai_row.id then
+    raise exception 'C14: ai_run replay must observe original id';
+  end if;
+
+  if not public.record_message_classification(
+    '91000000-0000-4000-8000-000000000001', message_id, 'ACCEPTED_QUOTE', 0.88
+  ) then
+    raise exception 'C14: record_message_classification should transition once';
+  end if;
+  if public.record_message_classification(
+    '91000000-0000-4000-8000-000000000001', message_id, 'ACCEPTED_QUOTE', 0.9
+  ) then
+    raise exception 'C14: replay classification on already-classified must return false';
+  end if;
+  select intent, confidence into intent, conf from public.messages where id = message_id;
+  if intent is distinct from 'ACCEPTED_QUOTE' or conf is distinct from 0.88::numeric then
+    raise exception 'C14: message denorm expected intent=ACCEPTED_QUOTE / confidence=0.88 (got %, %)', intent, conf;
+  end if;
+end;
+$$;
+
+-- (C12) Approval flow on a fresh run for the same quote (dispatcher path).
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  jsonb_build_object(
+    'sub', '91100000-0000-4000-8000-000000000001',
+    'role', 'authenticated'
+  )::text,
+  true);
+
+do $$
+declare
+  run_id  uuid := '91800000-0000-4000-8000-c14e2ec14001';
+  approved boolean;
+  s text;
+  d text;
+begin
+  insert into public.automation_runs (
+    id, organization_id, automation_config_id, idempotency_key,
+    status, scheduled_for, input_summary, output_summary
+  )
+  values (
+    run_id, '91000000-0000-4000-8000-000000000001',
+    '91700000-0000-4000-8000-000000000001',
+    'quote_followup:91500000-0000-4000-8000-c14e2ec14000:step:2',
+    'WAITING_FOR_APPROVAL', now(),
+    jsonb_build_object('quote_id', '91500000-0000-4000-8000-c14e2ec14000', 'step', 2),
+    jsonb_build_object(
+      'proposed_action', jsonb_build_object(
+        'channel', 'email',
+        'recipient_email', 'customer@example.com',
+        'subject', 'Relance étape 2',
+        'body', 'Bonjour...',
+        'quote_id', '91500000-0000-4000-8000-c14e2ec14000',
+        'step', 2,
+        'scheduled_for_iso', to_char(now() at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+        'template_key', 'quote_followup_schedule'
+      )
+    )
+  );
+
+  approved := public.approve_automation_run_pending_approval(
+    run_id, '91000000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001',
+    'OK C14 E2E', 'dispatcher-c14', 300
+  );
+  if not approved then
+    raise exception 'C14: approve should return true on fresh WAITING run';
+  end if;
+
+  select status, approval_decision into s, d from public.automation_runs where id = run_id;
+  if s is distinct from 'RUNNING' or d is distinct from 'APPROVED' then
+    raise exception 'C14: approved run should be RUNNING + APPROVED (got %, %)', s, d;
+  end if;
+
+  -- Replay approve must return false (already resolved).
+  if public.approve_automation_run_pending_approval(
+    run_id, '91000000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001',
+    'x', 'dispatcher-c14', 300
+  ) then
+    raise exception 'C14: replay approve on APPROVED must return false';
+  end if;
+end;
+$$;
+
+reset role;
+
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval and C14 end-to-end assertions passed' as result;
 
 rollback;

@@ -154,6 +154,100 @@ export function externalEffectKey(
 }
 
 /**
+ * Outbound message intent — one row per (kind, entity, step) send
+ * attempt. E.g. the first send of quote follow-up step 2:
+ *   outboundMessageIntentKey("quote_followup", quoteId, 2)
+ *
+ * Format: `outbound:{kind}:{entityId}:{step}`
+ *
+ * The `step` (or discriminator) is required to distinguish successive
+ * legitimate sends against the same entity (step 1, step 2, ...).
+ * Never derived from the subject / body / recipient — those are
+ * mutable business values and would defeat replay safety.
+ */
+export function outboundMessageIntentKey(
+  kind: string,
+  entityId: string,
+  step: number,
+): string {
+  assertNonEmpty("kind", kind, 64);
+  assertUuid("entityId", entityId);
+  assertPositiveInteger("step", step);
+  return `outbound:${kind}:${entityId}:${step}`;
+}
+
+/**
+ * Reverse of `outboundMessageIntentKey`. Used by the C10 inbound
+ * reply matcher: given an `outbound_messages.idempotency_key`
+ * recovered via In-Reply-To lookup, extract `(kind, entityId, step)`
+ * so the ingest layer knows which quote to transition.
+ *
+ * Returns `null` for any string that does not match the strict
+ * `outbound:{kind}:{uuid}:{positive_int}` shape — do NOT throw, the
+ * caller decides how to handle an unknown key (typically: skip the
+ * transition, still record the message, emit an "unmatched reply"
+ * Attention).
+ */
+export function parseOutboundMessageIntentKey(
+  key: string,
+): { kind: string; entityId: string; step: number } | null {
+  if (typeof key !== "string") return null;
+  const parts = key.split(":");
+  if (parts.length !== 4) return null;
+  if (parts[0] !== "outbound") return null;
+  const kind = parts[1];
+  const entityId = parts[2];
+  const stepRaw = parts[3];
+  if (kind.length === 0 || kind.length > 64) return null;
+  if (!UUID_REGEX.test(entityId)) return null;
+  const step = Number.parseInt(stepRaw, 10);
+  if (!Number.isInteger(step) || step < 1) return null;
+  return { kind, entityId, step };
+}
+
+/**
+ * Inbound message identity. Used by the C10 webhook to dedup the
+ * `messages` row on the provider's stable event id — a retried
+ * callback with the same event id must resolve to the same row.
+ *
+ * Format: `inbound:{provider}:{provider_event_id}`
+ *
+ * The provider's own event id (Resend's `email_id`, Sendgrid's
+ * `event_id`) is the authoritative identity. Never derive from
+ * headers, body, or recipient — those are mutable.
+ */
+export function inboundMessageKey(
+  provider: string,
+  providerEventId: string,
+): string {
+  assertNonEmpty("provider", provider, 64);
+  assertNonEmpty("providerEventId", providerEventId, 200);
+  return `inbound:${provider}:${providerEventId}`;
+}
+
+/**
+ * AI invocation identity. Used by the C11 reply classifier (and any
+ * future ai_runs writer) to dedup a single invocation per feature
+ * per entity per prompt version.
+ *
+ * Format: `ai:{feature}:{entity_id}:v{prompt_version}`
+ *
+ * `prompt_version` is included so a version bump legitimately
+ * re-classifies the same message. Callers pass the SAME string that
+ * lands in `ai_runs.prompt_version` so a replay hits the same key.
+ */
+export function aiRunKey(
+  feature: string,
+  entityId: string,
+  promptVersion: string,
+): string {
+  assertNonEmpty("feature", feature, 64);
+  assertUuid("entityId", entityId);
+  assertNonEmpty("promptVersion", promptVersion, 32);
+  return `ai:${feature}:${entityId}:v${promptVersion}`;
+}
+
+/**
  * Types of identifiers a key builder MAY accept. Used by the store
  * layer to keep the surface area explicit — a call site that mixes
  * a mutable value into a key trips a type error.
