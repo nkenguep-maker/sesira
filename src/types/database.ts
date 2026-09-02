@@ -1792,6 +1792,36 @@ export type Database = {
           age_hours: number
         }[]
       }
+      compute_staleness_signal: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+          target_now: string
+        }
+        Returns: {
+          score: number
+          band: string
+          factors: Json
+          explanation: string
+        }[]
+      }
+      record_reply_objection: {
+        Args: {
+          target_organization_id: string
+          target_message_id: string
+          target_quote_id: string | null
+          target_class: string
+          target_severity: string
+          target_extracted_amount: number | null
+          target_extracted_currency: string | null
+          target_summary: string | null
+          target_confidence: number | null
+        }
+        Returns: {
+          id: string
+          created: boolean
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string

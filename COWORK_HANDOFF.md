@@ -7,11 +7,11 @@ Read this file first on any new Claude Code session; resume from
 ## Current status
 
 - **Branch**: `claude/core-workflows`
-- **HEAD**: `2788e94` (C18 opportunity model)
+- **HEAD**: `155427c` (C19 value policies + sold-not-scheduled)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` (available; driver defaults to LOCAL COMMITS ONLY per §12)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
 - **Driver phase**: WAVE 2 in progress
-- **NEXT_MILESTONE**: `C19 — VALUE POLICIES + SOLD-NOT-SCHEDULED`
+- **NEXT_MILESTONE**: `C20 — BEHAVIOR SIGNALS + ADVANCED OBJECTIONS`
 
 ## Milestone log
 
@@ -31,6 +31,7 @@ Read this file first on any new Claude Code session; resume from
 | C16 | `98ee92f` | DONE | V1 technical complete (imports + onboarding + snapshot) |
 | C17 | `e9284e5` | DONE | Operational evidence + readiness metrics |
 | C18 | `2788e94` | DONE | Opportunity + variant + option model |
+| C19 | `155427c` | DONE | Value policies + sold-not-scheduled |
 
 ## BASELINE_FAILURE
 
