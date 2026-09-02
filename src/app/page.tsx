@@ -58,14 +58,21 @@ export default function HomePage() {
         <div className="section-intro">
           <span className="eyebrow">03 · MOT DU FONDATEUR</span>
           <div>
-            <h2>Le problème n’est pas le manque d’outils.<br />C’est ce qui passe entre eux.</h2>
+            <h2>Le problème n’est pas le manque d’outils.<br />C’est ce qui se perd entre eux.</h2>
             <p className="method-copy">
-              Après plusieurs années dans la vente B2B, j’ai vu le même problème revenir dans beaucoup de PME : les outils existent, les équipes travaillent, les clients écrivent — mais le suivi se perd. Un devis n’est pas relancé, une demande reste dans un e-mail, une opportunité dépend de la mémoire de quelqu’un.
+              Je travaille depuis plusieurs années au contact direct de PME et de leurs équipes commerciales. J’ai mené des centaines de cycles de vente, suivi des opportunités pendant des semaines, repris des dossiers après plusieurs interlocuteurs et vu ce qui se passe quand une entreprise grandit plus vite que son organisation. Très souvent, les personnes sont bonnes et les outils sont déjà là. Pourtant un client répond dans une boite mail, un devis vit ailleurs, une relance dépend d’un rappel personnel et une décision importante reste dans la tête de quelqu’un.
             </p>
             <p className="method-copy">
-              J’ai créé SESIRA pour être la couche qui veille sur le fonctionnement quotidien de l’entreprise : observer ce qui se passe, faire remonter ce qui demande une action et préparer ou automatiser le travail répétitif sans retirer le contrôle à l’équipe.
+              Au début, on compense avec de l’énergie et de la mémoire. Puis le volume augmente. Les petites pertes de contexte deviennent des devis oubliés, des réponses trop tardives, des tâches répétées et des responsables qui passent leur journée à demander où en sont les choses. C’est exactement là que SESIRA commence.
             </p>
-            <p className="eyebrow">PAUL NKENGUE · FONDATEUR, SESIRA</p>
+            <p className="method-copy">
+              Je n’ai pas voulu créer un logiciel de plus à ouvrir chaque matin. Je veux construire un système qui comprend ce qui est en cours dans l’entreprise, relie les informations utiles, repère ce qui risque d’être oublié et remet la bonne action devant la bonne personne au bon moment. Ensuite seulement, quand le contexte est suffisamment clair, SESIRA peut automatiser une partie du travail. Le but reste le même : moins de choses qui se perdent, moins de décisions prises à l’aveugle et une entreprise plus simple à piloter.
+            </p>
+            <div className="founder-signature">
+              <strong>Paul Nkengue</strong>
+              <span>Fondateur de SESIRA</span>
+              <small>Sales operator B2B en Europe · Plus de 450 opportunités conclues · President’s Club 2025</small>
+            </div>
           </div>
         </div>
       </section>
