@@ -9,6 +9,7 @@ export default function HomePage() {
         <div className="landing-nav-links">
           <a href="#produit">Produit</a>
           <a href="#methode">Méthode</a>
+          <a href="#fondateur">Fondateur</a>
           <Link className="button ghost small" href="/login">Connexion</Link>
           <Link className="button primary small" href="/login">Ouvrir SESIRA</Link>
         </div>
@@ -51,6 +52,22 @@ export default function HomePage() {
       <section id="methode" className="landing-section dark-section">
         <div className="section-intro"><span className="eyebrow">02 · MÉTHODE</span><h2>Connecter d’abord.<br />Automatiser ensuite.</h2></div>
         <p className="method-copy">SESIRA n’invente pas vos données. L’application affiche ce qui est réellement connecté et signale clairement ce qui ne l’est pas encore.</p>
+      </section>
+
+      <section id="fondateur" className="landing-section">
+        <div className="section-intro">
+          <span className="eyebrow">03 · MOT DU FONDATEUR</span>
+          <div>
+            <h2>Le problème n’est pas le manque d’outils.<br />C’est ce qui passe entre eux.</h2>
+            <p className="method-copy">
+              Après plusieurs années dans la vente B2B, j’ai vu le même problème revenir dans beaucoup de PME : les outils existent, les équipes travaillent, les clients écrivent — mais le suivi se perd. Un devis n’est pas relancé, une demande reste dans un e-mail, une opportunité dépend de la mémoire de quelqu’un.
+            </p>
+            <p className="method-copy">
+              J’ai créé SESIRA pour être la couche qui veille sur le fonctionnement quotidien de l’entreprise : observer ce qui se passe, faire remonter ce qui demande une action et préparer ou automatiser le travail répétitif sans retirer le contrôle à l’équipe.
+            </p>
+            <p className="eyebrow">PAUL NKENGUE · FONDATEUR, SESIRA</p>
+          </div>
+        </div>
       </section>
 
       <footer className="landing-footer"><SesiraLogo /><span>© 2026 SESIRA</span><Link href="/login">Connexion</Link></footer>
