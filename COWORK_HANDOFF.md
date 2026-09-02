@@ -7,11 +7,11 @@ Read this file first on any new Claude Code session; resume from
 ## Current status
 
 - **Branch**: `claude/core-workflows`
-- **HEAD**: `7ea8096` (C20 explainable prioritization + reply objections)
+- **HEAD**: `78edee6` (C21 V2 technical validation)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` (available; driver defaults to LOCAL COMMITS ONLY per §12)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
 - **Driver phase**: WAVE 2 in progress
-- **NEXT_MILESTONE**: `C21 — V2 TECHNICAL VALIDATION`
+- **NEXT_MILESTONE**: `C22 — SPEED-TO-LEAD`
 
 ## Milestone log
 
@@ -33,6 +33,7 @@ Read this file first on any new Claude Code session; resume from
 | C18 | `2788e94` | DONE | Opportunity + variant + option model |
 | C19 | `155427c` | DONE | Value policies + sold-not-scheduled |
 | C20 | `7ea8096` | DONE | Staleness signal + reply objections |
+| C21 | `78edee6` | DONE | V2 validation (SQL E2E + synthetic fixture) |
 
 ## BASELINE_FAILURE
 

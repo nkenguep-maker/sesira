@@ -1332,15 +1332,18 @@ export type Database = {
       }
       requests: {
         Row: {
+          acknowledged_at: string | null
           assigned_user_id: string | null
           created_at: string
           customer_id: string | null
           data: Json
           external_id: string | null
           external_provider: string | null
+          first_response_at: string | null
           id: string
           organization_id: string
           qualification_score: number | null
+          received_at: string
           service_catalog_item_id: string | null
           source: string
           status: string
@@ -1348,15 +1351,18 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          acknowledged_at?: string | null
           assigned_user_id?: string | null
           created_at?: string
           customer_id?: string | null
           data?: Json
           external_id?: string | null
           external_provider?: string | null
+          first_response_at?: string | null
           id?: string
           organization_id: string
           qualification_score?: number | null
+          received_at?: string
           service_catalog_item_id?: string | null
           source?: string
           status?: string
@@ -1364,15 +1370,18 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          acknowledged_at?: string | null
           assigned_user_id?: string | null
           created_at?: string
           customer_id?: string | null
           data?: Json
           external_id?: string | null
           external_provider?: string | null
+          first_response_at?: string | null
           id?: string
           organization_id?: string
           qualification_score?: number | null
+          received_at?: string
           service_catalog_item_id?: string | null
           source?: string
           status?: string
@@ -1879,6 +1888,36 @@ export type Database = {
         Returns: {
           id: string
           created: boolean
+        }[]
+      }
+      record_request_acknowledged: {
+        Args: {
+          target_organization_id: string
+          target_request_id: string
+        }
+        Returns: boolean
+      }
+      record_request_first_response: {
+        Args: {
+          target_organization_id: string
+          target_request_id: string
+          target_responder_user_id: string
+        }
+        Returns: boolean
+      }
+      speed_to_lead_stats: {
+        Args: {
+          target_organization_id: string
+          target_period_start: string
+          target_period_end: string
+        }
+        Returns: {
+          responded_count: number
+          unresponded_count: number
+          median_response_seconds: number | null
+          p90_response_seconds: number | null
+          fastest_response_seconds: number | null
+          slowest_response_seconds: number | null
         }[]
       }
       record_audit_log: {
