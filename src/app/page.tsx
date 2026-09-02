@@ -10,7 +10,7 @@ export default function HomePage() {
           <a href="#produit">Produit</a>
           <a href="#methode">Méthode</a>
           <Link href="/diagnostic">Diagnostic</Link>
-          <a href="#fondateur">Fondateur</a>
+          <a href="#fondateur">Qui construit SESIRA</a>
           <Link className="button ghost small" href="/login">Connexion</Link>
           <Link className="button primary small" href="/diagnostic">Faire le diagnostic</Link>
         </div>
@@ -55,26 +55,51 @@ export default function HomePage() {
         <p className="method-copy">SESIRA n’invente pas vos données. L’application affiche ce qui est réellement connecté et signale clairement ce qui ne l’est pas encore.</p>
       </section>
 
-      <section id="fondateur" className="landing-section">
-        <div className="section-intro">
-          <span className="eyebrow">03 · MOT DU FONDATEUR</span>
+      <section id="fondateur" className="landing-section founder-section">
+        <div className="section-intro founder-intro">
+          <span className="eyebrow">03 · QUI CONSTRUIT SESIRA</span>
           <div>
-            <h2>Le problème n’est pas le manque d’outils.<br />C’est ce qui se perd entre eux.</h2>
-            <p className="method-copy">
-              Je travaille depuis plusieurs années au contact direct de PME et de leurs équipes commerciales. J’ai mené des centaines de cycles de vente, suivi des opportunités pendant des semaines, repris des dossiers après plusieurs interlocuteurs et vu ce qui se passe quand une entreprise grandit plus vite que son organisation. Très souvent, les personnes sont bonnes et les outils sont déjà là. Pourtant un client répond dans une boite mail, un devis vit ailleurs, une relance dépend d’un rappel personnel et une décision importante reste dans la tête de quelqu’un.
+            <h2>Une observation née du terrain.<br />Une équipe construite autour du problème.</h2>
+            <p className="founder-lede">
+              J’ai passé plus de dix ans au contact d’entreprises de tailles très différentes, de la prospection au recouvrement en passant par la vente, le service client et l’onboarding. Derrière des métiers différents, j’ai retrouvé le même moment de rupture : quelque chose devait arriver ensuite, mais aucun système ne s’assurait que cela arrive.
             </p>
-            <p className="method-copy">
-              Au début, on compense avec de l’énergie et de la mémoire. Puis le volume augmente. Les petites pertes de contexte deviennent des devis oubliés, des réponses trop tardives, des tâches répétées et des responsables qui passent leur journée à demander où en sont les choses. C’est exactement là que SESIRA commence.
+            <p className="founder-copy">
+              Une demande attend une réponse. Un devis part puis disparaît du radar. Un contrat est signé mais son démarrage se décale. Un message important reste dans une boite de réception. Une facture arrive à échéance et la relance dépend encore de la mémoire de quelqu’un. C’est de cette répétition qu’est né SESIRA.
             </p>
-            <p className="method-copy">
-              Je n’ai pas voulu créer un logiciel de plus à ouvrir chaque matin. Je veux construire un système qui comprend ce qui est en cours dans l’entreprise, relie les informations utiles, repère ce qui risque d’être oublié et remet la bonne action devant la bonne personne au bon moment. Ensuite seulement, quand le contexte est suffisamment clair, SESIRA peut automatiser une partie du travail. Le but reste le même : moins de choses qui se perdent, moins de décisions prises à l’aveugle et une entreprise plus simple à piloter.
-            </p>
-            <p className="method-copy">
-              <strong>Paul Nkengue</strong><br />
-              Fondateur de SESIRA<br />
-              <span className="eyebrow">Plus de 450 opportunités conclues en B2B · President’s Club 2025 · Expérience terrain auprès de PME européennes</span>
+            <p className="founder-copy">
+              Aujourd’hui, SESIRA ne repose pas sur l’expérience d’une seule personne. Notre équipe réunit des compétences en vente B2B, relation client, opérations, cybersécurité, produit, logiciel et automatisation. Des disciplines différentes avec une même obsession : comprendre ce qui doit arriver ensuite et empêcher que cela se perde.
             </p>
           </div>
+        </div>
+
+        <div className="founder-proof-grid">
+          <article>
+            <span className="eyebrow">FONDATEUR</span>
+            <h3>Le problème vécu sous plusieurs angles.</h3>
+            <p>Plus de 10 ans dans la tech, la vente et la cybersécurité. Plus de 1 000 entreprises accompagnées, de 10 à 2 000 salariés. Une expérience du cycle client qui va de la prospection au recouvrement.</p>
+          </article>
+          <article>
+            <span className="eyebrow">ÉQUIPE</span>
+            <h3>Les compétences nécessaires pour l’exécuter.</h3>
+            <p>Vente B2B, relation client, opérations, cybersécurité, produit, logiciel et automatisation sont réunis autour d’un même système plutôt qu’empilés comme des fonctions séparées.</p>
+          </article>
+          <article>
+            <span className="eyebrow">PME PARTENAIRES</span>
+            <h3>La réalité du métier dans la boucle de conception.</h3>
+            <p>Des dirigeants et équipes de PME partenaires confrontent SESIRA à leurs demandes, devis, emails, interventions et contraintes réelles. Ils testent nos hypothèses et nous aident à adapter le produit avant de généraliser une fonctionnalité.</p>
+          </article>
+        </div>
+
+        <div className="founder-partner-statement">
+          <span className="eyebrow">NOTRE BOUCLE DE CONCEPTION</span>
+          <p>Nous apportons la technologie et la méthode. Nos partenaires apportent la réalité du terrain.</p>
+          <p>SESIRA doit s’adapter au fonctionnement d’une PME, pas demander à la PME de se transformer pour s’adapter au logiciel.</p>
+        </div>
+
+        <div className="founder-signature">
+          <strong>Paul Nkengue</strong>
+          <span>Fondateur de SESIRA</span>
+          <small>Plus de 10 ans dans la tech, la vente et la cybersécurité · Plus de 1 000 entreprises accompagnées · Mathématicien de formation</small>
         </div>
       </section>
 
