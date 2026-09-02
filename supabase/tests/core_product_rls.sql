@@ -2687,8 +2687,270 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C14 — End-to-end happy path (C7 → C9 → C10 → C11 → C12 chained)
+-- =========================================================================
+-- This block simulates the full workflow a single quote goes through:
+--
+--   1. C9 outbound send: record intent → mark sent → row in
+--      outbound_messages, provider_message_id linked to the quote via
+--      the idempotency_key.
+--   2. C10 inbound reply: service_role record_inbound_message with
+--      the same provider_message_id in In-Reply-To → mark_quote_replied
+--      transitions SENT → REPLIED.
+--   3. C11 classification: insert_ai_run_once + record_message_classification
+--      denormalize `intent` and `confidence` on the inbound message.
+--   4. C12 approval: a fresh WAITING_FOR_APPROVAL run staged for the
+--      same quote → approve_automation_run_pending_approval →
+--      RUNNING with fresh dispatcher lease.
+--
+-- Every step re-runs to assert idempotency (no duplicate rows, no
+-- side effect on replay). Terminal state is a single (quote,
+-- outbound_message, inbound_message, ai_run, approved automation_run)
+-- quintuple.
+
+-- We start as authenticated tenant A.
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  jsonb_build_object(
+    'sub', '91100000-0000-4000-8000-000000000001',
+    'role', 'authenticated'
+  )::text,
+  true);
+
+do $$
+declare
+  quote_id      uuid := '91500000-0000-4000-8000-c14e2ec14000';
+  outbound_key  text := 'outbound:quote_followup:91500000-0000-4000-8000-c14e2ec14000:step:1';
+  provider_msg  text := 'resend_msg_e2e_c14_alpha';
+  intent_row    record;
+  intent_replay record;
+begin
+  -- Seed a fresh SENT quote for tenant A.
+  insert into public.quotes (id, organization_id, customer_id, request_id, title, amount, status)
+  values (quote_id, '91000000-0000-4000-8000-000000000001',
+          '91300000-0000-4000-8000-000000000001', null,
+          'C14 E2E seed quote', 2500.00, 'DRAFT');
+  update public.quotes set status = 'SENT', sent_at = now() where id = quote_id;
+
+  -- (C9) record_outbound_message_intent — first call created.
+  select id, created into intent_row from public.record_outbound_message_intent(
+    '91000000-0000-4000-8000-000000000001',
+    outbound_key, null, 'resend', 'email',
+    'customer@example.com', 'sesira@example.com', null,
+    'Relance C14 étape 1', repeat('c', 64)
+  );
+  if not intent_row.created then
+    raise exception 'C14: first outbound intent must be created';
+  end if;
+
+  -- (C9) Replay observes the original id.
+  select id, created into intent_replay from public.record_outbound_message_intent(
+    '91000000-0000-4000-8000-000000000001',
+    outbound_key, null, 'resend', 'email',
+    'customer@example.com', 'sesira@example.com', null,
+    'Different subject', repeat('d', 64)
+  );
+  if intent_replay.created then
+    raise exception 'C14: replay outbound intent must not be created';
+  end if;
+  if intent_replay.id is distinct from intent_row.id then
+    raise exception 'C14: replay must observe original outbound id';
+  end if;
+
+  -- (C9) mark_outbound_message_sent transitions QUEUED → SENT once.
+  if not public.mark_outbound_message_sent(
+    '91000000-0000-4000-8000-000000000001', intent_row.id, provider_msg
+  ) then
+    raise exception 'C14: mark_sent should transition on first call';
+  end if;
+  if public.mark_outbound_message_sent(
+    '91000000-0000-4000-8000-000000000001', intent_row.id, provider_msg
+  ) then
+    raise exception 'C14: mark_sent replay on SENT row must return false';
+  end if;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification and C12 approval assertions passed' as result;
+-- (C10) Inbound reply → record_inbound_message + mark_quote_replied.
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+do $$
+declare
+  quote_id     uuid := '91500000-0000-4000-8000-c14e2ec14000';
+  outbound_key text := 'outbound:quote_followup:91500000-0000-4000-8000-c14e2ec14000:step:1';
+  provider_msg text := 'resend_msg_e2e_c14_alpha';
+  inbound_row  record;
+  inbound_replay record;
+  ai_row       record;
+  ai_replay    record;
+  message_id   uuid;
+  transitioned boolean;
+  s            text;
+  intent       text;
+  conf         numeric;
+begin
+  -- (C10) Insert inbound row keyed on the provider event id.
+  select id, created into inbound_row from public.record_inbound_message(
+    '91000000-0000-4000-8000-000000000001',
+    'inbound:resend:evt_c14_e2e',
+    'resend', 'inbound_c14_msg', null, quote_id, null,
+    'customer@example.com', 'Re: Relance C14', 'Merci, on peut discuter la semaine prochaine.',
+    provider_msg, array[provider_msg]::text[],
+    jsonb_build_object('Message-ID', '<inbound_c14_msg@example.com>'),
+    now()
+  );
+  if not inbound_row.created then
+    raise exception 'C14: first inbound insert must be created';
+  end if;
+  message_id := inbound_row.id;
+
+  -- (C10) Replay of the same event → created=false, same id, single row.
+  select id, created into inbound_replay from public.record_inbound_message(
+    '91000000-0000-4000-8000-000000000001',
+    'inbound:resend:evt_c14_e2e',
+    'resend', 'inbound_c14_msg', null, quote_id, null,
+    'customer@example.com', 'Re: Relance C14 replay', 'replayed body',
+    provider_msg, array[provider_msg]::text[], '{}'::jsonb, now()
+  );
+  if inbound_replay.created or inbound_replay.id is distinct from message_id then
+    raise exception 'C14: inbound replay must observe original id, created=false';
+  end if;
+
+  -- (C10) mark_quote_replied transitions SENT → REPLIED.
+  transitioned := public.mark_quote_replied(
+    '91000000-0000-4000-8000-000000000001', quote_id
+  );
+  if not transitioned then
+    raise exception 'C14: mark_quote_replied should transition SENT → REPLIED';
+  end if;
+  if public.mark_quote_replied(
+    '91000000-0000-4000-8000-000000000001', quote_id
+  ) then
+    raise exception 'C14: mark_quote_replied replay on REPLIED must return false';
+  end if;
+  select status into s from public.quotes where id = quote_id;
+  if s is distinct from 'REPLIED' then
+    raise exception 'C14: quote should be REPLIED (got %)', s;
+  end if;
+
+  -- (C11) insert_ai_run_once + record_message_classification.
+  select id, created into ai_row from public.insert_ai_run_once(
+    '91000000-0000-4000-8000-000000000001',
+    'ai:reply_classification:' || message_id::text || ':v1',
+    'reply_classification', 'message', message_id,
+    'claude', 'claude-haiku-4-5-20251001', '1',
+    jsonb_build_object('message_id', message_id::text),
+    jsonb_build_object(
+      'intent', 'ACCEPTED_QUOTE',
+      'confidence', 0.88,
+      'summary', 'Client OK, veut planifier'
+    ),
+    0.88, null, 'SUCCEEDED', 620, 145, 55, null, null
+  );
+  if not ai_row.created then
+    raise exception 'C14: first ai_run must be created';
+  end if;
+  select id, created into ai_replay from public.insert_ai_run_once(
+    '91000000-0000-4000-8000-000000000001',
+    'ai:reply_classification:' || message_id::text || ':v1',
+    'reply_classification', 'message', message_id,
+    'claude', 'claude-haiku-4-5-20251001', '1',
+    '{}'::jsonb, '{}'::jsonb, 0.9, null, 'SUCCEEDED', 100, null, null, null, null
+  );
+  if ai_replay.created or ai_replay.id is distinct from ai_row.id then
+    raise exception 'C14: ai_run replay must observe original id';
+  end if;
+
+  if not public.record_message_classification(
+    '91000000-0000-4000-8000-000000000001', message_id, 'ACCEPTED_QUOTE', 0.88
+  ) then
+    raise exception 'C14: record_message_classification should transition once';
+  end if;
+  if public.record_message_classification(
+    '91000000-0000-4000-8000-000000000001', message_id, 'ACCEPTED_QUOTE', 0.9
+  ) then
+    raise exception 'C14: replay classification on already-classified must return false';
+  end if;
+  select intent, confidence into intent, conf from public.messages where id = message_id;
+  if intent is distinct from 'ACCEPTED_QUOTE' or conf is distinct from 0.88::numeric then
+    raise exception 'C14: message denorm expected intent=ACCEPTED_QUOTE / confidence=0.88 (got %, %)', intent, conf;
+  end if;
+end;
+$$;
+
+-- (C12) Approval flow on a fresh run for the same quote (dispatcher path).
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  jsonb_build_object(
+    'sub', '91100000-0000-4000-8000-000000000001',
+    'role', 'authenticated'
+  )::text,
+  true);
+
+do $$
+declare
+  run_id  uuid := '91800000-0000-4000-8000-c14e2ec14001';
+  approved boolean;
+  s text;
+  d text;
+begin
+  insert into public.automation_runs (
+    id, organization_id, automation_config_id, idempotency_key,
+    status, scheduled_for, input_summary, output_summary
+  )
+  values (
+    run_id, '91000000-0000-4000-8000-000000000001',
+    '91700000-0000-4000-8000-000000000001',
+    'quote_followup:91500000-0000-4000-8000-c14e2ec14000:step:2',
+    'WAITING_FOR_APPROVAL', now(),
+    jsonb_build_object('quote_id', '91500000-0000-4000-8000-c14e2ec14000', 'step', 2),
+    jsonb_build_object(
+      'proposed_action', jsonb_build_object(
+        'channel', 'email',
+        'recipient_email', 'customer@example.com',
+        'subject', 'Relance étape 2',
+        'body', 'Bonjour...',
+        'quote_id', '91500000-0000-4000-8000-c14e2ec14000',
+        'step', 2,
+        'scheduled_for_iso', to_char(now() at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+        'template_key', 'quote_followup_schedule'
+      )
+    )
+  );
+
+  approved := public.approve_automation_run_pending_approval(
+    run_id, '91000000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001',
+    'OK C14 E2E', 'dispatcher-c14', 300
+  );
+  if not approved then
+    raise exception 'C14: approve should return true on fresh WAITING run';
+  end if;
+
+  select status, approval_decision into s, d from public.automation_runs where id = run_id;
+  if s is distinct from 'RUNNING' or d is distinct from 'APPROVED' then
+    raise exception 'C14: approved run should be RUNNING + APPROVED (got %, %)', s, d;
+  end if;
+
+  -- Replay approve must return false (already resolved).
+  if public.approve_automation_run_pending_approval(
+    run_id, '91000000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001',
+    'x', 'dispatcher-c14', 300
+  ) then
+    raise exception 'C14: replay approve on APPROVED must return false';
+  end if;
+end;
+$$;
+
+reset role;
+
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval and C14 end-to-end assertions passed' as result;
 
 rollback;
