@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { EmailProvider, EmailSendResult } from "@/lib/email/provider";
+import { outboundMessageIntentKey } from "@/lib/idempotency/keys";
 
 import { dispatchApprovedFollowup } from "./dispatch";
 
@@ -148,9 +149,8 @@ describe("dispatchApprovedFollowup", () => {
   });
 
   it("returns REPLAY and releases SUCCEEDED when intent was already inserted", async () => {
-    // Prime the ledger so the second attempt observes created=false.
     state.intentLedger.set(
-      `${ORG}|outbound:quote_followup:${QUOTE}:step:1`,
+      `${ORG}|${outboundMessageIntentKey("quote_followup", QUOTE, 1)}`,
       "msg-prev",
     );
     const provider = makeProvider({ status: "SENT", providerMessageId: "unused" });
@@ -224,7 +224,7 @@ describe("dispatchApprovedFollowup", () => {
   });
 
   it("fails closed when the guard is off (env not production)", async () => {
-    RESET_ENV(); // ensure guard blocks
+    RESET_ENV();
     process.env.EXTERNAL_ACTIONS_ENABLED = "true";
     process.env.VERCEL_ENV = "preview";
     const provider = makeProvider({ status: "SENT", providerMessageId: "unused" });
