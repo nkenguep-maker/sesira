@@ -32,10 +32,10 @@ export interface ParseCsvResult {
 export function parseCsv(text: string): ParseCsvResult {
   const errors: Array<{ rowIndex: number; message: string }> = [];
   const cleaned = stripBom(text);
-  const lines = splitLines(cleaned);
-  if (lines.length === 0) {
+  if (cleaned.length === 0) {
     return { header: [], rows: [], errors: [{ rowIndex: 0, message: "empty file" }] };
   }
+  const lines = splitLines(cleaned);
   const rawHeader = parseLine(lines[0], 0, errors);
   const header = rawHeader.map((h) => h.trim());
   if (header.length === 0 || header.some((h) => h.length === 0)) {
@@ -70,9 +70,6 @@ function stripBom(text: string): string {
 }
 
 function splitLines(text: string): string[] {
-  // Preserve CRLF/LF but drop terminal newline. Multi-line quoted
-  // fields are rejected — we split on physical line breaks and let
-  // `parseLine` reject an unterminated quote.
   return text.split(/\r\n|\n|\r/);
 }
 
@@ -101,10 +98,6 @@ function parseLine(
     }
     if (ch === '"') {
       if (cur.length !== 0) {
-        // A quote in the middle of an unquoted field is technically
-        // permitted by many parsers but almost always a bug — treat
-        // as literal for tolerance but note the anomaly for the
-        // caller if a stricter mode is added later.
         cur += ch;
         continue;
       }
@@ -123,8 +116,6 @@ function parseLine(
       rowIndex,
       message: "unterminated quoted field (multi-line quoted fields not supported)",
     });
-    // Fall through — best-effort field push so the caller sees a
-    // shape close to what was intended.
   }
   fields.push(cur);
   return fields;
