@@ -2951,6 +2951,197 @@ $$;
 
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval and C14 end-to-end assertions passed' as result;
+-- =========================================================================
+-- C21 — V2 technical validation (opportunities + variants + options +
+--       value policies + staleness + objections)
+-- =========================================================================
+-- Exercises the WAVE 2 primitives (C18-C20) on tenant A. Rolls back
+-- via the outer transaction. No provider effect.
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  jsonb_build_object('sub', '91100000-0000-4000-8000-000000000001', 'role', 'authenticated')::text,
+  true);
+
+do $$
+declare
+  opp_result   record;
+  variant_id   uuid;
+  revision_id  uuid;
+  policy_result record;
+  staleness_r  record;
+  option_id    uuid := '91a00000-0000-4000-8000-000000000001';
+  quote_id_c21 uuid;
+  captured     text;
+begin
+  -- (C18) create opportunity + first quote atomically.
+  select opportunity_id, quote_id into opp_result
+  from public.create_opportunity_with_quote(
+    '91000000-0000-4000-8000-000000000001',
+    '91300000-0000-4000-8000-000000000001',
+    null, null, 3500.00, 'EUR',
+    'C21 Quote standard', 'standard', '{}'::jsonb
+  );
+  if opp_result.opportunity_id is null then
+    raise exception 'C21: create_opportunity_with_quote must return an opportunity_id';
+  end if;
+  quote_id_c21 := opp_result.quote_id;
+
+  -- (C18) add a premium variant.
+  variant_id := public.add_quote_variant_to_opportunity(
+    '91000000-0000-4000-8000-000000000001',
+    opp_result.opportunity_id, 'premium',
+    'C21 Quote premium', 5500.00, 'EUR'
+  );
+  if variant_id is null or variant_id = quote_id_c21 then
+    raise exception 'C21: premium variant must be a different quote';
+  end if;
+
+  -- (C18) verify two current revisions coexist under two variants.
+  declare
+    variant_count integer;
+  begin
+    select count(distinct variant_key) into variant_count
+    from public.quotes
+    where opportunity_id = opp_result.opportunity_id
+      and is_current_revision = true;
+    if variant_count <> 2 then
+      raise exception 'C21: expected 2 variants coexisting (got %)', variant_count;
+    end if;
+  end;
+
+  -- (C18) create a revision on the standard variant.
+  revision_id := public.create_quote_revision(
+    '91000000-0000-4000-8000-000000000001',
+    quote_id_c21, 'C21 Quote standard rev 2', 3700.00, 'EUR'
+  );
+  if revision_id is null then
+    raise exception 'C21: revision must be created';
+  end if;
+  -- Previous revision must no longer be current.
+  declare
+    prev_current boolean;
+  begin
+    select is_current_revision into prev_current
+    from public.quotes where id = quote_id_c21;
+    if prev_current then
+      raise exception 'C21: previous revision must be flipped to is_current_revision=false';
+    end if;
+  end;
+
+  -- (C18) insert an option on the new revision, then INCLUDE it.
+  insert into public.quote_options (
+    id, organization_id, quote_id, option_key, name, amount, currency, status, ordinal
+  )
+  values (
+    option_id, '91000000-0000-4000-8000-000000000001', revision_id,
+    'installation_premium', 'Installation premium', 300, 'EUR', 'PROPOSED', 1
+  );
+  if not public.select_quote_option(
+    '91000000-0000-4000-8000-000000000001', option_id, 'INCLUDED'
+  ) then
+    raise exception 'C21: select_quote_option should transition PROPOSED → INCLUDED';
+  end if;
+
+  -- (C19) insert a policy + resolve it deterministically.
+  insert into public.value_policies (
+    organization_id, name, applies_to, min_amount, max_amount, currency,
+    required_workflow_mode, reason, priority, enabled
+  )
+  values (
+    '91000000-0000-4000-8000-000000000001', 'C21 mid-band',
+    'quote', 1000, 5000, 'EUR', 'APPROVAL', '1000-5000 EUR → approval',
+    10, true
+  );
+  select policy_id, required_workflow_mode, reason
+  into policy_result
+  from public.resolve_value_policy(
+    '91000000-0000-4000-8000-000000000001',
+    'quote', 3700, 'EUR'
+  );
+  if policy_result.policy_id is null then
+    raise exception 'C21: policy should have matched for 3700 EUR quote';
+  end if;
+  if policy_result.required_workflow_mode is distinct from 'APPROVAL' then
+    raise exception 'C21: policy expected APPROVAL (got %)', policy_result.required_workflow_mode;
+  end if;
+
+  -- (C19) 500 EUR does NOT match the 1000-5000 band → empty result.
+  select policy_id into captured
+  from public.resolve_value_policy(
+    '91000000-0000-4000-8000-000000000001',
+    'quote', 500, 'EUR'
+  );
+  if captured is not null then
+    raise exception 'C21: 500 EUR should not match the 1000-5000 policy';
+  end if;
+
+  -- (C20) staleness signal on the new revision — score should be low
+  --       or 0 (freshly inserted, DRAFT status).
+  select score, band into staleness_r
+  from public.compute_staleness_signal(
+    '91000000-0000-4000-8000-000000000001', revision_id, now()
+  );
+  if staleness_r.band is null then
+    raise exception 'C21: staleness signal must return a band';
+  end if;
+
+  -- (C18) transition opportunity NEW → ACTIVE → WON.
+  if not public.transition_opportunity_state(
+    '91000000-0000-4000-8000-000000000001',
+    opp_result.opportunity_id, 'ACTIVE', null
+  ) then
+    raise exception 'C21: NEW → ACTIVE should succeed';
+  end if;
+  if not public.transition_opportunity_state(
+    '91000000-0000-4000-8000-000000000001',
+    opp_result.opportunity_id, 'WON', 'signed C21'
+  ) then
+    raise exception 'C21: ACTIVE → WON should succeed';
+  end if;
+  -- Terminal → any further transition rejected.
+  begin
+    perform public.transition_opportunity_state(
+      '91000000-0000-4000-8000-000000000001',
+      opp_result.opportunity_id, 'LOST', 'nope'
+    );
+    raise exception 'C21: WON → LOST should be rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C21: unexpected sqlstate % on WON → LOST', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Cross-tenant isolation on C18-C20: tenant A cannot see tenant B
+-- opportunities / value_policies / reply_objections.
+do $$
+declare
+  visible integer;
+begin
+  select count(*) into visible from public.opportunities
+    where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then
+    raise exception 'C21: tenant A must not see tenant B opportunities (got %)', visible;
+  end if;
+  select count(*) into visible from public.value_policies
+    where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then
+    raise exception 'C21: tenant A must not see tenant B value_policies (got %)', visible;
+  end if;
+  select count(*) into visible from public.reply_objections
+    where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then
+    raise exception 'C21: tenant A must not see tenant B reply_objections (got %)', visible;
+  end if;
+end;
+$$;
+
+reset role;
+
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end and C21 V2 validation assertions passed' as result;
 
 rollback;

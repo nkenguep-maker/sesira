@@ -1035,6 +1035,65 @@ export type Database = {
           },
         ]
       }
+      value_policies: {
+        Row: {
+          applies_to: string
+          created_at: string
+          currency: string
+          enabled: boolean
+          id: string
+          max_amount: number | null
+          metadata: Json
+          min_amount: number
+          name: string
+          organization_id: string
+          priority: number
+          reason: string
+          required_workflow_mode: string
+          updated_at: string
+        }
+        Insert: {
+          applies_to: string
+          created_at?: string
+          currency?: string
+          enabled?: boolean
+          id?: string
+          max_amount?: number | null
+          metadata?: Json
+          min_amount: number
+          name: string
+          organization_id: string
+          priority?: number
+          reason: string
+          required_workflow_mode: string
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          currency?: string
+          enabled?: boolean
+          id?: string
+          max_amount?: number | null
+          metadata?: Json
+          min_amount?: number
+          name?: string
+          organization_id?: string
+          priority?: number
+          reason?: string
+          required_workflow_mode?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "value_policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_options: {
         Row: {
           amount: number | null

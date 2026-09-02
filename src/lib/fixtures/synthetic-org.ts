@@ -38,6 +38,10 @@ export interface SyntheticOrgSpec {
   quoteCount?: number;
   automationEnabled?: boolean;
   automationLevel?: "OBSERVATION" | "SHADOW" | "APPROVAL" | "AUTOMATIC";
+  /** C21 extension: also create opportunities (1:1 with quotes) + value policies. */
+  includeOpportunities?: boolean;
+  /** C21 extension: seed one value policy per band. */
+  includeValuePolicies?: boolean;
   client?: SupabaseClient<Database>;
 }
 
@@ -47,6 +51,8 @@ export interface SyntheticOrgResult {
   customerIds: string[];
   quoteIds: string[];
   automationConfigId: string | null;
+  opportunityIds: string[];
+  valuePolicyIds: string[];
 }
 
 export async function createSyntheticOrganization(
@@ -155,12 +161,67 @@ export async function createSyntheticOrganization(
     automationConfigId = (cfgInsert.data as { id: string }).id;
   }
 
+  // 6. Opportunities (C18) — 1:1 with the created quotes when requested.
+  const opportunityIds: string[] = [];
+  if ((spec.includeOpportunities ?? false) && quoteIds.length > 0) {
+    const oppRows = quoteIds.map((quoteId, i) => ({
+      id: deterministicUuid(rng),
+      organization_id: organizationId,
+      customer_id: customerIds[i % customerIds.length],
+      commercial_state: "ACTIVE",
+      estimated_value: 500 + Math.floor(rng() * 4500),
+      currency: "EUR",
+    }));
+    const oppInsert = await supabase.from("opportunities").insert(oppRows).select("id");
+    if (oppInsert.error) {
+      throw new Error(`createSyntheticOrganization: opportunities insert failed: ${oppInsert.error.message}`);
+    }
+    for (let i = 0; i < oppRows.length; i += 1) {
+      const oppId = (oppInsert.data![i] as { id: string }).id;
+      opportunityIds.push(oppId);
+      await supabase.from("quotes")
+        .update({ opportunity_id: oppId })
+        .eq("id", quoteIds[i]);
+    }
+  }
+
+  // 7. Value policies (C19) — three deterministic bands.
+  const valuePolicyIds: string[] = [];
+  if (spec.includeValuePolicies ?? false) {
+    const policyRows = [
+      { name: "low band", min_amount: 0, max_amount: 999, required_workflow_mode: "AUTOMATIC", reason: "low value → automatic", priority: 10 },
+      { name: "mid band", min_amount: 1000, max_amount: 4999, required_workflow_mode: "APPROVAL", reason: "mid value → approval", priority: 10 },
+      { name: "high band", min_amount: 5000, max_amount: null, required_workflow_mode: "HUMAN_FIRST", reason: "high value → human-first", priority: 20 },
+    ].map((p) => ({
+      id: deterministicUuid(rng),
+      organization_id: organizationId,
+      name: p.name,
+      applies_to: "quote",
+      min_amount: p.min_amount,
+      max_amount: p.max_amount,
+      currency: "EUR",
+      required_workflow_mode: p.required_workflow_mode,
+      reason: p.reason,
+      priority: p.priority,
+      enabled: true,
+    }));
+    const policyInsert = await supabase.from("value_policies").insert(policyRows).select("id");
+    if (policyInsert.error) {
+      throw new Error(`createSyntheticOrganization: value_policies insert failed: ${policyInsert.error.message}`);
+    }
+    for (const row of policyInsert.data as Array<{ id: string }>) {
+      valuePolicyIds.push(row.id);
+    }
+  }
+
   return {
     organizationId,
     ownerUserId: spec.ownerUserId,
     customerIds,
     quoteIds,
     automationConfigId,
+    opportunityIds,
+    valuePolicyIds,
   };
 }
 
