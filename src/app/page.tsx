@@ -1,109 +1,184 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
 import { SesiraLogo } from "@/components/sesira/logo";
+
+export const metadata: Metadata = {
+  title: "SESIRA | Suivi des devis pour PME CVC",
+  description:
+    "SESIRA surveille les devis envoyés, prépare les relances et fait remonter les décisions importantes aux PME du chauffage, de la climatisation et des pompes à chaleur.",
+};
+
+const WORK_SPLIT = [
+  ["Surveiller les devis", "Le prix"],
+  ["Préparer les relances", "Une remise"],
+  ["Repérer une réponse", "Une réclamation"],
+  ["Tenir le suivi à jour", "Un litige"],
+] as const;
 
 export default function HomePage() {
   return (
-    <main className="landing-shell">
-      <nav className="landing-nav">
-        <SesiraLogo />
-        <div className="landing-nav-links">
-          <a href="#produit">Produit</a>
-          <a href="#methode">Méthode</a>
-          <Link href="/diagnostic">Diagnostic</Link>
-          <a href="#fondateur">Qui construit SESIRA</a>
+    <main className="cvc-shell">
+      <nav className="cvc-nav">
+        <Link href="/" aria-label="SESIRA"><SesiraLogo /></Link>
+        <div className="cvc-nav-links">
+          <a href="#probleme">Le problème</a>
+          <a href="#fonctionnement">Comment ça marche</a>
+          <a href="#produit">Le produit</a>
+          <a href="#fondateur">Fondateur</a>
           <Link className="button ghost small" href="/login">Connexion</Link>
-          <Link className="button primary small" href="/diagnostic">Faire le diagnostic</Link>
+          <Link className="button primary small" href="/diagnostic">Faire le calcul</Link>
         </div>
       </nav>
 
-      <section className="hero">
-        <div className="hero-copy">
-          <span className="eyebrow">OPERATING SYSTEM · PME</span>
-          <h1>Votre entreprise,<br /><em>enfin lisible.</em></h1>
-          <p>SESIRA réunit vos clients, vos devis, votre suivi et vos opérations dans un système simple à lire et simple à piloter.</p>
-          <div className="hero-actions">
-            <Link href="/diagnostic" className="button primary">Faire le diagnostic</Link>
-            <Link href="/login" className="text-link">Ouvrir SESIRA <span>↘</span></Link>
+      <section className="cvc-hero">
+        <div className="cvc-hero-copy">
+          <span className="cvc-kicker">SESIRA · CHAUFFAGE · CLIMATISATION · POMPES À CHALEUR</span>
+          <h1>Des devis déjà envoyés <em>dorment dans votre boîte mail.</em></h1>
+          <p className="cvc-hero-lede">
+            SESIRA surveille vos devis. Quand un client ne répond pas, il prépare la relance et vous la montre. Vous décidez. SESIRA envoie seulement quand vous l’autorisez.
+          </p>
+          <p className="cvc-hero-note">Vous ne pouvez pas prendre tous les chantiers. Le but est de ne pas perdre les bons.</p>
+          <div className="cvc-actions">
+            <Link className="button primary" href="/diagnostic">Voir si SESIRA est rentable chez moi</Link>
+            <a className="cvc-text-link" href="#probleme">Comprendre en 2 minutes</a>
           </div>
+          <small>Gratuit · sans compte · premier résultat en un clic</small>
         </div>
-        <div className="hero-system" aria-label="Aperçu de l’application SESIRA">
-          <div className="system-top"><span>SESIRA / AUJOURD’HUI</span><span className="live-dot">ACTIF</span></div>
-          <div className="system-grid">
-            <div className="system-score"><small>À traiter</small><strong>—</strong><span>Les données apparaîtront après connexion.</span></div>
-            <div className="system-list">
-              <div><span>Clients</span><b>non connecté</b></div>
-              <div><span>Devis</span><b>non connecté</b></div>
-              <div><span>Email</span><b>à configurer</b></div>
-              <div><span>Suivi</span><b>à configurer</b></div>
-            </div>
-          </div>
-          <div className="system-line" />
-        </div>
-      </section>
 
-      <section id="produit" className="landing-section">
-        <div className="section-intro"><span className="eyebrow">01 · PRODUIT</span><h2>Une seule lecture du travail.</h2></div>
-        <div className="feature-grid">
-          <article><span>01</span><h3>Voir</h3><p>Une vue opérationnelle nette, sans multiplier les tableaux et les outils.</p></article>
-          <article><span>02</span><h3>Décider</h3><p>Les priorités importantes remontent avant le bruit quotidien.</p></article>
-          <article><span>03</span><h3>Suivre</h3><p>Clients, devis, emails et actions restent reliés au même contexte.</p></article>
+        <div className="cvc-quote-demo" aria-label="Exemple de devis surveillé par SESIRA">
+          <div className="cvc-demo-top"><span>SESIRA REGARDE CE DEVIS</span><span>EXEMPLE</span></div>
+          <h2>Sophie Lefèvre</h2>
+          <p>Pompe à chaleur air eau · Rhône</p>
+          <strong>18 450 € HT</strong>
+          <dl>
+            <div><dt>Envoyé</dt><dd>il y a 3 jours</dd></div>
+            <div><dt>Le client a répondu</dt><dd>non</dd></div>
+          </dl>
+          <div className="cvc-demo-alert"><span /> <p><b>Aujourd’hui, SESIRA préparerait la relance.</b><br />Il attend votre feu vert.</p></div>
+          <small>Rien n’est parti</small>
         </div>
       </section>
 
-      <section id="methode" className="landing-section dark-section">
-        <div className="section-intro"><span className="eyebrow">02 · MÉTHODE</span><h2>Connecter d’abord.<br />Automatiser ensuite.</h2></div>
-        <p className="method-copy">SESIRA n’invente pas vos données. L’application affiche ce qui est réellement connecté et signale clairement ce qui ne l’est pas encore.</p>
-      </section>
-
-      <section id="fondateur" className="landing-section founder-section">
-        <div className="section-intro founder-intro">
-          <span className="eyebrow">03 · QUI CONSTRUIT SESIRA</span>
+      <section id="probleme" className="cvc-section cvc-light">
+        <div className="cvc-section-head">
+          <span>01 · LE PROBLÈME</span>
+          <h2>Ce devis, vous l’avez déjà payé.</h2>
+          <p>La demande, le déplacement, le rendez vous et le chiffrage sont déjà faits quand le devis part. Ensuite, trop souvent, le suivi repose encore sur une boîte mail, un rappel personnel ou la mémoire de quelqu’un.</p>
+        </div>
+        <div className="cvc-flow" aria-label="Cycle d'un devis">
+          <span>Le client appelle</span><b>→</b><span>Vous vous déplacez</span><b>→</b><span>Vous chiffrez</span><b>→</b><span>Le devis part</span><b>→</b><em>?</em>
+        </div>
+        <div className="cvc-problem-grid">
           <div>
-            <h2>Une observation née du terrain.<br />Une équipe construite autour du problème.</h2>
-            <p className="founder-lede">
-              J’ai passé plus de dix ans au contact d’entreprises de tailles très différentes, de la prospection au recouvrement en passant par la vente, le service client et l’onboarding. Derrière des métiers différents, j’ai retrouvé le même moment de rupture : quelque chose devait arriver ensuite, mais aucun système ne s’assurait que cela arrive.
-            </p>
-            <p className="founder-copy">
-              Une demande attend une réponse. Un devis part puis disparaît du radar. Un contrat est signé mais son démarrage se décale. Un message important reste dans une boite de réception. Une facture arrive à échéance et la relance dépend encore de la mémoire de quelqu’un. C’est de cette répétition qu’est né SESIRA.
-            </p>
-            <p className="founder-copy">
-              Aujourd’hui, SESIRA ne repose pas sur l’expérience d’une seule personne. Notre équipe réunit des compétences en vente B2B, relation client, opérations, cybersécurité, produit, logiciel et automatisation. Des disciplines différentes avec une même obsession : comprendre ce qui doit arriver ensuite et empêcher que cela se perde.
-            </p>
+            <h3>Ce point d’interrogation, c’est le travail de SESIRA.</h3>
+            <p>Il regarde ce qui devait arriver ensuite et fait remonter ce qui risque de se perdre.</p>
           </div>
-        </div>
-
-        <div className="founder-proof-grid">
-          <article>
-            <span className="eyebrow">FONDATEUR</span>
-            <h3>Le problème vécu sous plusieurs angles.</h3>
-            <p>Plus de 10 ans dans la tech, la vente et la cybersécurité. Plus de 1 000 entreprises accompagnées, de 10 à 2 000 salariés. Une expérience du cycle client qui va de la prospection au recouvrement.</p>
-          </article>
-          <article>
-            <span className="eyebrow">ÉQUIPE</span>
-            <h3>Les compétences nécessaires pour l’exécuter.</h3>
-            <p>Vente B2B, relation client, opérations, cybersécurité, produit, logiciel et automatisation sont réunis autour d’un même système plutôt qu’empilés comme des fonctions séparées.</p>
-          </article>
-          <article>
-            <span className="eyebrow">PME PARTENAIRES</span>
-            <h3>La réalité du métier dans la boucle de conception.</h3>
-            <p>Des dirigeants et équipes de PME partenaires confrontent SESIRA à leurs demandes, devis, emails, interventions et contraintes réelles. Ils testent nos hypothèses et nous aident à adapter le produit avant de généraliser une fonctionnalité.</p>
-          </article>
-        </div>
-
-        <div className="founder-partner-statement">
-          <span className="eyebrow">NOTRE BOUCLE DE CONCEPTION</span>
-          <p>Nous apportons la technologie et la méthode. Nos partenaires apportent la réalité du terrain.</p>
-          <p>SESIRA doit s’adapter au fonctionnement d’une PME, pas demander à la PME de se transformer pour s’adapter au logiciel.</p>
-        </div>
-
-        <div className="founder-signature">
-          <strong>Paul Nkengue</strong>
-          <span>Fondateur de SESIRA</span>
-          <small>Plus de 10 ans dans la tech, la vente et la cybersécurité · Plus de 1 000 entreprises accompagnées · Mathématicien de formation</small>
+          <div className="cvc-example-card">
+            <span>UN MOIS · EXEMPLE</span>
+            <div><strong>47</strong><small>devis suivis</small></div>
+            <div><strong>12</strong><small>sans réponse</small></div>
+            <div><strong>148 k€</strong><small>encore ouverts</small></div>
+            <div><strong>4</strong><small>à regarder aujourd’hui</small></div>
+          </div>
         </div>
       </section>
 
-      <footer className="landing-footer"><SesiraLogo /><span>© 2026 SESIRA</span><Link href="/diagnostic">Diagnostic</Link><Link href="/login">Connexion</Link></footer>
+      <section id="fonctionnement" className="cvc-section cvc-sand">
+        <div className="cvc-section-head">
+          <span>02 · COMMENT ÇA MARCHE</span>
+          <h2>Rien ne part sans que vous l’ayez lu.</h2>
+          <p>Au départ, SESIRA observe et prépare. Vous gardez le contrôle. L’automatisation vient seulement après, quand les règles sont claires et que vous avez confiance dans le comportement du système.</p>
+        </div>
+        <div className="cvc-steps">
+          <article><span>01</span><h3>Il regarde</h3><p>SESIRA repère les devis restés sans réponse. Aucun message n’est envoyé.</p></article>
+          <article><span>02</span><h3>Il vous montre</h3><p>Il prépare la relance et explique pourquoi ce dossier remonte maintenant.</p></article>
+          <article className="featured"><span>03</span><h3>Vous validez</h3><p>Vous lisez, vous corrigez si nécessaire, puis vous décidez.</p></article>
+          <article><span>04</span><h3>Il automatise</h3><p>Uniquement ce que vous avez explicitement autorisé.</p></article>
+        </div>
+      </section>
+
+      <section className="cvc-section cvc-dark">
+        <div className="cvc-section-head">
+          <span>03 · LA FRONTIÈRE</span>
+          <h2>Le répétitif à SESIRA. La décision à vous.</h2>
+          <p>Le but n’est pas de sortir l’équipe du circuit. Le but est de ne lui laisser que ce qui mérite réellement une décision humaine.</p>
+        </div>
+        <div className="cvc-split-grid">
+          <div className="cvc-decision-demo">
+            <span>LE CLIENT TROUVE ÇA TROP CHER</span>
+            <h3>Sophie Lefèvre · 18 450 € HT</h3>
+            <blockquote>Nous sommes toujours intéressés, mais le tarif dépasse un peu notre budget.</blockquote>
+            <p><b>Pourquoi SESIRA vous le montre</b><br />Parler d’argent avec un client, ce n’est pas au logiciel de décider à votre place.</p>
+          </div>
+          <div className="cvc-work-split">
+            <div><b>SESIRA S’EN OCCUPE</b><b>VOUS DÉCIDEZ</b></div>
+            {WORK_SPLIT.map(([sesira, human]) => <div key={sesira}><span>{sesira}</span><strong>{human}</strong></div>)}
+          </div>
+        </div>
+      </section>
+
+      <section id="produit" className="cvc-section cvc-light">
+        <div className="cvc-section-head">
+          <span>04 · CE QUE VOUS REGARDEZ</span>
+          <h2>Trois choses demandent votre attention. Pas trente tableaux.</h2>
+          <p>Le produit doit répondre à une question simple le matin : qu’est ce qui mérite vraiment que je m’en occupe aujourd’hui ?</p>
+        </div>
+        <div className="cvc-product-frame">
+          <div className="cvc-product-top"><strong>MARDI · 08:17</strong><span>À regarder aujourd’hui · 3</span></div>
+          <article><div><span>DEVIS</span><strong>18 450 € · Sophie Lefèvre</strong><p>Cliente intéressée, mais prix jugé élevé.</p></div><b>À vous de décider</b></article>
+          <article><div><span>DEVIS</span><strong>9 800 € · Dupont SARL</strong><p>Aucune réponse depuis 6 jours. Relance prête.</p></div><b>Relance à valider</b></article>
+          <article><div><span>FACTURE</span><strong>4 850 € · Résidence Les Tilleuls</strong><p>En retard et sans réponse au premier rappel.</p></div><b>À vérifier</b></article>
+        </div>
+      </section>
+
+      <section className="cvc-section cvc-sand">
+        <div className="cvc-roi-grid">
+          <div className="cvc-section-head">
+            <span>05 · LE CALCUL</span>
+            <h2>On mesure le seuil. On ne promet pas le résultat.</h2>
+            <p>SESIRA ne prétend pas savoir combien de devis supplémentaires vous signerez. Le calcul montre simplement combien de devis additionnels suffiraient à couvrir son coût avec vos propres chiffres.</p>
+          </div>
+          <div className="cvc-roi-card">
+            <span>EXEMPLE AFFICHÉ</span>
+            <strong>6 devis</strong>
+            <p>Avec 45 devis par mois, 12 000 € de montant moyen et 30 % de marge, six devis supplémentaires sur 540 envoyés dans l’année couvriraient un coût annuel de 19 200 €.</p>
+            <small>Ce n’est pas une prévision de résultat.</small>
+            <Link className="button primary" href="/diagnostic">Faire le calcul avec mon volume</Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="fondateur" className="cvc-section cvc-founder">
+        <div className="cvc-founder-grid">
+          <div>
+            <span className="cvc-kicker">QUI EST DERRIÈRE SESIRA</span>
+            <h2>Paul Nkengue</h2>
+            <p className="cvc-founder-role">Fondateur de SESIRA<br /><b>Mathématicien · Expert en vente B2B</b></p>
+          </div>
+          <div className="cvc-founder-copy">
+            <p>Je travaille depuis plusieurs années au contact direct d’entreprises et d’équipes commerciales. J’ai vu le même problème sous différentes formes : une demande arrive, un devis part, un client répond, puis la prochaine action dépend encore trop souvent de la mémoire de quelqu’un.</p>
+            <p>La vente B2B m’a montré où le suivi se casse. Les mathématiques influencent la façon dont je veux construire SESIRA : mesurer ce qui se passe réellement, rendre les hypothèses visibles et ne jamais confondre une estimation avec un résultat.</p>
+            <p>Je ne prétends pas connaître votre métier technique mieux que vous. En revanche, un devis important resté plusieurs semaines sans réponse et une relance mal gérée, je connais très bien ce risque. SESIRA est construit pour que ce type de dossier ne disparaisse plus du radar.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="cvc-section cvc-dark cvc-start">
+        <div>
+          <span className="cvc-kicker">POUR QUI</span>
+          <h2>Pour les PME CVC qui ont déjà assez de devis pour que le suivi devienne un système.</h2>
+          <p>SESIRA vise les entreprises qui envoient régulièrement des devis, gèrent plusieurs dossiers en parallèle et veulent savoir ce qui mérite une action sans ajouter un logiciel de plus à surveiller.</p>
+        </div>
+        <div className="cvc-start-card">
+          <h3>Voyez d’abord si le problème est assez gros chez vous.</h3>
+          <Link className="button primary" href="/diagnostic">Faire le calcul</Link>
+          <a className="button ghost" href="mailto:paul@sesira.fr?subject=SESIRA%20pour%20mon%20entreprise%20CVC">Parler à Paul</a>
+          <small>Sans engagement · sans carte bancaire</small>
+        </div>
+      </section>
+
+      <footer className="cvc-footer"><SesiraLogo /><span>© 2026 SESIRA</span><Link href="/diagnostic">Calcul</Link><Link href="/login">Connexion</Link></footer>
     </main>
   );
 }
