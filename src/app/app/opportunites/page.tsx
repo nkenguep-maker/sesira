@@ -2,18 +2,21 @@ import Link from "next/link";
 
 import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
-import { getCustomerList, getOpportunitiesFeed } from "@/lib/data";
+import { getCustomerList, getOpportunitiesFeed, getReactivationCandidates } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
+
+const REACTIVATION_WINDOW_DAYS = 60;
 
 export default async function OpportunitiesPage() {
   const viewer = await getViewerContext();
   if (!viewer) return null;
 
   const organizationId = viewer.organization.id;
-  const [opportunities, customers] = await Promise.all([
+  const [opportunities, customers, reactivationCandidates] = await Promise.all([
     getOpportunitiesFeed(organizationId, { limit: 100, includeTerminal: true }),
     getCustomerList(organizationId, { limit: 500 }),
+    getReactivationCandidates(organizationId, { dormantSinceDays: REACTIVATION_WINDOW_DAYS }),
   ]);
   const customerById = new Map(customers.map((customer) => [customer.id, customer.displayName] as const));
   const open = opportunities.filter((opportunity) => !["WON", "LOST", "CANCELLED"].includes(opportunity.commercialState));
@@ -33,6 +36,32 @@ export default async function OpportunitiesPage() {
         <div><strong>{open.length}</strong><span>Ouvertes</span></div>
         <div><strong>{won.length}</strong><span>Gagnées</span></div>
         <div><strong>{formatAmount(pipelineValue, open[0]?.currency ?? "EUR")}</strong><span>Valeur ouverte connue</span></div>
+      </section>
+
+      <section className="premium-results-section">
+        <div className="premium-section-heading">
+          <div><span className="eyebrow">RÉACTIVATION · VUE DE TRAVAIL</span><h2>Dossiers sans activité récente.</h2></div>
+          <StatusPill tone={reactivationCandidates.length ? "warning" : "neutral"}>Observation uniquement</StatusPill>
+        </div>
+        <p className="premium-muted-copy">Cette vue utilise une fenêtre de travail de {REACTIVATION_WINDOW_DAYS} jours. Ce seuil n’est pas un benchmark commercial calibré. Les dossiers avec opt out ou plainte sont exclus et aucune relance ne part depuis cette vue.</p>
+        {reactivationCandidates.length ? (
+          <div className="premium-connection-grid">
+            {reactivationCandidates.slice(0, 6).map((candidate) => (
+              <article key={candidate.opportunityId} className="premium-connection-card">
+                <header>
+                  <div><span className="eyebrow">CANDIDAT À RELIRE</span><h2>{customerById.get(candidate.customerId) ?? "Client non disponible"}</h2></div>
+                  <StatusPill>{candidate.dormantDays} jours</StatusPill>
+                </header>
+                <div className="premium-data-list compact">
+                  <div><span>Dernière activité observée</span><strong>{formatDate(candidate.lastActivityAt)}</strong></div>
+                  <div><span>Valeur estimée</span><strong>{formatAmount(candidate.estimatedValue, candidate.currency)}</strong></div>
+                  <div><span>État</span><strong>{stateLabel(candidate.commercialState)}</strong></div>
+                </div>
+                <Link href={`/app/opportunites/${candidate.opportunityId}`} className="button ghost small full">Relire le dossier</Link>
+              </article>
+            ))}
+          </div>
+        ) : <p className="premium-muted-copy">Aucun dossier ne correspond actuellement à cette fenêtre de travail.</p>}
       </section>
 
       {opportunities.length ? (
