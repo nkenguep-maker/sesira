@@ -25,7 +25,7 @@ export type C21SyntheticCase = {
   ordinal: number;
   variantCount: number;
   optionCount: number;
-  concurrentActionIdentity: string;
+  concurrentActionSourceId: string;
   snapshot: OpportunityCommercialSnapshot;
 };
 
@@ -117,7 +117,7 @@ export function generateC21SyntheticCorpus(options: { tenants?: number; opportun
         ordinal,
         variantCount,
         optionCount,
-        concurrentActionIdentity: `commercial:${tenantId}:${opportunityId}:review`,
+        concurrentActionSourceId: deterministicUuid(tenantIndex, ordinal),
         snapshot,
       });
     }
@@ -175,6 +175,11 @@ export function summarizeC21Coverage(corpus: readonly C21SyntheticCase[]): C21Co
     withOptions,
     calibration: C21_REAL_WORLD_CALIBRATION,
   };
+}
+
+function deterministicUuid(tenantIndex: number, ordinal: number): string {
+  const suffix = (tenantIndex * 10_000 + ordinal + 1).toString(16).padStart(12, "0");
+  return `c2100000-0000-4000-8000-${suffix}`;
 }
 
 function isoDaysAgo(now: Date, days: number): string {
