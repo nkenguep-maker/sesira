@@ -451,8 +451,13 @@ export type Database = {
           description: string | null
           entity_id: string | null
           entity_type: string | null
+          fingerprint: string | null
+          first_seen_at: string | null
           id: string
+          last_seen_at: string | null
+          metadata: Json
           organization_id: string
+          recurrence_count: number
           resolved_at: string | null
           severity: string
           status: string
@@ -465,8 +470,13 @@ export type Database = {
           description?: string | null
           entity_id?: string | null
           entity_type?: string | null
+          fingerprint?: string | null
+          first_seen_at?: string | null
           id?: string
+          last_seen_at?: string | null
+          metadata?: Json
           organization_id: string
+          recurrence_count?: number
           resolved_at?: string | null
           severity: string
           status?: string
@@ -479,8 +489,13 @@ export type Database = {
           description?: string | null
           entity_id?: string | null
           entity_type?: string | null
+          fingerprint?: string | null
+          first_seen_at?: string | null
           id?: string
+          last_seen_at?: string | null
+          metadata?: Json
           organization_id?: string
+          recurrence_count?: number
           resolved_at?: string | null
           severity?: string
           status?: string
