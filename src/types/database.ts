@@ -1764,6 +1764,34 @@ export type Database = {
         }
         Returns: boolean
       }
+      resolve_value_policy: {
+        Args: {
+          target_organization_id: string
+          target_applies_to: string
+          target_amount: number
+          target_currency: string
+        }
+        Returns: {
+          policy_id: string
+          required_workflow_mode: string
+          reason: string
+        }[]
+      }
+      sold_not_scheduled_opportunities: {
+        Args: {
+          target_organization_id: string
+          target_since: string
+          target_marker_types: string[] | null
+        }
+        Returns: {
+          opportunity_id: string
+          customer_id: string
+          estimated_value: number | null
+          currency: string
+          closed_at: string
+          age_hours: number
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string

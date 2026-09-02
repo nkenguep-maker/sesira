@@ -54,3 +54,6 @@ export {
 
 export type { OpportunityFeedRow, OpportunityDetail } from "./opportunities";
 export { getOpportunitiesFeed, getOpportunityDetail } from "./opportunities";
+
+export type { SoldNotScheduledRow } from "./sold-not-scheduled";
+export { getSoldNotScheduledOpportunities } from "./sold-not-scheduled";
