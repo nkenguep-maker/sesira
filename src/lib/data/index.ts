@@ -27,5 +27,7 @@ export type { OpportunityOperationalState } from "./value-policies";
 export { getSoldNotScheduledPolicy, getOpportunityOperationalState } from "./value-policies";
 export type { OpportunityCommercialSnapshot } from "@/lib/commercial/signals";
 export { getOpportunityCommercialSnapshot } from "./commercial-signals";
+export type { SpeedToLeadPolicy, SpeedToLeadSummary } from "@/lib/speed-to-lead/contracts";
+export { getSpeedToLeadPolicy, getSpeedToLeadSummary } from "./speed-to-lead";
 export type { CustomerListRow, QuoteListRow, OrganizationMemberRow, OrganizationSettingsRow } from "./core-ui";
 export { getCustomerList, getQuoteList, getOrganizationMembers, getOrganizationSettings } from "./core-ui";
