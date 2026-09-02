@@ -1,18 +1,10 @@
 /**
  * SESIRA V1 data layer — the single seam every server component /
- * server action MUST call to read from Supabase. See
- * `~/.claude/rules/supabase-security.md` §4.
+ * server action MUST call to read from Supabase.
  *
- * Never import `@/lib/supabase/*` directly from a page or component;
- * always call one of these getters. Adding a new getter here is
- * cheap; adding a raw Supabase query in a page is a review-blocker.
- *
- * Every getter:
- *   * takes `organizationId` explicitly (never trusts URL/FormData),
- *   * uses `safeClient()` (returns the empty shape on env failure),
- *   * relies on RLS as the authoritative tenant boundary,
- *   * yields the empty shape (`[]`, `null`, or a zeroed object)
- *     rather than throwing when data is unavailable.
+ * Every getter takes `organizationId` explicitly, relies on RLS as the
+ * authoritative tenant boundary, and returns a safe empty shape when data is
+ * unavailable so the UI never invents business state.
  */
 export { safeClient } from "./safe-client";
 
@@ -54,3 +46,16 @@ export {
 
 export type { OpportunityFeedRow, OpportunityDetail } from "./opportunities";
 export { getOpportunitiesFeed, getOpportunityDetail } from "./opportunities";
+
+export type {
+  CustomerListRow,
+  QuoteListRow,
+  OrganizationMemberRow,
+  OrganizationSettingsRow,
+} from "./core-ui";
+export {
+  getCustomerList,
+  getQuoteList,
+  getOrganizationMembers,
+  getOrganizationSettings,
+} from "./core-ui";
