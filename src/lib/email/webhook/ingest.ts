@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { classifyMessageReply } from "@/lib/ai/classify-reply";
+import type { ReplyClassifierProvider } from "@/lib/ai/provider";
 import { createWorkflowAttention } from "@/lib/attention/create";
 import type { InboundReplyEnvelope } from "@/lib/email/webhook/envelope";
 import {
@@ -49,6 +51,20 @@ export type IngestInboundReplyResult =
       created: boolean;
       quoteTransitioned: boolean;
       attentionId: string;
+      classification: {
+        status: "CLASSIFIED";
+        intent: string;
+        confidence: number;
+        denormalized: boolean;
+        sensitive: boolean;
+      } | {
+        status: "SKIPPED";
+        reason: string;
+      } | {
+        status: "FAILED";
+        errorClass: "TRANSIENT" | "PERMANENT";
+        errorMessage: string;
+      };
     }
   | { status: "REPLAY_MESSAGE"; organizationId: string; quoteId: string; messageId: string }
   | { status: "UNMATCHED"; providerEventId: string; inReplyTo: string | null }
@@ -63,6 +79,14 @@ interface OutboundMatch {
 
 export interface IngestInboundReplyDeps {
   client?: SupabaseClient<Database>;
+  /**
+   * Optional reply classifier. When present AND the message is
+   * freshly created (not a replay), the ingest awaits classification
+   * so the response body carries the intent. Absent classifier =>
+   * classification.status = "SKIPPED". Classifier errors are
+   * captured (never bubble to caller) so a webhook always ACKs.
+   */
+  classifier?: ReplyClassifierProvider | null;
 }
 
 export async function ingestInboundReply(
@@ -180,6 +204,16 @@ export async function ingestInboundReply(
     client: supabase,
   });
 
+  // 6. Reply classification (fire-and-await; never throws to caller).
+  const classification = await runClassifierSafely({
+    classifier: deps.classifier ?? null,
+    supabase,
+    organizationId,
+    messageId: messageRow.id,
+    subject: envelope.subject,
+    body: envelope.text,
+  });
+
   return {
     status: "ACCEPTED",
     organizationId,
@@ -188,7 +222,63 @@ export async function ingestInboundReply(
     created: messageRow.created,
     quoteTransitioned,
     attentionId: attention.id,
+    classification,
   };
+}
+
+async function runClassifierSafely(args: {
+  classifier: ReplyClassifierProvider | null;
+  supabase: SupabaseClient<Database>;
+  organizationId: string;
+  messageId: string;
+  subject: string;
+  body: string;
+}): Promise<
+  | { status: "CLASSIFIED"; intent: string; confidence: number; denormalized: boolean; sensitive: boolean }
+  | { status: "SKIPPED"; reason: string }
+  | { status: "FAILED"; errorClass: "TRANSIENT" | "PERMANENT"; errorMessage: string }
+> {
+  if (!args.classifier) {
+    return { status: "SKIPPED", reason: "no classifier configured" };
+  }
+  try {
+    const result = await classifyMessageReply(
+      {
+        organizationId: args.organizationId,
+        messageId: args.messageId,
+        subject: args.subject,
+        body: args.body,
+        provider: args.classifier,
+      },
+      { client: args.supabase },
+    );
+    if (result.status === "CLASSIFIED") {
+      return {
+        status: "CLASSIFIED",
+        intent: result.intent,
+        confidence: result.confidence,
+        denormalized: result.denormalized,
+        sensitive: result.sensitive,
+      };
+    }
+    if (result.status === "FAILED") {
+      return {
+        status: "FAILED",
+        errorClass: result.errorClass,
+        errorMessage: result.errorMessage,
+      };
+    }
+    if (result.status === "SKIPPED_ALREADY_CLASSIFIED") {
+      return { status: "SKIPPED", reason: "already classified" };
+    }
+    return { status: "SKIPPED", reason: `error: ${result.reason}` };
+  } catch (err) {
+    return {
+      status: "FAILED",
+      errorClass: "PERMANENT",
+      errorMessage: `classifier threw — ${(err as Error).message}`,
+    };
+  }
 }
 
 interface InsertOnceRow {

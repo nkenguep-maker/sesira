@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { createClaudeReplyClassifier } from "@/lib/ai/providers/claude";
 import { ingestInboundReply } from "@/lib/email/webhook/ingest";
 import { parseResendInbound } from "@/lib/email/webhook/parse-resend";
 import { verifyResendWebhook } from "@/lib/email/webhook/verify";
@@ -73,7 +74,14 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
 
-  const result = await ingestInboundReply(parsed.envelope);
+  const classifier = serverEnv.ANTHROPIC_API_KEY
+    ? createClaudeReplyClassifier({
+        apiKey: serverEnv.ANTHROPIC_API_KEY,
+        model: serverEnv.ANTHROPIC_MODEL,
+      })
+    : null;
+
+  const result = await ingestInboundReply(parsed.envelope, { classifier });
   switch (result.status) {
     case "ACCEPTED":
       return NextResponse.json({
@@ -83,6 +91,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         message_id: result.messageId,
         quote_transitioned: result.quoteTransitioned,
         attention_id: result.attentionId,
+        classification: result.classification,
       });
     case "REPLAY_MESSAGE":
       return NextResponse.json({

@@ -25,6 +25,7 @@ export type Database = {
           estimated_cost: number | null
           feature: string
           id: string
+          idempotency_key: string | null
           input_summary: Json
           input_tokens: number | null
           latency_ms: number | null
@@ -46,6 +47,7 @@ export type Database = {
           estimated_cost?: number | null
           feature: string
           id?: string
+          idempotency_key?: string | null
           input_summary?: Json
           input_tokens?: number | null
           latency_ms?: number | null
@@ -67,6 +69,7 @@ export type Database = {
           estimated_cost?: number | null
           feature?: string
           id?: string
+          idempotency_key?: string | null
           input_summary?: Json
           input_tokens?: number | null
           latency_ms?: number | null
@@ -542,6 +545,7 @@ export type Database = {
         Row: {
           body_text: string | null
           channel: string
+          classified_at: string | null
           confidence: number | null
           created_at: string
           customer_id: string | null
@@ -567,6 +571,7 @@ export type Database = {
         Insert: {
           body_text?: string | null
           channel?: string
+          classified_at?: string | null
           confidence?: number | null
           created_at?: string
           customer_id?: string | null
@@ -592,6 +597,7 @@ export type Database = {
         Update: {
           body_text?: string | null
           channel?: string
+          classified_at?: string | null
           confidence?: number | null
           created_at?: string
           customer_id?: string | null
@@ -1254,6 +1260,41 @@ export type Database = {
         Args: {
           target_organization_id: string
           target_quote_id: string
+        }
+        Returns: boolean
+      }
+      insert_ai_run_once: {
+        Args: {
+          target_organization_id: string
+          target_idempotency_key: string
+          target_feature: string
+          target_entity_type: string | null
+          target_entity_id: string | null
+          target_provider: string
+          target_model: string
+          target_prompt_version: string
+          target_input_summary: Json | null
+          target_output: Json | null
+          target_confidence: number | null
+          target_action: string | null
+          target_status: string
+          target_latency_ms: number | null
+          target_input_tokens: number | null
+          target_output_tokens: number | null
+          target_estimated_cost: number | null
+          target_error: string | null
+        }
+        Returns: {
+          id: string
+          created: boolean
+        }[]
+      }
+      record_message_classification: {
+        Args: {
+          target_organization_id: string
+          target_message_id: string
+          target_intent: string
+          target_confidence: number
         }
         Returns: boolean
       }

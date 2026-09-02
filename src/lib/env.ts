@@ -12,6 +12,8 @@ const serverEnvSchema = publicEnvSchema.extend({
   EMAIL_REPLY_TO: z.string().email().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20).optional(),
   RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_MODEL: z.string().min(1).optional(),
 });
 
 export const publicEnv = publicEnvSchema.parse({
@@ -27,4 +29,6 @@ export const serverEnv = serverEnvSchema.parse({
   EMAIL_REPLY_TO: process.env.EMAIL_REPLY_TO,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET,
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+  ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL,
 });

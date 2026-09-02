@@ -2382,8 +2382,186 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C11 — Reply classification: insert_ai_run_once + record_message_classification
+-- =========================================================================
+-- insert_ai_run_once is callable by authenticated (tenant-scoped) and
+-- service_role. record_message_classification is service_role only.
+
+do $$
+declare
+  first_row  record;
+  replay_row record;
+  raw_count  integer;
+  message_id uuid;
+  captured   text;
+begin
+  -- Seed a fresh inbound message to classify.
+  insert into public.messages (
+    organization_id, direction, channel, status,
+    quote_id, provider_message_id, subject, body_text,
+    idempotency_key, received_at
+  )
+  values (
+    '91000000-0000-4000-8000-000000000001', 'INBOUND', 'EMAIL', 'RECEIVED',
+    '91500000-0000-4000-8000-00000000c010',
+    'inbound_msg_alpha_c11', 'Re: Devis', 'OK pour moi',
+    'inbound:resend:evt_c11_seed', now()
+  )
+  returning id into message_id;
+
+  -- (i) insert_ai_run_once inserts a SUCCEEDED run.
+  select id, created into first_row
+  from public.insert_ai_run_once(
+    '91000000-0000-4000-8000-000000000001',
+    'ai:reply_classification:' || message_id::text || ':v1',
+    'reply_classification', 'message', message_id,
+    'claude', 'claude-haiku-4-5-20251001', '1',
+    jsonb_build_object('message_id', message_id::text),
+    jsonb_build_object('intent', 'ACCEPTED_QUOTE', 'confidence', 0.9, 'summary', 'OK'),
+    0.9, null, 'SUCCEEDED', 500, 120, 40, null, null
+  );
+  if not first_row.created then
+    raise exception 'first insert_ai_run_once must set created=true';
+  end if;
+
+  -- Replay observes the original id.
+  select id, created into replay_row
+  from public.insert_ai_run_once(
+    '91000000-0000-4000-8000-000000000001',
+    'ai:reply_classification:' || message_id::text || ':v1',
+    'reply_classification', 'message', message_id,
+    'claude', 'claude-haiku-4-5-20251001', '1',
+    '{}'::jsonb, '{}'::jsonb, 0.5, null, 'SUCCEEDED', 100, null, null, null, null
+  );
+  if replay_row.created then
+    raise exception 'replay insert_ai_run_once must set created=false';
+  end if;
+  if replay_row.id is distinct from first_row.id then
+    raise exception 'replay must observe the original ai_run id';
+  end if;
+
+  select count(*) into raw_count from public.ai_runs
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and idempotency_key = 'ai:reply_classification:' || message_id::text || ':v1';
+  if raw_count <> 1 then
+    raise exception 'duplicate ai_runs row after replay (got %)', raw_count;
+  end if;
+
+  -- (ii) Empty key rejected 22023.
+  begin
+    perform public.insert_ai_run_once(
+      '91000000-0000-4000-8000-000000000001', '',
+      'reply_classification', null, null,
+      'claude', 'x', '1', '{}'::jsonb, null, null, null, 'SUCCEEDED',
+      100, null, null, null, null
+    );
+    raise exception 'empty ai_run key was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting empty ai_run key', captured;
+    end if;
+  end;
+
+  -- (iii) Invalid status rejected 22023.
+  begin
+    perform public.insert_ai_run_once(
+      '91000000-0000-4000-8000-000000000001',
+      'ai:reply_classification:' || message_id::text || ':bad',
+      'reply_classification', null, null,
+      'claude', 'x', '1', '{}'::jsonb, null, null, null, 'WEIRD',
+      100, null, null, null, null
+    );
+    raise exception 'invalid ai_run status was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % rejecting invalid ai_run status', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Authenticated caller must NOT be able to call record_message_classification (42501).
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  jsonb_build_object(
+    'sub', '91100000-0000-4000-8000-000000000001',
+    'role', 'authenticated'
+  )::text,
+  true);
+
+do $$
+declare captured text;
+begin
+  begin
+    perform public.record_message_classification(
+      '91000000-0000-4000-8000-000000000001',
+      '00000000-0000-0000-0000-000000000000',
+      'OTHER', 0.5
+    );
+    raise exception 'authenticated record_message_classification was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % on authenticated record_message_classification', captured;
+    end if;
+  end;
+end;
+$$;
+
+reset role;
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+-- record_message_classification happy path + idempotence.
+do $$
+declare
+  message_id uuid;
+  transitioned boolean;
+  captured    text;
+begin
+  select id into message_id from public.messages
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and idempotency_key = 'inbound:resend:evt_c11_seed'
+  limit 1;
+
+  transitioned := public.record_message_classification(
+    '91000000-0000-4000-8000-000000000001', message_id, 'ACCEPTED_QUOTE', 0.9
+  );
+  if not transitioned then
+    raise exception 'first record_message_classification should return true';
+  end if;
+  if public.record_message_classification(
+    '91000000-0000-4000-8000-000000000001', message_id, 'ACCEPTED_QUOTE', 0.9
+  ) then
+    raise exception 'replay record_message_classification must return false';
+  end if;
+
+  select intent into captured from public.messages where id = message_id;
+  if captured is distinct from 'ACCEPTED_QUOTE' then
+    raise exception 'intent should be ACCEPTED_QUOTE (got %)', captured;
+  end if;
+
+  -- Invalid confidence range rejected 22023.
+  begin
+    perform public.record_message_classification(
+      '91000000-0000-4000-8000-000000000001', message_id, 'OTHER', 1.5
+    );
+    raise exception 'confidence>1 was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'unexpected sqlstate % on bad confidence', captured;
+    end if;
+  end;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents and C10 inbound reply assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply and C11 classification assertions passed' as result;
 
 rollback;

@@ -226,6 +226,28 @@ export function inboundMessageKey(
 }
 
 /**
+ * AI invocation identity. Used by the C11 reply classifier (and any
+ * future ai_runs writer) to dedup a single invocation per feature
+ * per entity per prompt version.
+ *
+ * Format: `ai:{feature}:{entity_id}:v{prompt_version}`
+ *
+ * `prompt_version` is included so a version bump legitimately
+ * re-classifies the same message. Callers pass the SAME string that
+ * lands in `ai_runs.prompt_version` so a replay hits the same key.
+ */
+export function aiRunKey(
+  feature: string,
+  entityId: string,
+  promptVersion: string,
+): string {
+  assertNonEmpty("feature", feature, 64);
+  assertUuid("entityId", entityId);
+  assertNonEmpty("promptVersion", promptVersion, 32);
+  return `ai:${feature}:${entityId}:v${promptVersion}`;
+}
+
+/**
  * Types of identifiers a key builder MAY accept. Used by the store
  * layer to keep the surface area explicit — a call site that mixes
  * a mutable value into a key trips a type error.
