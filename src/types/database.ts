@@ -1229,6 +1229,7 @@ export type Database = {
           created_at: string
           currency: string
           customer_id: string
+          draft_gaps: Json
           expires_at: string | null
           external_id: string | null
           external_provider: string | null
@@ -1285,6 +1286,7 @@ export type Database = {
           created_at?: string
           currency?: string
           customer_id?: string
+          draft_gaps?: Json
           expires_at?: string | null
           external_id?: string | null
           external_provider?: string | null
@@ -1918,6 +1920,30 @@ export type Database = {
           p90_response_seconds: number | null
           fastest_response_seconds: number | null
           slowest_response_seconds: number | null
+        }[]
+      }
+      record_quote_draft_gaps: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+          target_draft_gaps: Json
+        }
+        Returns: boolean
+      }
+      dormant_opportunities: {
+        Args: {
+          target_organization_id: string
+          target_dormant_since_days: number
+        }
+        Returns: {
+          opportunity_id: string
+          customer_id: string
+          commercial_state: string
+          estimated_value: number | null
+          currency: string
+          opened_at: string
+          last_activity_at: string
+          dormant_days: number
         }[]
       }
       record_audit_log: {

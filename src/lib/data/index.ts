@@ -60,3 +60,6 @@ export { getSoldNotScheduledOpportunities } from "./sold-not-scheduled";
 
 export type { SpeedToLeadStats } from "./speed-to-lead";
 export { getSpeedToLeadStats } from "./speed-to-lead";
+
+export type { ReactivationCandidateRow } from "./reactivation";
+export { getReactivationCandidates } from "./reactivation";
