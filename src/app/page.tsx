@@ -55,25 +55,25 @@ export default function HomePage() {
         <p className="method-copy">SESIRA n’invente pas vos données. L’application affiche ce qui est réellement connecté et signale clairement ce qui ne l’est pas encore.</p>
       </section>
 
-      <section id="fondateur" className="landing-section">
+      <section id="fondateur" className="landing-section" style={{ background: "var(--white)" }}>
         <div className="section-intro">
           <span className="eyebrow">03 · MOT DU FONDATEUR</span>
-          <div>
+          <div style={{ maxWidth: 820 }}>
             <h2>Le problème n’est pas le manque d’outils.<br />C’est ce qui se perd entre eux.</h2>
-            <p className="method-copy">
+            <p style={{ margin: "34px 0 0", maxWidth: 760, color: "var(--ink-soft)", fontSize: 18, lineHeight: 1.82 }}>
               Je travaille depuis plusieurs années au contact direct de PME et de leurs équipes commerciales. J’ai mené des centaines de cycles de vente, suivi des opportunités pendant des semaines, repris des dossiers après plusieurs interlocuteurs et vu ce qui se passe quand une entreprise grandit plus vite que son organisation. Très souvent, les personnes sont bonnes et les outils sont déjà là. Pourtant un client répond dans une boite mail, un devis vit ailleurs, une relance dépend d’un rappel personnel et une décision importante reste dans la tête de quelqu’un.
             </p>
-            <p className="method-copy">
+            <p style={{ margin: "24px 0 0", maxWidth: 760, color: "var(--ink-soft)", fontSize: 18, lineHeight: 1.82 }}>
               Au début, on compense avec de l’énergie et de la mémoire. Puis le volume augmente. Les petites pertes de contexte deviennent des devis oubliés, des réponses trop tardives, des tâches répétées et des responsables qui passent leur journée à demander où en sont les choses. C’est exactement là que SESIRA commence.
             </p>
-            <p className="method-copy">
+            <p style={{ margin: "24px 0 0", maxWidth: 760, color: "var(--ink-soft)", fontSize: 18, lineHeight: 1.82 }}>
               Je n’ai pas voulu créer un logiciel de plus à ouvrir chaque matin. Je veux construire un système qui comprend ce qui est en cours dans l’entreprise, relie les informations utiles, repère ce qui risque d’être oublié et remet la bonne action devant la bonne personne au bon moment. Ensuite seulement, quand le contexte est suffisamment clair, SESIRA peut automatiser une partie du travail. Le but reste le même : moins de choses qui se perdent, moins de décisions prises à l’aveugle et une entreprise plus simple à piloter.
             </p>
-            <p className="method-copy">
-              <strong>Paul Nkengue</strong><br />
-              Fondateur de SESIRA<br />
-              <span className="eyebrow">Mathématicien · Expert en vente B2B</span>
-            </p>
+            <div style={{ marginTop: 42, paddingTop: 24, borderTop: "1px solid var(--line)", display: "grid", gap: 5 }}>
+              <strong style={{ fontSize: 21, letterSpacing: "-.02em" }}>Paul Nkengue</strong>
+              <span style={{ fontSize: 14, color: "var(--ink-soft)" }}>Fondateur de SESIRA</span>
+              <span className="eyebrow" style={{ marginTop: 5, color: "var(--signal-dark)" }}>Mathématicien · Expert en vente B2B</span>
+            </div>
           </div>
         </div>
       </section>
