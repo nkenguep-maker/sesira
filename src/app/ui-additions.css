@@ -160,6 +160,7 @@
 }
 
 .diagnostic-choice {
+  width: 100%;
   min-height: 178px;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -169,6 +170,9 @@
   align-content: start;
   transition: .18s ease;
   background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+  appearance: none;
 }
 
 .diagnostic-choice:hover {
@@ -317,7 +321,7 @@
   align-items: baseline;
 }
 .diagnostic-summary span { color: #7d8385; font-size: 11px; }
-.diagnostic-summary strong { font-size: 22px; letter-spacing: -.03em; }
+.diagnostic-summary strong { font-size: 22px; letter-spacing: -.03em; text-align: right; }
 
 .diagnostic-priority-grid {
   display: grid;
