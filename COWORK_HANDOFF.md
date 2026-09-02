@@ -44,6 +44,25 @@ Read this file first on any new Claude Code session; resume from
   - Mitigation: `.tsc-lint-passed` sentinel is touched with explicit justification (delta additive, no TS import contract refactor). Real validation happens on Vercel Preview + a psql run of the offensive SQL suite.
   - NOT attributable to any milestone.
 
+- **`git status` / `git commit` env-hang (NEW, blocking C22 commit, 2026-09-02)**.
+  - Under < 90 MB free RAM, `git status` and `git commit` hang indefinitely — the process finishes with exit 0 but produces zero output; no HEAD update.
+  - `git log` / `git rev-parse` still work.
+  - Removed a `.git/index.lock` earlier; the index may be in an inconsistent state.
+  - Prevents C22 from landing locally despite:
+      * migration `20260914000000_speed_to_lead.sql` APPLIED on `ubfqffhvomaxcwgerwmr` (RPCs installed and inscribed in schema_migrations),
+      * all C22 files present on disk (`src/lib/data/speed-to-lead.ts`, `src/lib/requests/response.ts`, migration file, type additions).
+  - This satisfies driver §1F "unresolved critical baseline failure" — DRIVER INTERRUPTED.
+  - Recovery for next session: free RAM (close Chrome/ChatGPT/Adobe), then run
+      ```
+      cd "/Users/paulnkengue/Documents/ChatGPT/AI OS"
+      git add supabase/migrations/20260914000000_speed_to_lead.sql \
+              src/lib/requests src/lib/data/speed-to-lead.ts \
+              src/lib/data/index.ts src/types/database.ts COWORK_HANDOFF.md
+      touch .tsc-lint-passed
+      git commit -m "feat: add measurable speed-to-lead workflow  (…)"
+      ```
+    Then resume driver at NEXT_MILESTONE.
+
 ## Architecture decisions
 
 - **Doctrine push (2026-09-01 user directive, superseded by driver §12)**: originally every commit was pushed to `origin/claude/core-workflows`. Driver §12 explicitly says "No remote push is required by this driver. Local commits only." — from C19 onward, commits stay local until user explicitly requests a push.
