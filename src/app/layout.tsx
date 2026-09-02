@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./ui-additions.css";
+import "./premium-surfaces.css";
 
 export const metadata: Metadata = {
   title: "SESIRA — L'OS opérationnel de votre entreprise",
