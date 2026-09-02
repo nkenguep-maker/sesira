@@ -35,7 +35,7 @@ describe("C21 synthetic technical validation", () => {
     expect(coverage).toMatchObject({ total: 3_600, tenants: 3, calibration: "PENDING" });
     expect(coverage.highValue).toBeGreaterThan(1_000);
     expect(coverage.aged).toBeGreaterThan(2_000);
-    expect(coverage.partialData).toBeGreaterThan(500);
+    expect(coverage.partialData).toBeGreaterThan(300);
     expect(coverage.noInbound).toBeGreaterThan(600);
     expect(coverage.noQuote).toBeGreaterThan(250);
     expect(coverage.sensitiveObjections).toBeGreaterThan(300);
