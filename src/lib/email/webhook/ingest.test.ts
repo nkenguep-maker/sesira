@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { outboundMessageIntentKey } from "@/lib/idempotency/keys";
+
 import type { InboundReplyEnvelope } from "./envelope";
 import { ingestInboundReply } from "./ingest";
 
@@ -7,7 +9,7 @@ const ORG = "91000000-0000-4000-8000-000000000001";
 const QUOTE = "91500000-0000-4000-8000-000000000001";
 const CUSTOMER = "91300000-0000-4000-8000-000000000001";
 const OUTBOUND_MSG_ID = "outbound_msg_id_abc";
-const OUTBOUND_IDEMPOTENCY = `outbound:quote_followup:${QUOTE}:step:1`;
+const OUTBOUND_IDEMPOTENCY = outboundMessageIntentKey("quote_followup", QUOTE, 1);
 
 function makeEnvelope(overrides: Partial<InboundReplyEnvelope> = {}): InboundReplyEnvelope {
   return {
@@ -172,7 +174,7 @@ describe("ingestInboundReply", () => {
   it("returns UNMATCHED when outbound key is not a quote_followup", async () => {
     state.outboundLookup = {
       ...state.outboundLookup!,
-      idempotency_key: `outbound:other_kind:${QUOTE}:step:1`,
+      idempotency_key: outboundMessageIntentKey("other_kind", QUOTE, 1),
     };
     const result = await ingestInboundReply(makeEnvelope(), { client: client as never });
     expect(result.status).toBe("UNMATCHED");
@@ -187,7 +189,6 @@ describe("ingestInboundReply", () => {
     if (second.status !== "REPLAY_MESSAGE") return;
     expect(second.messageId).toBe(first.status === "ACCEPTED" ? first.messageId : "");
     expect(state.recordInboundCalls).toHaveLength(2);
-    // No new event / transition / attention on replay.
     expect(state.eventCalls).toHaveLength(1);
     expect(state.transitionCalls).toHaveLength(1);
     expect(state.attentionCalls).toHaveLength(1);
