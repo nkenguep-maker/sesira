@@ -16,6 +16,7 @@ function makeFakeClient() {
     from(table: string) {
       const chain: {
         _predicates: string[];
+        _head: boolean;
         select: (...args: unknown[]) => typeof chain;
         eq: (...args: unknown[]) => typeof chain;
         in: (...args: unknown[]) => typeof chain;
@@ -28,7 +29,13 @@ function makeFakeClient() {
         then: (resolve: (v: { data: unknown; error: unknown; count?: number }) => void) => Promise<void>;
       } = {
         _predicates: [],
-        select() { return chain; },
+        _head: false,
+        select(_columns?: unknown, options?: unknown) {
+          if (options && typeof options === "object" && "head" in options) {
+            chain._head = (options as { head?: boolean }).head === true;
+          }
+          return chain;
+        },
         eq() { return chain; },
         in() { return chain; },
         is() { return chain; },
@@ -43,6 +50,14 @@ function makeFakeClient() {
           return Promise.resolve({ data: [], error: state.error[table] ?? null });
         },
         async then(resolve) {
+          if (chain._head) {
+            resolve({
+              data: null,
+              error: state.error[table] ?? null,
+              count: state.counts[table] ?? 0,
+            });
+            return;
+          }
           if (table === "events") {
             resolve({ data: state.events, error: state.error[table] ?? null, count: state.events.length });
             return;
@@ -161,8 +176,6 @@ describe("getComplaintAndOptOutCounts", () => {
   it("returns counts", async () => {
     state.counts = { quotes: 2 };
     const r = await getComplaintAndOptOutCounts(ORG);
-    // Both queries land on the `quotes` fake key → same count. This
-    //   is fine for the "both non-zero" assertion.
     expect(r.quotesPausedForComplaint).toBe(2);
     expect(r.quotesOptedOut).toBe(2);
   });
