@@ -973,6 +973,124 @@ export type Database = {
           },
         ]
       }
+      opportunities: {
+        Row: {
+          closed_at: string | null
+          closed_reason: string | null
+          commercial_state: string
+          created_at: string
+          currency: string
+          customer_id: string
+          estimated_value: number | null
+          expected_close_date: string | null
+          id: string
+          metadata: Json
+          opened_at: string
+          organization_id: string
+          owner_user_id: string | null
+          request_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_reason?: string | null
+          commercial_state?: string
+          created_at?: string
+          currency?: string
+          customer_id: string
+          estimated_value?: number | null
+          expected_close_date?: string | null
+          id?: string
+          metadata?: Json
+          opened_at?: string
+          organization_id: string
+          owner_user_id?: string | null
+          request_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_reason?: string | null
+          commercial_state?: string
+          created_at?: string
+          currency?: string
+          customer_id?: string
+          estimated_value?: number | null
+          expected_close_date?: string | null
+          id?: string
+          metadata?: Json
+          opened_at?: string
+          organization_id?: string
+          owner_user_id?: string | null
+          request_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_options: {
+        Row: {
+          amount: number | null
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json
+          name: string
+          option_key: string
+          ordinal: number
+          organization_id: string
+          quote_id: string
+          selected_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          name: string
+          option_key: string
+          ordinal?: number
+          organization_id: string
+          quote_id: string
+          selected_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          name?: string
+          option_key?: string
+          ordinal?: number
+          organization_id?: string
+          quote_id?: string
+          selected_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_options_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1056,17 +1174,22 @@ export type Database = {
           external_id: string | null
           external_provider: string | null
           id: string
+          is_current_revision: boolean
           metadata: Json
           next_action_at: string | null
+          opportunity_id: string | null
           opted_out_at: string | null
           organization_id: string
           owner_user_id: string | null
+          previous_quote_id: string | null
           reference: string | null
           request_id: string | null
+          revision: number
           sent_at: string | null
           status: string
           title: string
           updated_at: string
+          variant_key: string
         }
         Insert: {
           amount?: number | null
@@ -1079,17 +1202,22 @@ export type Database = {
           external_id?: string | null
           external_provider?: string | null
           id?: string
+          is_current_revision?: boolean
           metadata?: Json
           next_action_at?: string | null
+          opportunity_id?: string | null
           opted_out_at?: string | null
           organization_id: string
           owner_user_id?: string | null
+          previous_quote_id?: string | null
           reference?: string | null
           request_id?: string | null
+          revision?: number
           sent_at?: string | null
           status?: string
           title: string
           updated_at?: string
+          variant_key?: string
         }
         Update: {
           amount?: number | null
@@ -1102,17 +1230,22 @@ export type Database = {
           external_id?: string | null
           external_provider?: string | null
           id?: string
+          is_current_revision?: boolean
           metadata?: Json
           next_action_at?: string | null
+          opportunity_id?: string | null
           opted_out_at?: string | null
           organization_id?: string
           owner_user_id?: string | null
+          previous_quote_id?: string | null
           reference?: string | null
           request_id?: string | null
+          revision?: number
           sent_at?: string | null
           status?: string
           title?: string
           updated_at?: string
+          variant_key?: string
         }
         Relationships: [
           {
@@ -1575,6 +1708,61 @@ export type Database = {
           target_organization_id: string
         }
         Returns: Json
+      }
+      create_opportunity_with_quote: {
+        Args: {
+          target_organization_id: string
+          target_customer_id: string
+          target_request_id: string | null
+          target_owner_user_id: string | null
+          target_estimated_value: number | null
+          target_currency: string
+          target_quote_title: string
+          target_variant_key: string
+          target_metadata: Json
+        }
+        Returns: {
+          opportunity_id: string
+          quote_id: string
+        }[]
+      }
+      add_quote_variant_to_opportunity: {
+        Args: {
+          target_organization_id: string
+          target_opportunity_id: string
+          target_variant_key: string
+          target_quote_title: string
+          target_amount: number | null
+          target_currency: string
+        }
+        Returns: string
+      }
+      create_quote_revision: {
+        Args: {
+          target_organization_id: string
+          target_previous_quote_id: string
+          target_quote_title: string
+          target_amount: number | null
+          target_currency: string
+        }
+        Returns: string
+      }
+      select_quote_option: {
+        Args: {
+          target_organization_id: string
+          target_option_id: string
+          target_new_status: string
+        }
+        Returns: boolean
+      }
+      transition_opportunity_state: {
+        Args: {
+          target_organization_id: string
+          target_opportunity_id: string
+          target_new_state: string
+          target_closed_reason: string | null
+        }
+        Returns: boolean
       }
       record_audit_log: {
         Args: {

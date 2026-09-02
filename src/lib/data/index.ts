@@ -51,3 +51,6 @@ export {
   getApprovalRateWindow, getShadowProposalCount, getSendVsReplyRatio,
   getComplaintAndOptOutCounts, getIncidentTrend,
 } from "./evidence";
+
+export type { OpportunityFeedRow, OpportunityDetail } from "./opportunities";
+export { getOpportunitiesFeed, getOpportunityDetail } from "./opportunities";
