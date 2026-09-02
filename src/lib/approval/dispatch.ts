@@ -20,7 +20,7 @@ import type { Database } from "@/types/database";
  *      `proposed_action` against the shadow schema. A malformed or
  *      missing proposal cancels the run — we cannot invent a payload.
  *   2. Compute the outbound idempotency key
- *      (`outbound:quote_followup:{quote_id}:step:{n}`) so the
+ *      (`outbound:quote_followup:{quote_id}:{n}`) so the
  *      dispatcher can never send twice for the same step, and so a
  *      resumed dispatch after a network blip collapses onto the
  *      already-inserted `outbound_messages` row.
@@ -47,7 +47,7 @@ export interface DispatchApprovedFollowupInput {
   integrationId: string | null;
   fromEmail: string;
   replyTo?: string;
-  /** Escape hatch for tests: inject a preconstructed client. */
+  /** Escape hatch for tests and orchestrators: inject a preconstructed client. */
   client?: SupabaseClient<Database>;
 }
 
@@ -122,8 +122,6 @@ export async function dispatchApprovedFollowup(
   const proposalRaw = extractProposal(run.output_summary);
   const parsed = proposedQuoteFollowupActionSchema.safeParse(proposalRaw);
   if (!parsed.success) {
-    // Cancel — we cannot fabricate a proposal, and the human already
-    //   made a decision so re-staging is the wrong response.
     await releaseQuoteFollowupRun(
       input.runId, input.organizationId, input.dispatcherWorker, "CANCELLED",
       { errorMessage: `invalid proposal: ${parsed.error.message.slice(0, 400)}`, client: supabase },
@@ -155,6 +153,7 @@ export async function dispatchApprovedFollowup(
     headers: {
       "X-Sesira-Automation-Run-Id": input.runId,
     },
+    client: supabase,
   });
 
   if (sendResult.status === "SENT") {
