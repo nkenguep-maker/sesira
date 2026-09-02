@@ -1,31 +1,92 @@
 import Link from "next/link";
-import { MetricCard, PageHeader, StatusPill } from "@/components/sesira/ui";
 
-export default function DashboardPage() {
+import { MetricCard, PageHeader, StatusPill } from "@/components/sesira/ui";
+import { getViewerContext } from "@/lib/auth/viewer";
+import { AUTOMATION_LEVEL_LABELS } from "@/lib/automations/view-model";
+import { buildResultsPeriod } from "@/lib/results/period";
+import { createSupabaseResultsRepository } from "@/lib/results/supabase-results-repository";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  const viewer = await getViewerContext();
+  if (!viewer) return null;
+
+  const supabase = await createClient();
+  const organizationId = viewer.organization.id;
+  const [customersResult, quotesResult, integrationsResult, automationResult] = await Promise.all([
+    supabase.from("customers").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
+    supabase.from("quotes").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
+    supabase.from("integrations").select("id, type, status", { count: "exact" }).eq("organization_id", organizationId),
+    supabase.from("automation_configs").select("id, level, enabled").eq("organization_id", organizationId).eq("enabled", true).order("updated_at", { ascending: false }).limit(1),
+  ]);
+
+  let attentionOpen: number | null = null;
+  try {
+    const repository = createSupabaseResultsRepository(supabase);
+    const summary = await repository.getSummary({ organizationId, period: buildResultsPeriod("30d") });
+    attentionOpen = summary.observed.find((metric) => metric.key === "attention_open")?.value ?? null;
+  } catch {
+    attentionOpen = null;
+  }
+
+  const connectedEmail = (integrationsResult.data ?? []).some((item) => item.type === "EMAIL" && item.status === "CONNECTED");
+  const currentAutomation = automationResult.data?.[0];
+  const automationLevel = currentAutomation?.level && currentAutomation.level in AUTOMATION_LEVEL_LABELS
+    ? AUTOMATION_LEVEL_LABELS[currentAutomation.level as keyof typeof AUTOMATION_LEVEL_LABELS]
+    : "Non configuré";
+
   return (
     <>
-      <PageHeader eyebrow="AUJOURD'HUI" title="Vue d'ensemble" description="Une lecture simple de ce qui mérite votre attention." actions={<Link href="/app/onboarding" className="button primary small">Configurer SESIRA</Link>} />
-      <section className="metrics-grid">
-        <MetricCard label="Clients actifs" note="Source à connecter" />
-        <MetricCard label="Devis ouverts" note="Source à connecter" />
-        <MetricCard label="À relancer" note="Suivi à configurer" />
-        <MetricCard label="E-mails reliés" note="Messagerie à connecter" />
+      <PageHeader
+        eyebrow="AUJOURD'HUI"
+        title="Vue d'ensemble"
+        description={`Une lecture simple de ${viewer.organization.name} et de ce qui mérite votre attention.`}
+        actions={<Link href="/app/onboarding" className="button primary small">Configurer SESIRA</Link>}
+      />
+
+      <section className="metrics-grid premium-metrics">
+        <MetricCard label="Clients" value={formatCount(customersResult.error ? null : customersResult.count)} note="Dossiers enregistrés" />
+        <MetricCard label="Devis" value={formatCount(quotesResult.error ? null : quotesResult.count)} note="Dossiers enregistrés" />
+        <MetricCard label="À traiter" value={formatCount(attentionOpen)} note="Éléments ouverts" />
+        <MetricCard label="Email" value={connectedEmail ? "Connecté" : "—"} note={connectedEmail ? "Messagerie reliée" : "Connexion à configurer"} />
       </section>
-      <section className="dashboard-grid">
-        <article className="panel panel-large">
-          <div className="panel-head"><div><span className="eyebrow">PRIORITÉS</span><h2>Rien à arbitrer pour le moment.</h2></div><StatusPill>Non connecté</StatusPill></div>
-          <div className="priority-empty"><div className="priority-line" /><p>Connectez vos premières données pour que SESIRA puisse construire cette vue.</p></div>
-        </article>
-        <article className="panel">
-          <div className="panel-head"><div><span className="eyebrow">SYSTÈME</span><h2>État des connexions</h2></div></div>
-          <div className="connection-list">
-            <div><span>Entreprise</span><StatusPill tone="warning">À compléter</StatusPill></div>
-            <div><span>Équipe</span><StatusPill>Non connecté</StatusPill></div>
-            <div><span>Données</span><StatusPill>Non connecté</StatusPill></div>
-            <div><span>E-mail</span><StatusPill>Non connecté</StatusPill></div>
+
+      <section className="premium-dashboard-grid">
+        <article className="premium-focus-card">
+          <div className="premium-card-topline">
+            <span className="eyebrow">PRIORITÉ OPÉRATIONNELLE</span>
+            <StatusPill tone={attentionOpen && attentionOpen > 0 ? "warning" : "neutral"}>
+              {attentionOpen === null ? "Donnée indisponible" : attentionOpen > 0 ? `${attentionOpen} à traiter` : "Rien d'ouvert"}
+            </StatusPill>
           </div>
+          <div className="premium-focus-copy">
+            <strong>{attentionOpen === null ? "SESIRA attend une lecture exploitable." : attentionOpen > 0 ? "Des éléments demandent votre attention." : "Aucun arbitrage urgent n'est visible."}</strong>
+            <p>{attentionOpen === null ? "Une donnée indisponible reste indisponible. Elle n'est jamais remplacée par zéro." : attentionOpen > 0 ? "Ouvrez le suivi pour voir les dossiers concernés et leur contexte avant d'agir." : "SESIRA continuera à observer les dossiers et fera remonter ce qui nécessite réellement une action."}</p>
+          </div>
+          <div className="premium-focus-actions">
+            <Link href="/app/suivi" className="text-link">Voir le suivi <span>↘</span></Link>
+            <Link href="/app/resultats" className="text-link">Voir les résultats <span>↘</span></Link>
+          </div>
+        </article>
+
+        <article className="premium-system-card">
+          <span className="eyebrow">SYSTÈME</span>
+          <h2>État de votre espace</h2>
+          <div className="premium-data-list">
+            <div><span>Organisation</span><strong>{viewer.organization.status}</strong></div>
+            <div><span>Mode SESIRA</span><strong>{automationLevel}</strong></div>
+            <div><span>Email</span><strong>{connectedEmail ? "Connecté" : "À configurer"}</strong></div>
+            <div><span>Connexions connues</span><strong>{integrationsResult.error ? "Indisponible" : String(integrationsResult.data?.length ?? 0)}</strong></div>
+          </div>
+          <Link href="/app/integrations" className="button ghost small full">Gérer les connexions</Link>
         </article>
       </section>
     </>
   );
+}
+
+function formatCount(value: number | null | undefined) {
+  return value === null || value === undefined ? "—" : new Intl.NumberFormat("fr-FR").format(value);
 }
