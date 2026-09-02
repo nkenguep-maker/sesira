@@ -252,6 +252,10 @@ export type Database = {
       }
       automation_runs: {
         Row: {
+          approval_comment: string | null
+          approval_decided_at: string | null
+          approval_decided_by_user_id: string | null
+          approval_decision: string | null
           attempt_count: number
           automation_config_id: string | null
           completed_at: string | null
@@ -272,6 +276,10 @@ export type Database = {
           trigger_event_id: string | null
         }
         Insert: {
+          approval_comment?: string | null
+          approval_decided_at?: string | null
+          approval_decided_by_user_id?: string | null
+          approval_decision?: string | null
           attempt_count?: number
           automation_config_id?: string | null
           completed_at?: string | null
@@ -292,6 +300,10 @@ export type Database = {
           trigger_event_id?: string | null
         }
         Update: {
+          approval_comment?: string | null
+          approval_decided_at?: string | null
+          approval_decided_by_user_id?: string | null
+          approval_decision?: string | null
           attempt_count?: number
           automation_config_id?: string | null
           completed_at?: string | null
@@ -1295,6 +1307,26 @@ export type Database = {
           target_message_id: string
           target_intent: string
           target_confidence: number
+        }
+        Returns: boolean
+      }
+      approve_automation_run_pending_approval: {
+        Args: {
+          target_run_id: string
+          target_organization_id: string
+          target_approver_user_id: string
+          target_comment: string | null
+          target_dispatcher_worker: string
+          target_lease_seconds: number
+        }
+        Returns: boolean
+      }
+      reject_automation_run_pending_approval: {
+        Args: {
+          target_run_id: string
+          target_organization_id: string
+          target_approver_user_id: string
+          target_comment: string | null
         }
         Returns: boolean
       }

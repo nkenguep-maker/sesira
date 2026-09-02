@@ -2560,8 +2560,135 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C12 — Approval-based controlled sending
+-- =========================================================================
+-- approve_automation_run_pending_approval / reject_automation_run_pending_approval
+-- are SECURITY DEFINER. Both enforce ACTIVE membership on caller AND
+-- approver, and only transition rows in WAITING_FOR_APPROVAL with
+-- approval_decision IS NULL.
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  jsonb_build_object(
+    'sub', '91100000-0000-4000-8000-000000000001',
+    'role', 'authenticated'
+  )::text,
+  true);
+
+do $$
+declare
+  run_id_approve  uuid := '91800000-0000-4000-8000-c12000000001';
+  run_id_reject   uuid := '91800000-0000-4000-8000-c12000000002';
+  captured   text;
+  affected   boolean;
+begin
+  -- Seed two runs in WAITING_FOR_APPROVAL for tenant A.
+  insert into public.automation_runs (
+    id, organization_id, automation_config_id, idempotency_key,
+    status, scheduled_for, input_summary, output_summary
+  )
+  values
+    (run_id_approve, '91000000-0000-4000-8000-000000000001',
+     '91700000-0000-4000-8000-000000000001',
+     'quote_followup:91500000-0000-4000-8000-c12000000000:step:1',
+     'WAITING_FOR_APPROVAL', now(),
+     jsonb_build_object('quote_id', '91500000-0000-4000-8000-c12000000000', 'step', 1),
+     jsonb_build_object('proposed_action', jsonb_build_object('subject', 'Relance'))),
+    (run_id_reject, '91000000-0000-4000-8000-000000000001',
+     '91700000-0000-4000-8000-000000000001',
+     'quote_followup:91500000-0000-4000-8000-c12000000001:step:1',
+     'WAITING_FOR_APPROVAL', now(),
+     jsonb_build_object('quote_id', '91500000-0000-4000-8000-c12000000001', 'step', 1),
+     jsonb_build_object('proposed_action', jsonb_build_object('subject', 'Relance')));
+
+  -- (i) Foreign-org caller rejected 42501.
+  begin
+    perform public.approve_automation_run_pending_approval(
+      run_id_approve, '92000000-0000-4000-8000-000000000002',
+      '91100000-0000-4000-8000-000000000001', 'x', 'w', 300
+    );
+    raise exception 'foreign-org approve was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % on foreign-org approve', captured;
+    end if;
+  end;
+
+  -- (ii) Approver not ACTIVE member rejected 42501.
+  begin
+    perform public.approve_automation_run_pending_approval(
+      run_id_approve, '91000000-0000-4000-8000-000000000001',
+      '00000000-0000-0000-0000-000000000000', 'x', 'w', 300
+    );
+    raise exception 'inactive approver was not rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'unexpected sqlstate % on inactive approver', captured;
+    end if;
+  end;
+
+  -- (iii) Happy path approve: WAITING_FOR_APPROVAL -> RUNNING + approval columns.
+  affected := public.approve_automation_run_pending_approval(
+    run_id_approve, '91000000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001', 'OK', 'approver-worker', 300
+  );
+  if not affected then
+    raise exception 'happy-path approve should return true';
+  end if;
+
+  declare s text; d text; l text; begin
+    select status, approval_decision, locked_by into s, d, l
+    from public.automation_runs where id = run_id_approve;
+    if s is distinct from 'RUNNING' then
+      raise exception 'approved run status expected RUNNING (got %)', s;
+    end if;
+    if d is distinct from 'APPROVED' then
+      raise exception 'approved decision expected APPROVED (got %)', d;
+    end if;
+    if l is distinct from 'approver-worker' then
+      raise exception 'approved run locked_by expected approver-worker (got %)', l;
+    end if;
+  end;
+
+  -- (iv) Replay approve on already-resolved run returns false.
+  if public.approve_automation_run_pending_approval(
+    run_id_approve, '91000000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001', 'OK', 'approver-worker', 300
+  ) then
+    raise exception 'replay approve should return false';
+  end if;
+
+  -- (v) Happy path reject: WAITING_FOR_APPROVAL -> CANCELLED + rejection columns.
+  affected := public.reject_automation_run_pending_approval(
+    run_id_reject, '91000000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001', 'trop tôt'
+  );
+  if not affected then
+    raise exception 'happy-path reject should return true';
+  end if;
+
+  declare s text; d text; c text; begin
+    select status, approval_decision, approval_comment into s, d, c
+    from public.automation_runs where id = run_id_reject;
+    if s is distinct from 'CANCELLED' then
+      raise exception 'rejected run status expected CANCELLED (got %)', s;
+    end if;
+    if d is distinct from 'REJECTED' then
+      raise exception 'rejected decision expected REJECTED (got %)', d;
+    end if;
+    if c is distinct from 'trop tôt' then
+      raise exception 'rejected comment expected `trop tôt` (got %)', c;
+    end if;
+  end;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply and C11 classification assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification and C12 approval assertions passed' as result;
 
 rollback;
