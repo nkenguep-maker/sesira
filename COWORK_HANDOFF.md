@@ -7,11 +7,11 @@ Read this file first on any new Claude Code session; resume from
 ## Current status
 
 - **Branch**: `claude/core-workflows`
-- **HEAD**: `50f53fc` (C24 commercial core maturity audit)
+- **HEAD**: `(new)` (C26 field reports core)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
-- **Driver phase**: WAVE 3 (Operations) starting
-- **NEXT_MILESTONE**: `C25 — INTERVENTIONS CORE`
+- **Driver phase**: WAVE 3 (Operations) — C26 landed
+- **NEXT_MILESTONE**: `C27 — DOCUMENTS`
 
 ## Milestone log
 
@@ -38,6 +38,9 @@ Read this file first on any new Claude Code session; resume from
 | CI  | `e85044a` | DONE | Extend verify.yml to claude/ branches |
 | C23 | `4ff4370` | DONE | Quote drafting gates + reactivation candidates |
 | C24 | `50f53fc` | DONE | Commercial core maturity audit — MATURE (no fix) |
+| C25 | `1049b53` | DONE | Interventions core |
+| C26 | `(new)` | DONE | Field reports core (state machine + gaps recorder) |
+| C27 | — | WORKTREE | documents migration SQL file on disk; NOT applied yet |
 
 ## BASELINE_FAILURE
 

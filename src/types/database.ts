@@ -1963,6 +1963,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      transition_field_report_review: {
+        Args: {
+          target_organization_id: string
+          target_report_id: string
+          target_reviewer_user_id: string
+          target_new_status: string
+        }
+        Returns: boolean
+      }
+      record_field_report_gaps: {
+        Args: {
+          target_organization_id: string
+          target_report_id: string
+          target_report_gaps: Json
+        }
+        Returns: boolean
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string
