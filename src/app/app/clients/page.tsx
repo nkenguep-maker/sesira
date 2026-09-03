@@ -1,5 +1,65 @@
-import { EmptyState, PageHeader } from "@/components/sesira/ui";
+import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
+import { getViewerContext } from "@/lib/auth/viewer";
+import { getCustomerList } from "@/lib/data";
 
-export default function ClientsPage() {
-  return <><PageHeader eyebrow="02 · RELATIONS" title="Clients" description="Tous les comptes et contacts reliés au travail réel." actions={<button className="button primary small">Ajouter un client</button>} /><EmptyState title="Aucun client connecté" description="Importez ou créez votre premier client. SESIRA n'affiche pas de contacts fictifs." action={<button className="button ghost">Préparer un import</button>} /></>;
+export const dynamic = "force-dynamic";
+
+export default async function ClientsPage() {
+  const viewer = await getViewerContext();
+  if (!viewer) return null;
+
+  const customers = await getCustomerList(viewer.organization.id);
+  const companies = customers.filter((customer) => customer.type === "COMPANY").length;
+  const people = customers.length - companies;
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="02 · RELATIONS"
+        title="Clients"
+        description="Les clients réellement enregistrés dans votre espace SESIRA. Aucun contact fictif n’est ajouté pour remplir l’écran."
+      />
+
+      <section className="premium-connection-summary">
+        <div><strong>{customers.length}</strong><span>Clients enregistrés</span></div>
+        <div><strong>{companies}</strong><span>Entreprises</span></div>
+        <div><strong>{people}</strong><span>Particuliers</span></div>
+      </section>
+
+      {customers.length ? (
+        <section className="premium-connection-grid">
+          {customers.map((customer) => (
+            <article key={customer.id} className="premium-connection-card">
+              <header>
+                <div className="premium-connection-mark">{customer.displayName.slice(0, 1).toUpperCase()}</div>
+                <div>
+                  <span className="eyebrow">CLIENT</span>
+                  <h2>{customer.displayName}</h2>
+                </div>
+                <StatusPill>{customer.type === "COMPANY" ? "Entreprise" : "Particulier"}</StatusPill>
+              </header>
+              <div className="premium-data-list compact">
+                <div><span>Société</span><strong>{customer.companyName ?? "—"}</strong></div>
+                <div><span>Email</span><strong>{customer.email ?? "Non renseigné"}</strong></div>
+                <div><span>Téléphone</span><strong>{customer.phone ?? "Non renseigné"}</strong></div>
+                <div><span>Mis à jour</span><strong>{formatDate(customer.updatedAt)}</strong></div>
+              </div>
+            </article>
+          ))}
+        </section>
+      ) : (
+        <EmptyState
+          title="Aucun client enregistré"
+          description="Importez vos données ou connectez une source pour faire apparaître ici vos vrais clients."
+        />
+      )}
+    </>
+  );
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "Date inconnue"
+    : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(date);
 }

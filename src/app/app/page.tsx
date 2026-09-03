@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MetricCard, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { AUTOMATION_LEVEL_LABELS } from "@/lib/automations/view-model";
+import { getSpeedToLeadSummary } from "@/lib/data";
 import { buildResultsPeriod } from "@/lib/results/period";
 import { createSupabaseResultsRepository } from "@/lib/results/supabase-results-repository";
 import { createClient } from "@/lib/supabase/server";
@@ -15,11 +16,12 @@ export default async function DashboardPage() {
 
   const supabase = await createClient();
   const organizationId = viewer.organization.id;
-  const [customersResult, quotesResult, integrationsResult, automationResult] = await Promise.all([
+  const [customersResult, quotesResult, integrationsResult, automationResult, speedToLead] = await Promise.all([
     supabase.from("customers").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
     supabase.from("quotes").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
     supabase.from("integrations").select("id, type, status", { count: "exact" }).eq("organization_id", organizationId),
     supabase.from("automation_configs").select("id, level, enabled").eq("organization_id", organizationId).eq("enabled", true).order("updated_at", { ascending: false }).limit(1),
+    getSpeedToLeadSummary(organizationId),
   ]);
 
   let attentionOpen: number | null = null;
@@ -51,6 +53,31 @@ export default async function DashboardPage() {
         <MetricCard label="Devis" value={formatCount(quotesResult.error ? null : quotesResult.count)} note="Dossiers enregistrés" />
         <MetricCard label="À traiter" value={formatCount(attentionOpen)} note="Éléments ouverts" />
         <MetricCard label="Email" value={connectedEmail ? "Connecté" : "—"} note={connectedEmail ? "Messagerie reliée" : "Connexion à configurer"} />
+      </section>
+
+      <section className="premium-results-section">
+        <div className="premium-section-heading">
+          <div><span className="eyebrow">PRISE EN CHARGE DES NOUVELLES DEMANDES</span><h2>Ce qui attend encore une première action.</h2></div>
+          <StatusPill tone={!speedToLead ? "neutral" : speedToLead.overdueCount > 0 ? "warning" : speedToLead.enabled ? "good" : "neutral"}>
+            {!speedToLead ? "Donnée indisponible" : speedToLead.enabled ? `Cible ${formatDuration(speedToLead.targetMinutes)}` : "Politique inactive"}
+          </StatusPill>
+        </div>
+        {!speedToLead ? (
+          <p className="premium-muted-copy">SESIRA ne peut pas lire cette mesure pour le moment. Aucune valeur de remplacement n’est affichée.</p>
+        ) : (
+          <>
+            <div className="premium-connection-summary">
+              <div><strong>{formatCount(speedToLead.pendingCount)}</strong><span>Nouvelles demandes en attente</span></div>
+              <div><strong>{speedToLead.enabled ? formatCount(speedToLead.overdueCount) : "—"}</strong><span>Au delà du délai choisi</span></div>
+              <div><strong>{speedToLead.averageHandlingMinutes === null ? "—" : formatDuration(speedToLead.averageHandlingMinutes)}</strong><span>Prise en charge moyenne observée · 30 jours</span></div>
+            </div>
+            <div className="premium-focus-actions">
+              <Link href="/app/suivi" className="text-link">Voir ce qui est à traiter <span>↘</span></Link>
+              <Link href="/app/parametres/politiques" className="text-link">Régler le délai <span>↘</span></Link>
+            </div>
+            <p className="premium-muted-copy">Mesure : première transition interne hors de Nouvelle. Échantillon observé sur 30 jours : {speedToLead.handledSampleCount}. SESIRA ne présente pas cette mesure comme un temps de réponse envoyé au client.</p>
+          </>
+        )}
       </section>
 
       <section className="premium-dashboard-grid">
@@ -89,4 +116,11 @@ export default async function DashboardPage() {
 
 function formatCount(value: number | null | undefined) {
   return value === null || value === undefined ? "—" : new Intl.NumberFormat("fr-FR").format(value);
+}
+
+function formatDuration(minutes: number | null | undefined) {
+  if (minutes === null || minutes === undefined) return "—";
+  if (minutes < 60) return `${Math.round(minutes)} min`;
+  const hours = minutes / 60;
+  return hours < 24 ? `${Math.round(hours * 10) / 10} h` : `${Math.round((hours / 24) * 10) / 10} j`;
 }

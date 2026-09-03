@@ -1,0 +1,24 @@
+/* C21 technical validation hardening.
+ * Keyboard focus and long-content resilience are global product contracts,
+ * not visual decoration. Keep these rules small and deterministic.
+ */
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--signal);
+  outline-offset: 3px;
+}
+
+:where(.panel, .premium-connection-card, .premium-results-section, .premium-data-list, .page-header) {
+  min-width: 0;
+}
+
+:where(.panel, .premium-connection-card, .premium-results-section, .premium-data-list) :where(p, strong, span, blockquote, dd, dt) {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  :where(.premium-connection-card select, .premium-connection-card input, .panel select, .panel input) {
+    width: 100%;
+    min-width: 0;
+  }
+}

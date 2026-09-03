@@ -4,6 +4,7 @@ import "./ui-additions.css";
 import "./premium-surfaces.css";
 import "./cvc-landing.css";
 import "./cvc-diagnostic.css";
+import "./c21-hardening.css";
 
 export const metadata: Metadata = {
   title: "SESIRA — L'OS opérationnel de votre entreprise",

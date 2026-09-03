@@ -5,12 +5,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
-/**
- * Result shape shared by every replay-safe insert. `created` distinguishes
- * "we inserted this row now" from "this row already existed" so a caller
- * can suppress downstream duplicate effects (e.g. don't re-emit an event
- * for a row that was already there) without a second read.
- */
 export interface InsertOnceResult {
   id: string;
   created: boolean;
@@ -43,19 +37,9 @@ export interface InsertEventOnceInput {
   entityType?: string | null;
   entityId?: string | null;
   payload?: Record<string, unknown> | null;
-  /** Reuse a deterministic/server client when the caller already owns one. */
   client?: SupabaseClient<Database>;
 }
 
-/**
- * Insert an event exactly once. Two concurrent calls with the same
- * `(organizationId, idempotencyKey)` observe one row and one
- * `created=true` — the loser sees the winner's id with `created=false`.
- *
- * The caller MUST have computed `idempotencyKey` from stable
- * identifiers via `src/lib/idempotency/keys`. Passing user-supplied
- * text here silently defeats replay safety.
- */
 export async function insertEventOnce(
   input: InsertEventOnceInput,
 ): Promise<InsertOnceResult> {
@@ -86,15 +70,9 @@ export interface InsertAttentionOnceInput {
   assignedUserId?: string | null;
   dueAt?: string | null;
   metadata?: Record<string, unknown> | null;
-  /** Reuse a deterministic/server client when the caller already owns one. */
   client?: SupabaseClient<Database>;
 }
 
-/**
- * Insert an Attention exactly once. Same replay semantics as
- * `insertEventOnce`. Never dedupes on `title` / `explanation` — those
- * are mutable business values.
- */
 export async function insertAttentionOnce(
   input: InsertAttentionOnceInput,
 ): Promise<InsertOnceResult> {
@@ -126,16 +104,9 @@ export interface RecordProviderDeliveryInput {
   relatedEntityId?: string | null;
   payload?: Record<string, unknown> | null;
   receivedAt?: Date | null;
-  /** Reuse a deterministic/server client when the caller already owns one. */
   client?: SupabaseClient<Database>;
 }
 
-/**
- * Record a provider delivery receipt exactly once. Restricted to
- * service_role callers (webhook receivers). The receipt is keyed by
- * `(organization_id, provider, provider_event_id)` — a retried
- * callback from the provider resolves to the same row.
- */
 export async function recordProviderDelivery(
   input: RecordProviderDeliveryInput,
 ): Promise<InsertOnceResult> {
@@ -151,4 +122,79 @@ export async function recordProviderDelivery(
     target_received_at: input.receivedAt?.toISOString() ?? null,
   });
   return unwrap("recordProviderDelivery", data as RpcRow[] | null, error);
+}
+
+export interface RecordOutboundMessageIntentInput {
+  organizationId: string;
+  idempotencyKey: string;
+  integrationId: string | null;
+  providerName: string;
+  channel: "email";
+  toEmail: string;
+  fromEmail: string;
+  replyTo: string | null;
+  subject: string;
+  bodyHash: string;
+  client?: SupabaseClient<Database>;
+}
+
+export async function recordOutboundMessageIntent(
+  input: RecordOutboundMessageIntentInput,
+): Promise<InsertOnceResult> {
+  const supabase = input.client ?? (await createClient());
+  const { data, error } = await supabase.rpc("record_outbound_message_intent", {
+    target_organization_id: input.organizationId,
+    target_idempotency_key: input.idempotencyKey,
+    target_integration_id: input.integrationId,
+    target_provider: input.providerName,
+    target_channel: input.channel,
+    target_to_email: input.toEmail,
+    target_from_email: input.fromEmail,
+    target_reply_to: input.replyTo,
+    target_subject: input.subject,
+    target_body_hash: input.bodyHash,
+  });
+  return unwrap("recordOutboundMessageIntent", data as RpcRow[] | null, error);
+}
+
+export interface MarkOutboundMessageSentInput {
+  organizationId: string;
+  messageId: string;
+  providerMessageId: string;
+  client?: SupabaseClient<Database>;
+}
+
+export async function markOutboundMessageSent(
+  input: MarkOutboundMessageSentInput,
+): Promise<boolean> {
+  const supabase = input.client ?? (await createClient());
+  const { data, error } = await supabase.rpc("mark_outbound_message_sent", {
+    target_organization_id: input.organizationId,
+    target_message_id: input.messageId,
+    target_provider_message_id: input.providerMessageId,
+  });
+  if (error) throw new Error(`markOutboundMessageSent: ${error.message}`);
+  return data === true;
+}
+
+export interface MarkOutboundMessageFailedInput {
+  organizationId: string;
+  messageId: string;
+  errorClass: "TRANSIENT" | "PERMANENT";
+  errorMessage: string;
+  client?: SupabaseClient<Database>;
+}
+
+export async function markOutboundMessageFailed(
+  input: MarkOutboundMessageFailedInput,
+): Promise<boolean> {
+  const supabase = input.client ?? (await createClient());
+  const { data, error } = await supabase.rpc("mark_outbound_message_failed", {
+    target_organization_id: input.organizationId,
+    target_message_id: input.messageId,
+    target_error_class: input.errorClass,
+    target_error_message: input.errorMessage,
+  });
+  if (error) throw new Error(`markOutboundMessageFailed: ${error.message}`);
+  return data === true;
 }
