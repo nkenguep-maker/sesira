@@ -1980,6 +1980,39 @@ export type Database = {
         }
         Returns: boolean
       }
+      record_document_classification: {
+        Args: {
+          target_organization_id: string
+          target_document_id: string
+          target_kind: string | null
+          target_extracted_fields: Json | null
+          target_extraction_confidence: number
+        }
+        Returns: boolean
+      }
+      validate_document: {
+        Args: {
+          target_organization_id: string
+          target_document_id: string
+          target_validator_user_id: string
+        }
+        Returns: boolean
+      }
+      reject_document: {
+        Args: {
+          target_organization_id: string
+          target_document_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      archive_document: {
+        Args: {
+          target_organization_id: string
+          target_document_id: string
+        }
+        Returns: boolean
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string
