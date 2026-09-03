@@ -11,7 +11,7 @@ C24 established technical maturity at repository-contract level, but it intentio
 
 The live audit found a concrete reason for that distinction: migration versions `20260912000000` through `20260915000000` had already been applied to Supabase with historical definitions, while Git history now contains newer C19 through C23 definitions under those same version numbers. A migration runner correctly considers those versions already applied, so changing the files in Git does not update the live schema.
 
-The correct repair is forward-only. Existing migration versions are never rewritten or re-applied to production.
+The repair was therefore forward-only. Existing production objects and historical data were preserved, and current contracts were installed through new reconciliation migrations.
 
 ## Drift observed before reconciliation
 
@@ -37,7 +37,7 @@ The live database already had migrations `20260916000000 interventions_core` and
 
 ## Forward-only repair
 
-The parity branch adds:
+The parity branch contains:
 
 1. `20260916000000_interventions_core.sql` restored to Git history.
 2. `20260917000000_field_reports.sql` reconstructed from the applied schema.
@@ -49,32 +49,67 @@ The reconciliation migrations use forward-only patterns such as `ADD COLUMN IF N
 
 Legacy objection rows are copied into the current model when present. Historical Speed to Lead response timestamps are deliberately not copied into `first_handled_at`, because doing so would fabricate a different measurement.
 
+The Supabase migration API generated temporary execution timestamps for the three reconciliation calls. Immediately after each successful transactional migration, `supabase_migrations.schema_migrations.version` was repaired to the canonical Git version. The live history now records exactly `20260918000000`, `20260919000000` and `20260920000000` for the three reconciliation migrations.
+
 ## C25 to C19 bridge
 
 A scheduled intervention is observable evidence of an operational next step. The bridge therefore mirrors a scheduled, non-terminal intervention onto a WON opportunity with source `INTERVENTION`.
 
 When that intervention becomes completed or cancelled, the bridge clears the next step only if the opportunity still points to the exact same intervention-derived timestamp. It never erases a different manual or system next step.
 
-## Permissions
+## Permissions and RLS
 
-The live audit showed that project-level default privileges had granted broader table capabilities than intended on `interventions` and `field_reports`. RLS still restricted row access, but parity hardening makes the capability surface explicit:
+The live audit showed that project-level default privileges had granted broader table capabilities than intended on `interventions` and `field_reports`. RLS still restricted row access, but parity hardening makes the authenticated capability surface explicit.
 
-Authenticated users receive only `SELECT`, `INSERT` and `UPDATE` on those tables. Public and anon receive no table privileges. RPC execution grants remain explicit.
+Authenticated users receive only `SELECT`, `INSERT` and `UPDATE` on `interventions` and `field_reports`. Public and anon receive no table privileges. `commercial_objections`, `interventions`, `field_reports`, `opportunities`, `quotes` and `requests` all have RLS enabled in the live database.
 
-## Promotion sequence
+`sync_commercial_objection_from_ai` remains service-role only. Tenant-facing `SECURITY DEFINER` RPCs remain executable by authenticated users only where the application intentionally calls them through the session client; those RPCs re-check organization membership and, where required, organization role inside the function body.
 
-1. Repository verify must pass on the exact parity head.
-2. Reconciliation migrations are then applied to the live `sesira-os` Supabase project in version order using the migration API.
-3. Exact columns, functions, triggers and grants are re-read from live.
-4. Supabase security and performance advisors are re-run.
-5. Only after those checks can `LIVE_DATABASE_PARITY` change from `PENDING` to `PASS`.
+## Live verification evidence
 
-External actions remain disabled throughout. This gate does not authorize Vercel production promotion or provider sends.
+Repository CI on the parity branch passed the canonical `npm run verify` gate with:
+
+- lint passed
+- typecheck passed
+- 69 test files passed
+- 456 tests passed
+- Next.js production build passed
+
+After live migration, the database was re-read directly and confirmed:
+
+- all four `opportunities.operational_next_step_*` columns exist
+- `requests.first_handled_at` exists while historical `first_response_at` remains intact
+- `quotes.draft_analysis_at` and `draft_gaps` exist
+- current C19, C20, C22 and C23 RPCs exist with the expected signatures
+- `requests_protect_first_handled_at`, Speed to Lead attention triggers, quote draft protection/readiness triggers and `interventions_sync_operational_next_step` are installed
+- `commercial_objections`, legacy `reply_objections` and legacy `value_policies` coexist, preserving historical compatibility
+- reconciliation migrations `20260918000000`, `20260919000000` and `20260920000000` are present in live migration history
+- no `anon` table grants exist on `commercial_objections`, `interventions` or `field_reports`
+
+## Advisor review
+
+Supabase security advisors were re-run after reconciliation. They report warnings for authenticated access to `SECURITY DEFINER` RPCs and for leaked-password protection being disabled.
+
+The RPC warnings are reviewed, not ignored: the tenant-facing RPCs are deliberately exposed because the server-side application uses the authenticated session client, and the functions re-impose membership or role checks in PostgreSQL. Service-only functions such as `sync_commercial_objection_from_ai` remain restricted to `service_role`.
+
+Leaked-password protection is an Auth hardening item and remains separate from this database parity gate.
+
+Performance advisors currently report informational items, mainly unused indexes on this young database and foreign keys without dedicated covering indexes. These are optimization follow-ups, not parity blockers, and should be revisited with real workload data rather than removing or adding indexes speculatively.
+
+## Promotion boundary
+
+External actions remain disabled. Passing this gate does not authorize provider sends, calibration claims or commercial validation claims.
+
+Production promotion remains a separate decision and must continue to respect the external-actions kill switch and the remaining C24 labels.
 
 ## Current status
 
-`REPOSITORY_PARITY_PATCH = BUILT`
+`REPOSITORY_PARITY_PATCH = VERIFIED`
 
-`LIVE_DATABASE_PARITY = PENDING`
+`LIVE_DATABASE_PARITY = PASS`
+
+`SECURITY_ADVISORS = REVIEWED_WITH_WARNINGS`
+
+`PERFORMANCE_ADVISORS = INFO_ONLY`
 
 `PRODUCTION_PROMOTION = LOCKED`
