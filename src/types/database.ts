@@ -2827,6 +2827,110 @@ export type Database = {
           checklist_item_count: number
         }[]
       }
+      arrive_at_intervention: {
+        Args: {
+          target_organization_id: string
+          target_intervention_id: string
+          target_actor_user_id: string
+          target_arrived_at: string
+          target_offline_client_id: string | null
+        }
+        Returns: boolean
+      }
+      start_intervention_work: {
+        Args: {
+          target_organization_id: string
+          target_intervention_id: string
+          target_actor_user_id: string
+          target_started_at: string
+        }
+        Returns: boolean
+      }
+      submit_intervention_field_artifact: {
+        Args: {
+          target_organization_id: string
+          target_intervention_id: string
+          target_artifact_kind: string
+          target_payload: Json
+          target_captured_at: string
+          target_captured_by_user_id: string
+          target_offline_client_id: string
+        }
+        Returns: {
+          artifact_id: string
+          upload_status: string
+          conflict_reason: string | null
+        }[]
+      }
+      resolve_field_artifact_conflict: {
+        Args: {
+          target_organization_id: string
+          target_artifact_id: string
+          target_actor_user_id: string
+          target_new_status: string
+          target_note: string | null
+        }
+        Returns: boolean
+      }
+      technician_day: {
+        Args: {
+          target_organization_id: string
+          target_user_id: string
+          target_date: string
+        }
+        Returns: {
+          intervention_id: string
+          title: string
+          status: string
+          customer_id: string
+          customer_display_name: string | null
+          customer_phone: string | null
+          address_line1: string | null
+          address_line2: string | null
+          address_postal_code: string | null
+          address_city: string | null
+          scheduled_at: string | null
+          duration_minutes: number | null
+          arrived_at: string | null
+          started_at: string | null
+          completed_at: string | null
+          equipment_id: string | null
+          quote_id: string | null
+          opportunity_id: string | null
+          notes: string | null
+        }[]
+      }
+      intervention_field_artifacts_for: {
+        Args: {
+          target_organization_id: string
+          target_intervention_id: string
+        }
+        Returns: {
+          artifact_id: string
+          artifact_kind: string
+          payload: Json
+          captured_at: string
+          captured_by_user_id: string
+          offline_client_id: string
+          upload_status: string
+          conflict_reason: string | null
+          uploaded_at: string
+        }[]
+      }
+      pending_field_artifact_conflicts: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          artifact_id: string
+          intervention_id: string
+          artifact_kind: string
+          captured_at: string
+          captured_by_user_id: string
+          conflict_reason: string | null
+          uploaded_at: string
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string

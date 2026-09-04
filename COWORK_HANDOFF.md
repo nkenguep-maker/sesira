@@ -8,11 +8,11 @@ Read this file first on any new Claude Code session; resume from
 
 - **Branch**: `claude/core-workflows`
 - **HEAD**: run `git log -1 --oneline` at session start; do not trust a hard-coded hash in this handoff.
-- **Last product milestone**: C35 financing indicator (see milestone log for hash)
+- **Last product milestone**: C36 technician field core (see milestone log for hash)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
-- **Driver phase**: WAVE 5 (Compliance) — **C33 ✓ C34 ✓ C35 ✓**. Next: C36 technician field core (mobile-first) + C37 voice (READ `REGULATORY.md` §4 BEFORE C37).
-- **NEXT_MILESTONE**: `C36 — TECHNICIAN FIELD CORE (mobile-first backend/API)`
+- **Driver phase**: WAVE 5 (Compliance) — **C33 ✓ C34 ✓ C35 ✓ C36 ✓**. Next: C37 voice (READ `REGULATORY.md` §4 BEFORE — AI Act art. 50 + CNIL enregistrement + Europe-only). U36 mobile UI is separate (codex branch).
+- **NEXT_MILESTONE**: `C37 — VOICE / accueil téléphonique (provider abstraction, disclosure, opt-out, no emotion analysis)`
 
 ## Milestone log
 
@@ -52,6 +52,7 @@ Read this file first on any new Claude Code session; resume from
 | C33.3 | `113dfbb` | DONE | Regulatory exports — `regulatory_exports` table + state machine trigger + `generate_cerfa_intervention_export` (one CERFA per intervention, INV-03 rule snapshot) + `generate_annual_regulatory_bilan` (per-fluid aggregation using GWP active at year-end) + `mark_regulatory_export_exported` (INV-04 traced human validation) + `regulatory_exports_for` + `pending_cerfa_interventions` — applied on Supabase as `20260929000000`. **C33 (F-Gas / CERFA) COMPLETE.** |
 | C34 | `b39e316` | DONE | E-invoicing provider abstraction — 3 tables (`einvoicing_providers`, `einvoicing_submissions`, `einvoicing_provider_events`) + state machine trigger + `configure_einvoicing_provider` (TEST or PENDING sentinel) + `prepare_einvoicing_submission` + `mark_einvoicing_submission_exported` (INV-04) + `record_einvoicing_provider_event` (doctrine gate: SUBMITTED/ACCEPTED/REJECTED only via service_role OR TEST provider) + `cancel_einvoicing_submission` + read helpers + TS `EInvoicingProvider` interface (TestEInvoicingProvider + PendingProductionEInvoicingProvider) — applied on Supabase as `20260930000000`. **Zero fake provider success enforced at SQL + TS layers.** |
 | C35 | `055e473` | DONE | Financing indicator (Option A, R519-2 CMF) — 2 tables (`financing_partners`, `financing_referrals`) + state machine trigger + 5 write RPCs (`configure_financing_partner`, `archive_financing_partner`, `initiate_financing_referral` [consent REQUIRED], `transition_financing_referral_status` [human-declared, ACTIVE member], `record_financing_commission` [audit-only, INV-05]) + 2 read helpers — applied on Supabase as `20261001000000`. **Schema explicitly excludes income/score/rate/monthly_payment fields (INV-06). No FK to documents (financing docs stay client-side).** |
+| C36 | `(new)` | DONE | Technician field core (BACKEND contracts) — ALTER interventions (arrived_at, started_at, offline_start_client_id) + NEW `intervention_field_artifacts` table (PHOTO/PART_USED/MEASUREMENT/ANOMALY/SIGNATURE/NOTE with per-kind payload validation) + offline-safe idempotent sync via offline_client_id + CONFLICT flag (never silently drops) + 6 RPCs (arrive, start, submit_artifact, resolve_conflict, technician_day, artifacts_for, pending_conflicts) — applied on Supabase as `20261002000000`. **AI must NEVER fabricate raw facts — captured_by_user_id REQUIRED on every artifact.** U36 mobile UI = codex branch. |
 
 ## BASELINE_FAILURE
 
