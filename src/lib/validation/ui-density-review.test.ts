@@ -8,18 +8,23 @@ function source(path: string) {
 }
 
 describe("dense workspace UI review", () => {
-  it("groups navigation by work domain and removes decorative numbering", () => {
+  it("keeps the daily rail compact and moves configuration behind the organization block", () => {
     const navigation = source("src/lib/navigation.ts");
     const shell = source("src/components/sesira/app-shell.tsx");
 
-    expect(navigation).toContain('label: "Commercial"');
-    expect(navigation).toContain('label: "Système"');
-    expect(navigation).toContain('label: "Pilotage"');
+    expect(navigation).toContain("SESIRA_PRIMARY_NAV");
+    expect(navigation).toContain('label: "Aujourd’hui"');
+    expect(navigation).toContain('label: "Documents"');
+    expect(navigation).toContain("SESIRA_ORGANIZATION_NAV");
+    expect(navigation).not.toContain('label: "Commercial"');
+    expect(navigation).not.toContain('label: "Système"');
+    expect(navigation).not.toContain('label: "Pilotage"');
     expect(navigation).not.toContain('index: "01"');
     expect(shell).not.toContain("nav-index");
     expect(shell).not.toContain("Identité fournie par le core");
     expect(shell).toContain("workspaceName");
-    expect(shell).toContain("roleLabel");
+    expect(shell).toContain("OrganizationMenu");
+    expect(shell).not.toContain("roleLabel");
   });
 
   it("uses a real first-run setup instead of a dashboard full of zeroes", () => {
