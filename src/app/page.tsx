@@ -6,363 +6,301 @@ import { SesiraLogo } from "@/components/sesira/logo";
 export const metadata: Metadata = {
   title: "SESIRA | Devis, chantiers, factures et entretien CVC",
   description:
-    "SESIRA met vos devis, interventions, factures et contrats d'entretien au même endroit et vous montre ce qui attend une action.",
+    "SESIRA réunit devis, chantiers, factures et contrats d'entretien pour montrer chaque matin ce qui attend une action.",
 };
 
 const TODAY_ITEMS = [
   {
     kind: "DEVIS",
     title: "18 450 € · Sophie Lefèvre",
-    detail: "Envoyé il y a 6 jours. Personne n'a relancé.",
+    detail: "Envoyé il y a 6 jours. Aucune relance faite.",
     action: "Relancer",
   },
   {
-    kind: "INTERVENTION",
+    kind: "CHANTIER",
     title: "Dupont SARL",
-    detail: "Chantier vendu. Aucune date au planning.",
+    detail: "Le client a signé. Aucune date au planning.",
     action: "Planifier",
-  },
-  {
-    kind: "RAPPORT TERRAIN",
-    title: "Intervention #1842",
-    detail: "Le technicien a terminé. Rapport à valider.",
-    action: "Valider",
   },
   {
     kind: "FACTURE",
     title: "12 400 €",
-    detail: "Le client avait annoncé un paiement vendredi.",
+    detail: "Paiement annoncé vendredi. Rien reçu depuis.",
     action: "Suivre",
   },
   {
     kind: "ENTRETIEN",
     title: "Martin & Fils",
-    detail: "Contrat d'entretien à renouveler dans 26 jours.",
+    detail: "Renouvellement dans 26 jours.",
     action: "Préparer",
   },
 ] as const;
 
-const CORE_PRODUCTS = [
+const MORE_FEATURES = [
   {
-    number: "01",
-    title: "VENDRE",
-    headline: "Les devis partis dont personne n'a de nouvelles.",
-    detail: "SESIRA garde les devis, les relances, les réponses clients et les objections au même endroit.",
-    outcome: "Vous savez qui rappeler aujourd'hui.",
-  },
-  {
-    number: "02",
-    title: "EXÉCUTER",
-    headline: "Les chantiers vendus qui ne sont pas encore au planning.",
-    detail: "Le devis, la date d'intervention, le technicien, les documents et le rapport restent liés au même client.",
-    outcome: "Vous voyez ce qui doit encore être planifié ou validé.",
-  },
-  {
-    number: "03",
-    title: "ENCAISSER",
-    headline: "Les factures parties dont l'argent n'est pas arrivé.",
-    detail: "SESIRA suit les échéances, les retards, les promesses de paiement et les litiges sans décider à votre place.",
-    outcome: "Vous savez quelle facture réclamer et laquelle laisser tranquille.",
-  },
-  {
-    number: "04",
-    title: "ENTRETENIR",
-    headline: "Les contrats d'entretien qu'il ne faut pas laisser expirer.",
-    detail: "Visites, prochaines dates, renouvellements et besoins futurs restent rattachés au client après le chantier.",
-    outcome: "Vous préparez le renouvellement avant la date limite.",
-  },
-] as const;
-
-const PLATFORM_LAYERS = [
-  {
-    title: "Trouver de nouveaux clients",
-    text: "Leads, campagnes, contenus et conversations restent rattachés à la vente qu'ils ont réellement générée quand l'information existe.",
-    tag: "NOUVEAUX CLIENTS",
-  },
-  {
-    title: "Techniciens sur mobile",
-    text: "Le technicien retrouve l'intervention, les informations utiles, les documents et le rapport à remplir depuis son téléphone.",
     tag: "TERRAIN",
+    title: "Techniciens sur mobile",
+    text: "L'intervention, les documents et le rapport sont disponibles depuis le téléphone du technicien.",
   },
   {
-    title: "Appels et messages",
-    text: "Les demandes entrantes restent avec le bon client. Votre équipe voit ce qui a été dit et ce qui attend une réponse.",
     tag: "CLIENTS",
+    title: "Appels et messages",
+    text: "Les demandes entrantes restent attachées au bon client et au bon devis.",
   },
   {
-    title: "F-Gas, CERFA et e-facture",
-    text: "SESIRA prépare les données à partir des interventions déjà saisies. Les validations et envois externes restent sous votre contrôle.",
+    tag: "DOCUMENTS",
+    title: "Rapports et pièces",
+    text: "Rapports terrain, documents et validations restent avec le chantier concerné.",
+  },
+  {
+    tag: "NOUVEAUX CLIENTS",
+    title: "Campagnes et contenus",
+    text: "Vous voyez quels contacts et quelles ventes viennent réellement de vos actions commerciales quand l'information existe.",
+  },
+  {
     tag: "OBLIGATIONS",
+    title: "F-Gas, CERFA et e-facture",
+    text: "SESIRA prépare les données à partir des interventions déjà saisies. Vous gardez la validation finale.",
   },
   {
-    title: "Relances et tâches automatiques",
-    text: "Une règle peut d'abord regarder, puis préparer, puis agir seule uniquement quand vous l'avez autorisée.",
     tag: "AUTOMATISATION",
-  },
-  {
-    title: "Voir ce que SESIRA a fait",
-    text: "Exécutions, erreurs, coûts et automatisations restent visibles pour que vous sachiez ce qui tourne réellement.",
-    tag: "SUIVI",
+    title: "Relances et tâches répétitives",
+    text: "SESIRA peut d'abord préparer, puis agir seul uniquement sur les règles que vous avez autorisées.",
   },
 ] as const;
 
-const AUTOMATION_LEVELS = [
-  ["01", "Observe", "SESIRA regarde ce qui se passe et compte ce qui reste en plan."],
-  ["02", "Prépare", "SESIRA prépare le message ou la tâche sans l'envoyer."],
-  ["03", "Vous validez", "Votre équipe relit et confirme avant que quelque chose parte."],
-  ["04", "Automatique", "La règle agit seule uniquement dans les cas que vous avez autorisés."],
-] as const;
-
-const WORK_SPLIT = [
-  ["Repérer les devis sans réponse", "Choisir le prix"],
-  ["Préparer un message de relance", "Accorder une remise"],
-  ["Repérer une facture en retard", "Décider quoi faire"],
-  ["Préparer les données F-Gas et CERFA", "Valider ce qui part à l'extérieur"],
-] as const;
-
-const JOURNEY = [
-  "Demande",
-  "Devis",
-  "Chantier",
-  "Rapport",
-  "Facture",
-  "Entretien",
-  "Nouvelle vente",
+const AUTOMATION_STEPS = [
+  ["Observe", "SESIRA regarde ce qui reste en plan."],
+  ["Prépare", "Le message ou la tâche est prêt, rien ne part."],
+  ["Vous validez", "Votre équipe confirme avant l'envoi."],
+  ["Automatique", "Seulement pour les cas que vous avez autorisés."],
 ] as const;
 
 export default function HomePage() {
   return (
     <main className="cvc-shell">
       <nav className="cvc-nav" aria-label="Navigation principale">
-        <Link href="/" aria-label="SESIRA"><SesiraLogo /></Link>
+        <Link href="/" aria-label="SESIRA">
+          <SesiraLogo />
+        </Link>
         <div className="cvc-nav-links">
-          <a href="#produit">Comment ça marche</a>
-          <a href="#plateforme">Ce que SESIRA suit</a>
-          <a href="#controle">Qui décide</a>
-          <a href="#cvc">Pour le CVC</a>
+          <a href="#devis">Devis</a>
+          <a href="#chantiers">Chantiers</a>
+          <a href="#factures">Factures</a>
+          <a href="#entretien">Entretien</a>
           <Link className="cvc-nav-login" href="/login">Connexion</Link>
-          <a className="button primary small" href="mailto:paul@sesira.fr?subject=Démo%20SESIRA">Demander une démo</a>
+          <a className="button primary small" href="mailto:paul@sesira.fr?subject=Démo%20SESIRA">Voir une démo</a>
         </div>
       </nav>
 
       <header className="cvc-hero">
         <div className="cvc-hero-copy">
-          <span className="cvc-kicker">SESIRA · POUR LES ENTREPRISES CVC DE 8 À 50 PERSONNES</span>
+          <span className="cvc-kicker">SESIRA · CHAUFFAGE · CLIMATISATION · POMPES À CHALEUR</span>
           <h1>Vos devis, vos chantiers et vos factures ne se parlent pas.</h1>
           <p className="cvc-hero-lede">
-            Chaque matin, SESIRA vous dit quel devis relancer, quelle intervention planifier et quelle facture suivre. Vous n'avez plus à chercher dans les mails, le planning et les tableaux.
+            SESIRA les réunit. Chaque matin, vous voyez quel devis rappeler, quel chantier planifier, quelle facture suivre et quel contrat d'entretien renouveler.
           </p>
           <div className="cvc-actions">
-            <a className="button primary" href="mailto:paul@sesira.fr?subject=Démo%20SESIRA">Voir SESIRA avec mes propres cas</a>
+            <a className="button primary" href="mailto:paul@sesira.fr?subject=Démo%20SESIRA">Voir SESIRA avec mes cas</a>
             <Link className="cvc-text-link" href="/diagnostic">Faire le diagnostic gratuit</Link>
           </div>
           <small>Démo avec le fondateur · sans engagement</small>
         </div>
 
         <div className="cvc-hero-product">
-          <div className="cvc-hero-product-meta">
-            <span>AUJOURD'HUI</span>
-            <b>5 choses à traiter</b>
-          </div>
           <TodayPreview compact />
-          <div className="cvc-hero-proof-row">
-            <div><strong>1</strong><span>devis à relancer</span></div>
-            <div><strong>1</strong><span>chantier à planifier</span></div>
-            <div><strong>1</strong><span>facture à suivre</span></div>
-          </div>
         </div>
       </header>
 
-      <section id="produit" className="cvc-section cvc-journey-section">
-        <div className="cvc-section-head cvc-section-head-wide">
-          <span>01 · DU DEVIS AU CONTRAT D'ENTRETIEN</span>
-          <h2>SESIRA suit le même client du premier devis au prochain entretien.</h2>
-          <p>
-            Le devis, le planning, le rapport du technicien, la facture et le contrat d'entretien restent liés. Quand quelque chose manque, vous le voyez.
-          </p>
-        </div>
+      <section className="cvc-morning-strip" aria-label="Exemples de sujets remontés par SESIRA">
+        <article>
+          <span>DEVIS</span>
+          <strong>18 450 €</strong>
+          <p>6 jours sans réponse</p>
+        </article>
+        <article>
+          <span>CHANTIER</span>
+          <strong>1 signé</strong>
+          <p>toujours sans date</p>
+        </article>
+        <article>
+          <span>FACTURE</span>
+          <strong>12 400 €</strong>
+          <p>paiement annoncé vendredi</p>
+        </article>
+        <article>
+          <span>ENTRETIEN</span>
+          <strong>26 jours</strong>
+          <p>avant renouvellement</p>
+        </article>
+      </section>
 
-        <div className="cvc-journey-line" aria-label="Étapes suivies par SESIRA">
-          {JOURNEY.map((item, index) => (
-            <div key={item} className="cvc-journey-step">
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <strong>{item}</strong>
-              {index < JOURNEY.length - 1 ? <b aria-hidden="true">→</b> : null}
-            </div>
-          ))}
-        </div>
-
-        <div className="cvc-rupture-grid">
-          <article>
-            <span>DEVIS</span>
-            <h3>18 450 € envoyés il y a 6 jours. Toujours aucune relance.</h3>
-            <p>SESIRA remet le devis devant la bonne personne avant qu'il soit oublié.</p>
-          </article>
-          <article>
-            <span>CHANTIER</span>
-            <h3>Le client a signé. Le chantier n'est toujours pas au planning.</h3>
-            <p>SESIRA montre la vente gagnée et la date d'intervention qui manque.</p>
-          </article>
-          <article>
-            <span>FACTURE</span>
-            <h3>12 400 € facturés. Le paiement annoncé vendredi n'est pas arrivé.</h3>
-            <p>SESIRA garde la promesse de paiement visible pour que quelqu'un reprenne le client.</p>
-          </article>
+      <section className="cvc-section cvc-intro-section">
+        <div className="cvc-section-head">
+          <span>CE QUE VOUS DEVEZ SAVOIR LE MATIN</span>
+          <h2>Qui rappeler. Quoi planifier. Quoi réclamer.</h2>
+          <p>Les exemples ci-dessous utilisent des données fictives. Ils montrent le type de travail que SESIRA garde sous les yeux.</p>
         </div>
       </section>
 
-      <section id="plateforme" className="cvc-section cvc-platform-section">
-        <div className="cvc-section-head cvc-section-head-wide">
-          <span>02 · CE QUE SESIRA SUIT</span>
-          <h2>Quatre choses que vous regardez déjà tous les jours.</h2>
-          <p>Les devis, les chantiers, les factures et les contrats d'entretien restent ensemble du début à la fin.</p>
+      <section id="devis" className="cvc-feature-band">
+        <div className="cvc-feature-copy">
+          <span>01 · DEVIS</span>
+          <h2>5 devis sans réponse. 61 300 € en attente.</h2>
+          <p>SESIRA garde la date d'envoi, la réponse du client, la relance prévue et la prochaine action au même endroit.</p>
+          <ul>
+            <li>Voir les devis qui attendent encore une réponse.</li>
+            <li>Préparer une relance sans l'envoyer à votre place.</li>
+            <li>Garder une objection prix visible jusqu'à votre décision.</li>
+          </ul>
         </div>
+        <QuotePanel />
+      </section>
 
-        <div className="cvc-core-grid">
-          {CORE_PRODUCTS.map((product) => (
-            <article key={product.title}>
-              <div className="cvc-core-top"><span>{product.number}</span><b>{product.title}</b></div>
-              <h3>{product.headline}</h3>
-              <p>{product.detail}</p>
-              <div className="cvc-core-outcome"><span>AU QUOTIDIEN</span><strong>{product.outcome}</strong></div>
-            </article>
-          ))}
+      <section id="chantiers" className="cvc-feature-band reverse muted">
+        <PlanningPanel />
+        <div className="cvc-feature-copy">
+          <span>02 · CHANTIERS</span>
+          <h2>Le client a signé. Le chantier doit maintenant entrer au planning.</h2>
+          <p>Le devis, la date, le technicien, les documents et le rapport restent attachés au même client.</p>
+          <ul>
+            <li>Repérer un chantier vendu sans date.</li>
+            <li>Retrouver les informations utiles avant l'intervention.</li>
+            <li>Voir les rapports terrain encore à valider.</li>
+          </ul>
         </div>
       </section>
 
-      <section id="aujourdhui" className="cvc-section cvc-today-section">
-        <div className="cvc-section-head cvc-section-head-wide">
-          <span>03 · SESIRA AUJOURD'HUI</span>
-          <h2>Vous ouvrez SESIRA et vous voyez ce qu'il faut traiter aujourd'hui.</h2>
-          <p>
-            Un devis sans réponse. Un chantier sans date. Un rapport à valider. Une facture à réclamer. Un contrat d'entretien à renouveler.
-          </p>
+      <section id="factures" className="cvc-feature-band">
+        <div className="cvc-feature-copy">
+          <span>03 · FACTURES</span>
+          <h2>22 400 € sont arrivés à échéance. Vous savez lesquels reprendre.</h2>
+          <p>SESIRA garde les échéances, les promesses de paiement et les litiges visibles. La décision reste chez vous.</p>
+          <ul>
+            <li>Voir les factures qui viennent d'arriver à échéance.</li>
+            <li>Noter une promesse de paiement et sa date.</li>
+            <li>Sortir un litige du suivi normal jusqu'à votre décision.</li>
+          </ul>
         </div>
-        <TodayPreview />
+        <InvoicePanel />
       </section>
 
-      <section className="cvc-section cvc-depth-section">
-        <div className="cvc-section-head cvc-section-head-wide">
-          <span>04 · LE RESTE DU TRAVAIL</span>
-          <h2>Techniciens, appels, obligations et nouveaux clients restent rattachés au bon client.</h2>
-          <p>SESIRA couvre aussi ce qui se passe avant le devis, sur le chantier et après la facture.</p>
-        </div>
-        <div className="cvc-layer-grid">
-          {PLATFORM_LAYERS.map((layer) => (
-            <article key={layer.title}>
-              <span>{layer.tag}</span>
-              <h3>{layer.title}</h3>
-              <p>{layer.text}</p>
-            </article>
-          ))}
+      <section id="entretien" className="cvc-feature-band reverse muted">
+        <MaintenancePanel />
+        <div className="cvc-feature-copy">
+          <span>04 · ENTRETIEN</span>
+          <h2>Le chantier est fini. Le client peut encore rester plusieurs années.</h2>
+          <p>SESIRA garde les visites, les dates et les renouvellements du contrat d'entretien avec le client.</p>
+          <ul>
+            <li>Voir les contrats qui arrivent à leur date de renouvellement.</li>
+            <li>Préparer la prochaine visite avant qu'elle soit oubliée.</li>
+            <li>Retrouver les besoins repérés lors des interventions précédentes.</li>
+          </ul>
         </div>
       </section>
 
-      <section id="controle" className="cvc-section cvc-control-section">
-        <div className="cvc-section-head cvc-section-head-wide cvc-section-head-dark">
-          <span>05 · QUI FAIT QUOI</span>
-          <h2>Le suivi, c'est SESIRA. Les décisions, c'est vous.</h2>
-          <p>
-            SESIRA peut repérer un devis oublié ou préparer une relance. Un prix, une remise, un litige ou un engagement important reste entre vos mains.
-          </p>
-        </div>
-
-        <div className="cvc-automation-grid">
-          {AUTOMATION_LEVELS.map(([number, title, description]) => (
-            <article key={title}>
-              <span>{number}</span>
-              <h3>{title}</h3>
-              <p>{description}</p>
-            </article>
-          ))}
-        </div>
-
-        <div className="cvc-control-grid">
-          <div className="cvc-decision-card">
-            <span>LE CLIENT HÉSITE SUR LE PRIX</span>
-            <h3>Sophie Lefèvre · 18 450 € HT</h3>
-            <blockquote>« Nous sommes toujours intéressés, mais le tarif dépasse un peu notre budget. »</blockquote>
-            <p>SESIRA garde la réponse visible et prépare la suite. C'est vous qui décidez si vous rappelez, négociez ou laissez le devis tel quel.</p>
+      <section className="cvc-today-dark">
+        <div className="cvc-today-dark-inner">
+          <div className="cvc-section-head light">
+            <span>SESIRA AUJOURD'HUI</span>
+            <h2>Ouvrez SESIRA le matin. La liste est déjà prête.</h2>
+            <p>Devis sans réponse, chantier sans date, facture à reprendre, entretien à préparer : tout arrive dans la même vue.</p>
           </div>
-          <div className="cvc-work-split">
-            <div><b>SESIRA</b><b>VOUS</b></div>
-            {WORK_SPLIT.map(([sesira, human]) => (
-              <div key={sesira}><span>{sesira}</span><strong>{human}</strong></div>
+          <TodayPreview />
+        </div>
+      </section>
+
+      <section className="cvc-section cvc-more-section">
+        <div className="cvc-section-head">
+          <span>AUTOUR DU DEVIS, DU CHANTIER ET DE LA FACTURE</span>
+          <h2>SESIRA suit aussi le travail autour.</h2>
+        </div>
+        <div className="cvc-more-grid">
+          {MORE_FEATURES.map((item) => (
+            <article key={item.title}>
+              <span>{item.tag}</span>
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="controle" className="cvc-control">
+        <div className="cvc-control-inner">
+          <div className="cvc-section-head light">
+            <span>QUI DÉCIDE</span>
+            <h2>SESIRA peut préparer une relance. Il ne baisse pas votre prix à votre place.</h2>
+            <p>Prix, remise, litige, contrat important ou action réglementaire : vous gardez la main.</p>
+          </div>
+
+          <div className="cvc-control-example">
+            <div className="cvc-client-message">
+              <span>CLIENT · SOPHIE LEFÈVRE · DEVIS 18 450 € HT</span>
+              <blockquote>« Nous sommes toujours intéressés, mais le tarif dépasse un peu notre budget. »</blockquote>
+            </div>
+            <div className="cvc-decision-note">
+              <span>SESIRA</span>
+              <strong>Réponse repérée. Relance commerciale mise en pause.</strong>
+              <p>Votre équipe choisit ensuite de rappeler, négocier ou conserver le prix.</p>
+            </div>
+          </div>
+
+          <div className="cvc-automation-row">
+            {AUTOMATION_STEPS.map(([title, text], index) => (
+              <article key={title}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <strong>{title}</strong>
+                <p>{text}</p>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="cvc" className="cvc-section cvc-cvc-section">
-        <div className="cvc-cvc-grid">
-          <div className="cvc-section-head">
-            <span>06 · FAIT POUR LE CVC</span>
-            <h2>Devis, planning, techniciens, fluides et entretien : SESIRA suit votre vrai travail.</h2>
-            <p>
-              Votre journée passe du devis au chantier, puis à la facture et au contrat d'entretien. SESIRA a été construit autour de ce travail-là.
-            </p>
-          </div>
-
-          <div className="cvc-cvc-stack">
-            <article><span>VENTE</span><strong>Devis, variantes, réponses clients et relances.</strong></article>
-            <article><span>CHANTIERS</span><strong>Planning, techniciens, rapports et documents.</strong></article>
-            <article><span>FACTURES</span><strong>Échéances, promesses de paiement et litiges.</strong></article>
-            <article><span>ENTRETIEN</span><strong>Contrats, visites et renouvellements.</strong></article>
-            <article><span>OBLIGATIONS</span><strong>F-Gas, CERFA, bilan annuel et facturation électronique.</strong></article>
-          </div>
+      <section className="cvc-section cvc-regulatory">
+        <div className="cvc-regulatory-copy">
+          <span>CVC · OBLIGATIONS MÉTIER</span>
+          <h2>Les données F-Gas et CERFA viennent déjà du chantier.</h2>
+          <p>SESIRA réutilise les informations de l'intervention pour préparer les éléments nécessaires. Les validations et les envois externes restent sous votre contrôle.</p>
+        </div>
+        <div className="cvc-regulatory-list">
+          <div><strong>F-Gas</strong><span>Données de l'intervention regroupées.</span></div>
+          <div><strong>CERFA</strong><span>Éléments du document préparés.</span></div>
+          <div><strong>Facturation électronique</strong><span>Données prêtes pour le prestataire connecté.</span></div>
         </div>
       </section>
 
-      <section className="cvc-section cvc-reg-section">
-        <div className="cvc-reg-grid">
-          <div>
-            <span>DATES À SUIVRE</span>
-            <h2>SESIRA prépare les données F-Gas, CERFA et e-facture à partir du travail déjà saisi.</h2>
-          </div>
-          <div className="cvc-reg-copy">
-            <p>Le technicien remplit son intervention une fois. Les informations utiles restent disponibles pour préparer les documents et échéances qui suivent.</p>
-            <div className="cvc-reg-points">
-              <div><strong>F-Gas & CERFA</strong><span>Données d'intervention et éléments nécessaires au suivi annuel.</span></div>
-              <div><strong>Facturation électronique</strong><span>Factures préparées pour passer par le prestataire prévu pour la transmission.</span></div>
-              <div><strong>Vous gardez la main</strong><span>Les actions externes importantes restent soumises à votre validation.</span></div>
-            </div>
-          </div>
+      <section className="cvc-founder">
+        <div>
+          <span>POURQUOI SESIRA</span>
+          <h2>Paul Nkengue</h2>
+          <strong>Mathématicien · Expert en vente B2B</strong>
+        </div>
+        <div>
+          <p>J'ai vu la même situation encore et encore : le devis est bon, le client est intéressé, mais personne ne reprend le sujet au bon moment.</p>
+          <p>La partie maths sert à une chose simple : si SESIRA ne sait pas, il l'affiche. Il n'invente pas un chiffre pour remplir l'écran.</p>
         </div>
       </section>
 
-      <section className="cvc-section cvc-founder-section">
-        <div className="cvc-founder-grid">
-          <div>
-            <span>FONDATEUR</span>
-            <h2>Paul Nkengue</h2>
-            <strong>Mathématicien · Expert en vente B2B</strong>
-          </div>
-          <div>
-            <p>J'ai passé des années en vente B2B à voir la même chose : un devis est envoyé, tout le monde passe au suivant, puis personne ne rappelle le client. Le problème n'était pas le travail. Le travail avait déjà été fait.</p>
-            <p>Je suis matheux de formation. Ici, ça sert à une chose : quand SESIRA ne sait pas, il l'écrit. Il n'invente pas un chiffre pour faire joli.</p>
-          </div>
+      <section id="demo" className="cvc-final-cta">
+        <div>
+          <span>DÉMO SESIRA</span>
+          <h2>Prenez un devis, un chantier et une facture. Je vous montre ce que SESIRA en ferait.</h2>
         </div>
-      </section>
-
-      <section id="demo" className="cvc-section cvc-cta-section">
-        <div className="cvc-cta-panel">
-          <div>
-            <span>VOIR SESIRA AVEC VOS PROPRES CAS</span>
-            <h2>On prend un devis, un chantier et une facture. Je vous montre ce que SESIRA en ferait.</h2>
-            <p>La démo part de votre façon de travailler aujourd'hui. Vous voyez tout de suite ce qui vous serait utile.</p>
-          </div>
-          <div className="cvc-cta-actions">
-            <a className="button primary" href="mailto:paul@sesira.fr?subject=Démo%20SESIRA">Demander une démo</a>
-            <Link className="button cvc-secondary-button" href="/diagnostic">Faire le diagnostic gratuit</Link>
-            <small>Avec le fondateur · PME CVC · sans engagement</small>
-          </div>
+        <div className="cvc-final-actions">
+          <a className="button primary" href="mailto:paul@sesira.fr?subject=Démo%20SESIRA">Demander une démo</a>
+          <Link href="/diagnostic">Faire le diagnostic gratuit</Link>
         </div>
       </section>
 
       <footer className="cvc-footer">
         <SesiraLogo />
         <p>Le suivi, c'est SESIRA. Les décisions, c'est vous.</p>
-        <div><a href="#plateforme">Ce que SESIRA suit</a><Link href="/diagnostic">Diagnostic</Link><Link href="/login">Connexion</Link></div>
+        <div>
+          <Link href="/diagnostic">Diagnostic</Link>
+          <Link href="/login">Connexion</Link>
+        </div>
         <span>© 2026 SESIRA</span>
       </footer>
     </main>
@@ -371,7 +309,7 @@ export default function HomePage() {
 
 function TodayPreview({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={compact ? "cvc-today-preview compact" : "cvc-today-preview"} aria-label="Exemple de la vue SESIRA Aujourd'hui">
+    <div className={compact ? "cvc-today-preview compact" : "cvc-today-preview"} aria-label="Exemple de SESIRA Aujourd'hui">
       <div className="cvc-product-chrome">
         <div><i /><i /><i /></div>
         <span>SESIRA · AUJOURD'HUI</span>
@@ -379,18 +317,74 @@ function TodayPreview({ compact = false }: { compact?: boolean }) {
       </div>
       <div className="cvc-product-body">
         <div className="cvc-product-heading">
-          <div><span>AUJOURD'HUI</span><h3>À traiter aujourd'hui</h3><p>Les devis, chantiers et factures qui attendent quelque chose.</p></div>
-          <div className="cvc-product-count"><strong>5</strong><span>à traiter</span></div>
+          <div>
+            <span>VENDREDI 4 SEPTEMBRE</span>
+            <h3>4 choses à traiter</h3>
+            <p>Avant de repartir dans les mails et le planning.</p>
+          </div>
+          <div className="cvc-product-count"><strong>4</strong><span>à voir</span></div>
         </div>
         <div className="cvc-today-list">
           {TODAY_ITEMS.map((item) => (
             <article key={`${item.kind}-${item.title}`}>
-              <div className="cvc-today-copy"><span>{item.kind}</span><strong>{item.title}</strong><p>{item.detail}</p></div>
+              <div className="cvc-today-copy">
+                <span>{item.kind}</span>
+                <strong>{item.title}</strong>
+                <p>{item.detail}</p>
+              </div>
               <b>{item.action}</b>
             </article>
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function QuotePanel() {
+  const rows = [
+    ["Sophie Lefèvre", "18 450 €", "6 j sans réponse"],
+    ["Clima Pro", "14 900 €", "4 j sans réponse"],
+    ["Martin & Fils", "11 250 €", "réponse reçue"],
+    ["Résidence Voltaire", "9 800 €", "relance demain"],
+    ["Benoît Martin", "6 900 €", "8 j sans réponse"],
+  ] as const;
+  return <DataPanel title="Devis à reprendre" meta="EXEMPLE"><div className="cvc-data-table">{rows.map(([name, amount, status]) => <div key={name}><span>{name}</span><strong>{amount}</strong><b>{status}</b></div>)}</div></DataPanel>;
+}
+
+function PlanningPanel() {
+  const rows = [
+    ["Dupont SARL", "PAC air/eau", "Sans date"],
+    ["Résidence Hugo", "Climatisation", "12 sept."],
+    ["Cabinet Lenoir", "Maintenance", "14 sept."],
+    ["Martin & Fils", "Chaudière", "Sans date"],
+  ] as const;
+  return <DataPanel title="Planning chantier" meta="EXEMPLE"><div className="cvc-data-table planning">{rows.map(([name, job, date]) => <div key={name}><span>{name}<small>{job}</small></span><b>{date}</b></div>)}</div></DataPanel>;
+}
+
+function InvoicePanel() {
+  const rows = [
+    ["Dupont SARL", "12 400 €", "Promis vendredi"],
+    ["SCI République", "6 800 €", "Échue hier"],
+    ["Hôtel Magenta", "3 200 €", "Litige ouvert"],
+  ] as const;
+  return <DataPanel title="Factures à suivre" meta="EXEMPLE"><div className="cvc-data-table invoices">{rows.map(([name, amount, status]) => <div key={name}><span>{name}</span><strong>{amount}</strong><b>{status}</b></div>)}</div></DataPanel>;
+}
+
+function MaintenancePanel() {
+  const rows = [
+    ["Martin & Fils", "26 jours", "Renouvellement"],
+    ["Cabinet Lenoir", "18 jours", "Visite annuelle"],
+    ["SCI République", "42 jours", "Renouvellement"],
+  ] as const;
+  return <DataPanel title="Entretien à préparer" meta="EXEMPLE"><div className="cvc-data-table maintenance">{rows.map(([name, when, status]) => <div key={name}><span>{name}</span><strong>{when}</strong><b>{status}</b></div>)}</div></DataPanel>;
+}
+
+function DataPanel({ title, meta, children }: { title: string; meta: string; children: React.ReactNode }) {
+  return (
+    <div className="cvc-data-panel">
+      <div className="cvc-data-panel-top"><span>{title}</span><b>{meta}</b></div>
+      <div className="cvc-data-panel-body">{children}</div>
     </div>
   );
 }
