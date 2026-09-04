@@ -90,6 +90,7 @@ Read this file first on any new Claude Code session; resume from
 
 ### Closed product decisions
 
+- **Company establishment — France**: SESIRA is to be established legally in **France**. C34 must therefore treat SESIRA's own invoicing obligations and partner-contracting assumptions from the French legal/tax framework. Under the current reference calendar, if SESIRA qualifies as a PME/TPE, its own electronic invoice issuance falls under the French 2027-09-01 mandate. This is a company-compliance requirement, not a customer-facing product feature.
 - **C33 — export only**: SESIRA produces the CERFA data/export and annual-balance export; the customer deposits with the approved body. Never write **« SESIRA déclare pour vous »** in UI, contracts, exports or sales copy. Product wording: « Préparer le bilan », « Produire l'export », « Exporter le dossier ».
 - **C34 — provider abstraction first**: build `EInvoicingProvider` + deterministic test double. No real PA API at initial C34 technical maturity. Keep `PRODUCTION_PROVIDER_INTEGRATION_PENDING` until Paul selects a PA and a real adapter exists. Provider success states are impossible in production without a real provider callback.
 - **C35 — Indicateur, Option A**: no IOBSP in V1. SESIRA may signal a financing partner, transmit prospect identity/contact with consent and track a human-declared status. It must not collect/transmit financing documents, compare offers, calculate rates/monthly payments, advise, score or assess solvency. Required documents = checklist only; financing documents do not enter C27 Documents.
@@ -98,7 +99,6 @@ Read this file first on any new Claude Code session; resume from
 
 ### Still open
 
-- Company establishment country (DE or FR), affecting SESIRA's own e-invoicing obligations and partner contracting.
 - DREAL leakage/release declaration rule: do not model until confirmed on Légifrance.
 - Future PA partner choice and production API adapter: not a blocker for C34 technical maturity, but a blocker for production submission.
 
