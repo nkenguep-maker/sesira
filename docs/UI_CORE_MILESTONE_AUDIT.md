@@ -1,52 +1,55 @@
-# SESIRA Core Milestone Audit
+# SESIRA Core ↔ Product/UI Milestone Audit
 
-This document is an evidence ledger, not a roadmap claim.
+Last audited: 2026-09-04.
+
+This document is an evidence ledger. It separates backend contract maturity from Product/UI exposure and from real-world calibration.
 
 ## Status vocabulary
 
-* `PASS_EVIDENCE`: implementation and milestone evidence exist in repository history.
-* `VERIFY_PENDING`: implementation exists but current canonical verification has not yet been reproduced on the integration branch.
-* `MISSING`: no repository evidence of milestone implementation.
-* `BLOCKED`: implementation cannot safely be validated because of an external or critical blocker.
+- `TECHNICALLY_VALIDATED`: contract/migration exists and has been validated against the live platform.
+- `UI_ALIGNED`: the Product/UI exposes the contract without inventing state or authority.
+- `UI_GAP`: backend capability exists but the Product/UI is missing or incomplete.
+- `REAL_WORLD_CALIBRATION_PENDING`: technical behavior exists but customer-derived thresholds/cadences are not calibrated.
+- `PROVIDER_PENDING`: external provider success is intentionally unavailable and must not be simulated in production.
 
-## C0 → C18 observed state
+## Core evidence
 
-The original Core development predates the C19→C40 autonomous driver and some early commits aggregate more than one foundational gate. Therefore C0→C4 are audited by invariant and implementation evidence rather than by relying only on commit-title numbering.
+The Core branch `claude/core-workflows` reached C40. The live Supabase project contains the C33-C40 migrations through `20261005000000_platform_maturity_fixes`. The current integration branch restores those migration artifacts into the Product mainline so repository history matches the deployed schema.
 
-| Core level | Evidence | Audit state before integration verification |
+| Milestones | Backend | Product/UI audit |
 | --- | --- | --- |
-| C0 | Claude Core baseline, canonical verify baseline, architecture and tenant inventory | PASS_EVIDENCE |
-| C1 | Request and Quote state-machine enforcement migrations and offensive coverage | PASS_EVIDENCE |
-| C2 | Tenant-safe assignments and first-class quote pause/opt-out safety state | PASS_EVIDENCE |
-| C3 | Deterministic follow-up scheduling, leases, claim/release safety | PASS_EVIDENCE |
-| C4 | Durable workflow idempotency for events, Attention and provider receipts | PASS_EVIDENCE |
-| C5 | Safe Shadow execution with structural no-send invariant | PASS_EVIDENCE |
-| C6 | Workflow Attention, Attention state machine and append-only audit provenance | PASS_EVIDENCE |
-| C7 | Bounded retries, deterministic failure classification and incident deduplication | PASS_EVIDENCE |
-| C8 | P0 workflow hardening and permission corrections | PASS_EVIDENCE |
-| C9 | Guarded outbound email provider boundary | PASS_EVIDENCE |
-| C10 | Inbound email reply verification, ingestion and quote matching | PASS_EVIDENCE |
-| C11 | Structured AI reply classification with schema validation and provenance | PASS_EVIDENCE |
-| C12 | Approval-based controlled sending | PASS_EVIDENCE |
-| C13 | Product read-model seam for UI consumers | PASS_EVIDENCE |
-| C14 | End-to-end workflow hardening tests | PASS_EVIDENCE |
-| C15 | Controlled production operations actions | PASS_EVIDENCE |
-| C16 | Onboarding/imports/results/weekly report/costs technical V1 gate | PASS_EVIDENCE |
-| C17 | Operational evidence and readiness metrics | PASS_EVIDENCE |
-| C18 | Opportunities, quote variants, revisions and options | PASS_EVIDENCE |
+| C0-C18 | TECHNICALLY_VALIDATED | UI_ALIGNED for current surfaced flows |
+| C19-C24 | TECHNICALLY_VALIDATED | UI_ALIGNED with targeted wiring debt |
+| C25-C32 | TECHNICALLY_VALIDATED | UI_ALIGNED; provider-truth and unknown-state gates present |
+| C33 F-Gas / CERFA | TECHNICALLY_VALIDATED | UI_GAP |
+| C34 E-invoicing | TECHNICALLY_VALIDATED / PROVIDER_PENDING for real PA | UI_GAP |
+| C35 Financing indicator | TECHNICALLY_VALIDATED | UI_GAP |
+| C36 Technician Field | TECHNICALLY_VALIDATED | UI_GAP |
+| C37 Voice intake | TECHNICALLY_VALIDATED / PROVIDER_PENDING until production vendor + Europe gate | UI_GAP |
+| C38 Observability / costs | TECHNICALLY_VALIDATED | UI_GAP |
+| C39 Security / recovery | TECHNICALLY_VALIDATED | Mostly backend-only; no standalone customer UI required |
+| C40 Platform maturity | TECHNICALLY_VALIDATED with follow-up gaps tracked in `full-platform-audit-c40.md` | UI catch-up in progress |
 
-`PASS_EVIDENCE` is not yet the final technical verdict. C0→C18 remain `VERIFY_PENDING` as a group until the divergent Core changes are integrated onto the current Product/UI base and the canonical verification runs green there.
+## Existing Product/UI debt to close before final C40 sign-off
 
-## C19 → C40 observed state
+1. Approval decisions are visible in `Suivi` but not yet operator-actionable from that surface.
+2. The CSV import orchestrator exists, while the current import UI still leaves analysis disabled.
+3. Open pipeline value must not aggregate mixed currencies into one amount.
+4. Onboarding currently keeps several answers only in local UI state.
+5. Connection management surfaces real state but several provider setup actions remain intentionally unavailable.
+6. Engineering vocabulary must be translated to CVC operator language without weakening provider truth.
 
-Core branch head is C18 and its C18 commit explicitly defers value policies to C19. No later Core milestone is assumed complete.
+## C33-C40 Product target
 
-| Levels | State |
-| --- | --- |
-| C19 → C40 | MISSING |
+- U33: equipment/fluid tracking, regulatory attentions, attestations, CERFA and annual export preparation.
+- U34: separate accounting state from e-invoicing state and never fake PA feedback.
+- U35: financing referral only in customer/opportunity context, no advice/rate/score surface.
+- U36: role-specific technician experience, offline-first artifacts and visible conflicts.
+- U37: voice policy/call activity with disclosure, opt-out, retention and Europe verification truth.
+- U38: admin-only `État SESIRA` based on raw component events/backlogs, no invented health score.
+- U39: security/recovery remains primarily an internal platform guarantee.
+- U40: final Core↔UI verification, wording gate, provider-truth gate and deployment smoke.
 
-## Deployment gate
+## Calibration boundary
 
-No production promotion while `Core verified level != Product/UI verified level`.
-
-Current production deployment remains based on `main` and is not used as proof that C8→C18 integrate cleanly with the current Product/UI code.
+C40 technical validation does not establish market validation, ROI proof, benchmark quality, conversion uplift or customer-calibrated thresholds. Those remain `REAL_WORLD_CALIBRATION_PENDING` / `COMMERCIAL_VALIDATION_PENDING` until real customer data exists.
