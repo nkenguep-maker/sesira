@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { DiagnosticExperience } from "@/components/diagnostic/diagnostic-experience";
 
 export const metadata: Metadata = {
-  title: "Calcul de rentabilité CVC | SESIRA",
-  description: "Estimez en un clic votre volume annuel de devis, puis calculez le seuil de rentabilité de SESIRA avec seulement deux chiffres facultatifs.",
+  title: "Diagnostic CVC | SESIRA",
+  description: "En trois minutes, utilisez vos propres chiffres pour voir ce qui reste sans suite dans votre activité CVC.",
 };
 
 export default function DiagnosticPage() {

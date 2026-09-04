@@ -5,46 +5,59 @@ import { useMemo, useState } from "react";
 
 import { SesiraLogo } from "@/components/sesira/logo";
 
-const MONTHLY_PRICE = 1500;
-const SETUP_PRICE = 1200;
-const FIRST_YEAR_COST = MONTHLY_PRICE * 12 + SETUP_PRICE;
-
 const VOLUMES = [
   { label: "Environ 10", value: 10 },
   { label: "Environ 25", value: 25 },
   { label: "Environ 50", value: 50 },
-  { label: "100 ou plus", value: 120 },
+  { label: "100 ou plus", value: 100 },
 ] as const;
 
 export function DiagnosticExperience() {
   const [monthlyQuotes, setMonthlyQuotes] = useState<number | null>(null);
-  const [refining, setRefining] = useState(false);
+  const [quotesWithoutFollowUp, setQuotesWithoutFollowUp] = useState("");
   const [averageQuote, setAverageQuote] = useState("");
-  const [margin, setMargin] = useState("");
+  const [unscheduledJobs, setUnscheduledJobs] = useState("");
+  const [overdueInvoices, setOverdueInvoices] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
-  const annualQuotes = monthlyQuotes ? monthlyQuotes * 12 : null;
-  const onePercent = annualQuotes ? Math.max(1, Math.round(annualQuotes * 0.01)) : null;
-
-  const refined = useMemo(() => {
+  const result = useMemo(() => {
     if (!monthlyQuotes) return null;
-    const amount = Number(averageQuote.replace(",", "."));
-    const marginPercent = Number(margin.replace(",", "."));
-    if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(marginPercent) || marginPercent <= 0 || marginPercent > 100) return null;
 
-    const marginPerQuote = amount * (marginPercent / 100);
-    const exactThreshold = FIRST_YEAR_COST / marginPerQuote;
-    const threshold = Math.ceil(exactThreshold);
-    const share = (threshold / (monthlyQuotes * 12)) * 100;
+    const noFollowUp = parseOptionalNumber(quotesWithoutFollowUp);
+    const average = parseOptionalNumber(averageQuote);
+    const unscheduled = parseOptionalNumber(unscheduledJobs);
+    const overdue = parseOptionalNumber(overdueInvoices);
 
-    return { amount, marginPercent, marginPerQuote, exactThreshold, threshold, share };
-  }, [averageQuote, margin, monthlyQuotes]);
+    const annualQuotes = monthlyQuotes * 12;
+    const annualQuotesLabel = monthlyQuotes === 100 ? `${formatNumber(annualQuotes)}+` : formatNumber(annualQuotes);
+    const annualNoFollowUp = noFollowUp === null ? null : Math.round(noFollowUp * 12);
+    const quoteValue = annualNoFollowUp !== null && average !== null ? annualNoFollowUp * average : null;
 
-  function selectVolume(value: number) {
-    setMonthlyQuotes(value);
-    setRefining(false);
-    setAverageQuote("");
-    setMargin("");
-    window.setTimeout(() => document.getElementById("diagnostic-result")?.scrollIntoView({ behavior: "smooth", block: "start" }), 20);
+    return {
+      annualQuotesLabel,
+      annualNoFollowUp,
+      quoteValue,
+      unscheduled,
+      overdue,
+    };
+  }, [averageQuote, monthlyQuotes, overdueInvoices, quotesWithoutFollowUp, unscheduledJobs]);
+
+  const followUpError = useMemo(() => {
+    if (!monthlyQuotes) return null;
+    const value = parseOptionalNumber(quotesWithoutFollowUp);
+    if (value === null) return null;
+    if (monthlyQuotes < 100 && value > monthlyQuotes) {
+      return `Ce nombre ne peut pas dépasser les ${monthlyQuotes} devis envoyés par mois.`;
+    }
+    return null;
+  }, [monthlyQuotes, quotesWithoutFollowUp]);
+
+  function showResult() {
+    if (!monthlyQuotes || followUpError) return;
+    setSubmitted(true);
+    window.setTimeout(() => {
+      document.getElementById("diagnostic-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 20);
   }
 
   return (
@@ -52,140 +65,245 @@ export function DiagnosticExperience() {
       <header className="roi-topbar">
         <Link href="/" aria-label="Retour à SESIRA"><SesiraLogo /></Link>
         <div>
-          <span>Calcul de rentabilité CVC</span>
+          <span>Diagnostic gratuit · sans compte</span>
           <Link className="button ghost small" href="/">Retour au site</Link>
         </div>
       </header>
 
       <section className="roi-hero">
+        <span className="roi-kicker">3 MINUTES · VOS CHIFFRES UNIQUEMENT</span>
+        <h1>Sur un mois normal, qu&apos;est-ce qui reste sans suite chez vous&nbsp;?</h1>
+        <p>Des chiffres approximatifs suffisent. Le résultat reprend uniquement ce que vous entrez.</p>
+      </section>
+
+      <section className="roi-form" aria-label="Questions du diagnostic SESIRA">
+        <article className="roi-question roi-question-wide">
+          <div className="roi-question-head">
+            <span>01 · DEVIS</span>
+            <h2>Combien de devis envoyez-vous chaque mois&nbsp;?</h2>
+          </div>
+          <div className="roi-volume-grid">
+            {VOLUMES.map((item) => (
+              <button
+                className={`roi-volume-choice ${monthlyQuotes === item.value ? "selected" : ""}`}
+                type="button"
+                key={item.label}
+                onClick={() => {
+                  setMonthlyQuotes(item.value);
+                  setSubmitted(false);
+                }}
+              >
+                <strong>{item.label}</strong>
+                <small>devis / mois</small>
+              </button>
+            ))}
+          </div>
+        </article>
+
+        <article className="roi-question">
+          <div className="roi-question-head">
+            <span>02 · RELANCES</span>
+            <h2>Combien de devis sans réponse ne sont jamais relancés&nbsp;?</h2>
+          </div>
+          <NumberField
+            label="Sur un mois normal"
+            value={quotesWithoutFollowUp}
+            onChange={(value) => {
+              setQuotesWithoutFollowUp(value);
+              setSubmitted(false);
+            }}
+            suffix="devis"
+            placeholder="3"
+            helper="Si vous ne savez pas, laissez vide."
+          />
+          {followUpError ? <p className="roi-field-error">{followUpError}</p> : null}
+        </article>
+
+        <article className="roi-question">
+          <div className="roi-question-head">
+            <span>03 · MONTANT</span>
+            <h2>Quel est le montant moyen d&apos;un devis&nbsp;?</h2>
+          </div>
+          <NumberField
+            label="Approximation"
+            value={averageQuote}
+            onChange={(value) => {
+              setAverageQuote(value);
+              setSubmitted(false);
+            }}
+            suffix="€"
+            placeholder="12000"
+            helper="Facultatif. Il sert uniquement à chiffrer la valeur des devis concernés."
+          />
+        </article>
+
+        <article className="roi-question">
+          <div className="roi-question-head">
+            <span>04 · CHANTIERS</span>
+            <h2>Combien de chantiers signés sont aujourd&apos;hui sans date au planning&nbsp;?</h2>
+          </div>
+          <NumberField
+            label="Aujourd'hui"
+            value={unscheduledJobs}
+            onChange={(value) => {
+              setUnscheduledJobs(value);
+              setSubmitted(false);
+            }}
+            suffix="chantiers"
+            placeholder="2"
+            helper="Laissez vide si vous ne connaissez pas le chiffre."
+          />
+        </article>
+
+        <article className="roi-question">
+          <div className="roi-question-head">
+            <span>05 · FACTURES</span>
+            <h2>Quel montant arrivé à échéance n&apos;est pas encore encaissé aujourd&apos;hui&nbsp;?</h2>
+          </div>
+          <NumberField
+            label="Factures échues"
+            value={overdueInvoices}
+            onChange={(value) => {
+              setOverdueInvoices(value);
+              setSubmitted(false);
+            }}
+            suffix="€"
+            placeholder="12400"
+            helper="Facultatif. Entrez le montant que vous voyez réellement aujourd'hui."
+          />
+        </article>
+      </section>
+
+      <section className="roi-submit">
         <div>
-          <span className="roi-kicker">1 CHOIX · PREMIER RÉSULTAT IMMÉDIAT</span>
-          <h1>Combien de devis envoyez vous <em>chaque mois&nbsp;?</em></h1>
+          <strong>Aucun compte demandé.</strong>
+          <span>Les valeurs restent dans cette page pendant votre calcul.</span>
         </div>
-        <p>Pas besoin de connaître votre marge ou votre panier moyen pour commencer. Choisissez simplement votre volume approximatif. Vous pourrez affiner ensuite si le premier résultat mérite votre attention.</p>
+        <button className="button primary" type="button" disabled={!monthlyQuotes || Boolean(followUpError)} onClick={showResult}>
+          Voir mes chiffres
+        </button>
       </section>
 
-      <section className="roi-volume-section">
-        <div className="roi-volume-grid">
-          {VOLUMES.map((item) => (
-            <button
-              className={`roi-volume-choice ${monthlyQuotes === item.value ? "selected" : ""}`}
-              type="button"
-              key={item.label}
-              onClick={() => selectVolume(item.value)}
-            >
-              <span>{monthlyQuotes === item.value ? "●" : "○"}</span>
-              <strong>{item.label}</strong>
-              <small>devis par mois</small>
-            </button>
-          ))}
-        </div>
-        <p className="roi-volume-note">Une approximation suffit. Le but est de savoir si le suivi mérite un système, pas de produire une prévision comptable.</p>
-      </section>
-
-      {monthlyQuotes && annualQuotes && onePercent ? (
+      {submitted && result ? (
         <section id="diagnostic-result" className="roi-result">
           <div className="roi-result-head">
-            <span className="roi-kicker">PREMIÈRE LECTURE</span>
-            <h2>Vous envoyez environ <em>{formatNumber(annualQuotes)} devis par an.</em></h2>
-            <p>À ce volume, le suivi n’est plus seulement une question de mémoire. Un écart de 1 % représente déjà environ {onePercent} {onePercent > 1 ? "dossiers" : "dossier"} sur l’année.</p>
+            <span className="roi-kicker">VOS CHIFFRES</span>
+            <h2>Voilà ce que vous avez déclaré.</h2>
           </div>
 
-          <div className="roi-first-value">
-            <div><span>Volume annuel</span><strong>{formatNumber(annualQuotes)}</strong><small>devis surveillables</small></div>
-            <div><span>1 % du volume</span><strong>{onePercent}</strong><small>{onePercent > 1 ? "dossiers" : "dossier"}</small></div>
-            <div><span>Effort demandé</span><strong>0</strong><small>chiffre exact saisi</small></div>
+          <div className="roi-result-grid">
+            <ResultCard label="Devis envoyés" value={result.annualQuotesLabel} detail="par an, d'après votre volume mensuel" />
+            <ResultCard
+              label="Sans réponse et sans relance"
+              value={result.annualNoFollowUp === null ? "Non renseigné" : formatNumber(result.annualNoFollowUp)}
+              detail={result.annualNoFollowUp === null ? "vous n'avez pas donné ce chiffre" : "devis par an, si votre mois normal se répète"}
+            />
+            <ResultCard
+              label="Valeur des devis concernés"
+              value={result.quoteValue === null ? "Non calculée" : formatEuro(result.quoteValue)}
+              detail={result.quoteValue === null ? "renseignez le montant moyen pour l'afficher" : "par an, sur vos chiffres"}
+            />
+            <ResultCard
+              label="Chantiers signés sans date"
+              value={result.unscheduled === null ? "Non renseigné" : formatNumber(result.unscheduled)}
+              detail="aujourd'hui"
+            />
+            <ResultCard
+              label="Factures échues non encaissées"
+              value={result.overdue === null ? "Non renseigné" : formatEuro(result.overdue)}
+              detail="aujourd'hui"
+            />
           </div>
 
-          {!refining ? (
-            <div className="roi-refine-cta">
-              <div>
-                <span className="roi-kicker">OPTIONNEL</span>
-                <h3>Vous voulez savoir combien de devis supplémentaires couvriraient SESIRA&nbsp;?</h3>
-                <p>Ajoutez seulement deux chiffres : le montant moyen d’un devis et votre marge approximative.</p>
-              </div>
-              <button className="button primary" type="button" onClick={() => setRefining(true)}>Affiner mon calcul</button>
-            </div>
-          ) : (
-            <div className="roi-refine-panel">
-              <div className="roi-refine-copy">
-                <span className="roi-kicker">DEUX CHIFFRES · PAS PLUS</span>
-                <h3>Calculez votre seuil de rentabilité.</h3>
-                <p>SESIRA ne promet pas de récupérer ces devis. Le calcul montre uniquement combien de devis supplémentaires suffiraient à couvrir son coût.</p>
-              </div>
-              <div className="roi-inputs">
-                <label>
-                  <span>Montant moyen d’un devis</span>
-                  <div><input inputMode="decimal" value={averageQuote} onChange={(event) => setAverageQuote(event.target.value)} placeholder="12000" /><b>€</b></div>
-                  <small>Une moyenne approximative suffit</small>
-                </label>
-                <label>
-                  <span>Marge approximative</span>
-                  <div><input inputMode="decimal" value={margin} onChange={(event) => setMargin(event.target.value)} placeholder="30" /><b>%</b></div>
-                  <small>Votre marge sur un devis signé</small>
-                </label>
-              </div>
-
-              <div className="roi-price-assumption">
-                <span>Hypothèse SESIRA affichée</span>
-                <strong>1 500 € / mois + 1 200 € de mise en service</strong>
-                <small>Soit {formatEuro(FIRST_YEAR_COST)} la première année. Le prix n’est pas modifiable dans le calcul.</small>
-              </div>
-
-              {refined ? (
-                <div className="roi-threshold">
-                  <div>
-                    <span>SEUIL DE RENTABILITÉ</span>
-                    <strong>{refined.threshold} {refined.threshold > 1 ? "devis" : "devis"}</strong>
-                    <p>supplémentaires sur les {formatNumber(annualQuotes)} devis que vous envoyez dans l’année</p>
-                  </div>
-                  <div className="roi-threshold-details">
-                    <p><span>Marge moyenne par devis</span><b>{formatEuro(refined.marginPerQuote)}</b></p>
-                    <p><span>Part du volume annuel</span><b>{formatPercent(refined.share)}</b></p>
-                    <p><span>Calcul exact</span><b>{formatNumber(refined.exactThreshold, 1)} devis</b></p>
-                  </div>
-                </div>
-              ) : (
-                <p className="roi-waiting">Renseignez ces deux valeurs pour afficher le seuil. Aucun email ni compte n’est demandé.</p>
-              )}
-            </div>
-          )}
-
-          <div className="roi-trust">
-            <div><span>01</span><p>Le calcul utilise uniquement les chiffres affichés ici.</p></div>
-            <div><span>02</span><p>SESIRA ne prétend pas savoir combien de devis seront réellement gagnés.</p></div>
-            <div><span>03</span><p>Si le seuil est trop élevé pour votre volume, le calcul doit le rendre évident.</p></div>
+          <div className="roi-truth-note">
+            <strong>La valeur des devis n&apos;est pas du chiffre d&apos;affaires perdu.</strong>
+            <p>Elle mesure seulement les devis que vous avez indiqués comme sans réponse et sans relance. SESIRA ne devine pas lesquels auraient signé.</p>
           </div>
 
-          <div className="roi-actions">
+          <div className="roi-next-step">
             <div>
-              <span className="roi-kicker">PROCHAINE ÉTAPE</span>
-              <h3>Le calcul vous semble rationnel&nbsp;? Regardons vos vrais devis.</h3>
+              <span className="roi-kicker">SUR VOS VRAIS DEVIS</span>
+              <h3>Vous voulez mesurer ça pendant 90 jours&nbsp;?</h3>
+              <p>SESIRA observe vos demandes et vos devis. Il garde aussi les relances datées. Rien n&apos;est envoyé par SESIRA pendant le constat.</p>
             </div>
-            <div>
-              <a className="button primary" href="mailto:paul@sesira.fr?subject=Calcul%20SESIRA%20pour%20mon%20entreprise%20CVC">Parler à Paul</a>
-              <Link className="button ghost" href="/login">Connexion</Link>
+            <div className="roi-offer-card">
+              <strong>590 €</strong>
+              <p>forfait unique · 90 jours · sans engagement</p>
+              <small>Déduits de l&apos;installation si vous continuez.</small>
+              <a className="button primary" href="mailto:paul@sesira.fr?subject=Constat%2090%20jours%20SESIRA">Demander mon constat</a>
             </div>
+          </div>
+
+          <div className="roi-secondary-actions">
+            <button className="button ghost" type="button" onClick={() => setSubmitted(false)}>Modifier mes chiffres</button>
+            <Link href="/#aujourdhui">Voir SESIRA Aujourd&apos;hui</Link>
           </div>
         </section>
       ) : null}
 
       <footer className="roi-footer">
         <SesiraLogo />
-        <span>Calcul indicatif. Un seuil de rentabilité n’est pas une promesse de résultat.</span>
+        <span>Le calcul reprend vos saisies. Il ne promet aucun résultat commercial.</span>
       </footer>
     </main>
   );
+}
+
+function NumberField({
+  label,
+  value,
+  onChange,
+  suffix,
+  placeholder,
+  helper,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  suffix: string;
+  placeholder: string;
+  helper: string;
+}) {
+  return (
+    <label className="roi-number-field">
+      <span>{label}</span>
+      <div>
+        <input
+          inputMode="decimal"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          aria-label={label}
+        />
+        <b>{suffix}</b>
+      </div>
+      <small>{helper}</small>
+    </label>
+  );
+}
+
+function ResultCard({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <article>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <small>{detail}</small>
+    </article>
+  );
+}
+
+function parseOptionalNumber(value: string) {
+  const cleaned = value.trim().replace(/\s/g, "").replace(",", ".");
+  if (!cleaned) return null;
+  const number = Number(cleaned);
+  if (!Number.isFinite(number) || number < 0) return null;
+  return number;
 }
 
 function formatEuro(value: number) {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
 }
 
-function formatNumber(value: number, decimals = 0) {
-  return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: decimals }).format(value);
-}
-
-function formatPercent(value: number) {
-  return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(value) + " %";
+function formatNumber(value: number) {
+  return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(value);
 }
