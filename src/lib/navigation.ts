@@ -1,3 +1,13 @@
+export type SesiraAppNavItem = {
+  href: string;
+  label: string;
+};
+
+type SesiraAppNavGroup = {
+  label: string;
+  items: readonly SesiraAppNavItem[];
+};
+
 export const SESIRA_APP_NAV_GROUPS = [
   {
     label: "Commercial",
@@ -24,12 +34,12 @@ export const SESIRA_APP_NAV_GROUPS = [
       { href: "/app/parametres", label: "Paramètres" },
     ],
   },
-] as const;
+] as const satisfies readonly SesiraAppNavGroup[];
 
-export const SESIRA_APP_NAV = [
+export const SESIRA_APP_NAV: readonly SesiraAppNavItem[] = [
   { href: "/app", label: "Aujourd’hui" },
-  ...SESIRA_APP_NAV_GROUPS.flatMap((group) => group.items),
-] as const;
+  ...SESIRA_APP_NAV_GROUPS.flatMap((group) => [...group.items]),
+];
 
 export function isAppNavActive(pathname: string, href: string) {
   return href === "/app" ? pathname === href : pathname.startsWith(href);
