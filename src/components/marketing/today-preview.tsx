@@ -123,15 +123,10 @@ type TodayPreviewProps = {
 };
 
 export function TodayPreview({ compact = false }: TodayPreviewProps) {
-  const [interactive, setInteractive] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const triggerRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const dragStartY = useRef<number | null>(null);
-
-  useEffect(() => {
-    setInteractive(true);
-  }, []);
 
   const closePanel = useCallback(() => {
     const originIndex = activeIndex;
@@ -217,10 +212,13 @@ export function TodayPreview({ compact = false }: TodayPreviewProps) {
             </div>
             <div className="cvc-product-count"><strong>5</strong><span>à voir</span></div>
           </div>
-          <div className="cvc-today-list">
-            {TODAY_ITEMS.map((item, index) => {
-              if (!compact && interactive) {
-                return (
+
+          {compact ? (
+            <StaticTodayList />
+          ) : (
+            <>
+              <div className="cvc-today-list cvc-today-interactive-list">
+                {TODAY_ITEMS.map((item, index) => (
                   <article key={`${item.kind}-${item.title}`} className="cvc-today-interactive-row">
                     <button
                       ref={(node) => { triggerRefs.current[index] = node; }}
@@ -232,16 +230,14 @@ export function TodayPreview({ compact = false }: TodayPreviewProps) {
                       <TodayRow item={item} />
                     </button>
                   </article>
-                );
-              }
-
-              return (
-                <article key={`${item.kind}-${item.title}`}>
-                  <TodayRow item={item} />
-                </article>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+              <noscript>
+                <style>{`.cvc-today-interactive-list{display:none!important}`}</style>
+                <StaticTodayList />
+              </noscript>
+            </>
+          )}
         </div>
       </div>
 
@@ -303,6 +299,18 @@ export function TodayPreview({ compact = false }: TodayPreviewProps) {
         </div>
       ) : null}
     </>
+  );
+}
+
+function StaticTodayList() {
+  return (
+    <div className="cvc-today-list">
+      {TODAY_ITEMS.map((item) => (
+        <article key={`${item.kind}-${item.title}`}>
+          <TodayRow item={item} />
+        </article>
+      ))}
+    </div>
   );
 }
 
