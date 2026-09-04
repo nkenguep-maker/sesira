@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState, useTransition } from "react";
 
+import { saveOnboardingDraftAction } from "@/app/app/onboarding/actions";
 import { SesiraLogo } from "@/components/sesira/logo";
 import type { OnboardingDraft } from "@/lib/core/ui-contracts";
 
@@ -15,6 +16,8 @@ type Field = {
   type?: "text" | "email";
   required?: boolean;
 };
+
+type SaveState = { kind: "idle" | "saved" | "error"; message?: string };
 
 const steps: Array<{
   name: string;
@@ -30,7 +33,7 @@ const steps: Array<{
     description: "Commençons par le contexte nécessaire pour organiser votre espace sans vous demander de tout configurer d’un coup.",
     fields: [
       { key: "companyName", label: "Nom de l’entreprise", placeholder: "Ex. Maison K", hint: "Le nom utilisé dans votre espace SESIRA.", required: true },
-      { key: "industry", label: "Activité principale", placeholder: "Ex. Services techniques", hint: "Votre métier principal, avec vos propres mots." },
+      { key: "industry", label: "Activité principale", placeholder: "Ex. Installation et maintenance CVC", hint: "Votre métier principal, avec vos propres mots." },
     ],
   },
   {
@@ -39,8 +42,8 @@ const steps: Array<{
     title: "Qui porte les dossiers ?",
     description: "SESIRA doit comprendre la taille et la responsabilité de l’équipe avant de proposer du suivi.",
     fields: [
-      { key: "teamSize", label: "Taille de l’équipe", placeholder: "Ex. 8 personnes", hint: "Une estimation suffit pour commencer." },
-      { key: "primaryRole", label: "Rôle principal", placeholder: "Ex. Direction commerciale", hint: "La fonction qui pilotera le plus souvent SESIRA." },
+      { key: "teamSize", label: "Taille de l’équipe", placeholder: "Ex. 15 personnes", hint: "Une estimation suffit pour commencer." },
+      { key: "primaryRole", label: "Rôle principal", placeholder: "Ex. Direction", hint: "La fonction qui utilisera le plus souvent SESIRA." },
     ],
   },
   {
@@ -49,7 +52,7 @@ const steps: Array<{
     title: "Où vivent vos données aujourd’hui ?",
     description: "SESIRA ne prétend jamais être connecté à une source qui ne l’est pas réellement.",
     fields: [
-      { key: "primaryTool", label: "Outil principal", placeholder: "Ex. Excel, HubSpot, Notion", hint: "L’endroit où votre équipe cherche l’information aujourd’hui." },
+      { key: "primaryTool", label: "Outil principal", placeholder: "Ex. Excel, logiciel métier, HubSpot", hint: "L’endroit où votre équipe cherche l’information aujourd’hui." },
       { key: "importFormat", label: "Format à importer", placeholder: "Ex. CSV", hint: "Le premier format que vous souhaitez reprendre." },
     ],
   },
@@ -59,7 +62,7 @@ const steps: Array<{
     title: "Préparez votre messagerie.",
     description: "Une adresse connectée donne du contexte à SESIRA. Elle ne lui donne pas automatiquement le droit d’envoyer.",
     fields: [
-      { key: "emailProvider", label: "Fournisseur email", placeholder: "Ex. Google Workspace", hint: "Microsoft 365, Gmail ou autre environnement professionnel." },
+      { key: "emailProvider", label: "Service email", placeholder: "Ex. Google Workspace", hint: "Microsoft 365, Gmail ou autre environnement professionnel." },
       { key: "professionalEmail", label: "Adresse professionnelle", placeholder: "vous@entreprise.com", hint: "La connexion de la messagerie se fait ensuite dans Connexions.", type: "email" },
     ],
   },
@@ -80,7 +83,7 @@ const steps: Array<{
     description: "Le système doit comprendre votre fonctionnement avant de proposer ou d’exécuter une action.",
     fields: [
       { key: "observationPeriod", label: "Période d’observation", placeholder: "Ex. 14 jours", hint: "Une période suffisante pour voir vos habitudes réelles." },
-      { key: "primaryGoal", label: "Objectif principal", placeholder: "Ex. Réduire les relances oubliées", hint: "Le problème que vous voulez rendre visible en premier." },
+      { key: "primaryGoal", label: "Objectif principal", placeholder: "Ex. Réduire les devis oubliés", hint: "Le problème que vous voulez rendre visible en premier." },
     ],
   },
 ];
@@ -101,17 +104,25 @@ const EMPTY_DRAFT: OnboardingDraft = {
 };
 
 const MODE_PREVIEW = [
-  ["01", "Observation", "SESIRA surveille. Aucune action externe."],
-  ["02", "Il vous montre", "SESIRA prépare ce qu’il aurait fait, sans envoyer."],
-  ["03", "Validation", "Votre équipe valide, modifie ou refuse avant envoi."],
-  ["04", "Automatisation contrôlée", "Les actions autorisées peuvent être exécutées dans les limites définies."],
+  ["01", "Observation", "SESIRA regarde ce qui se passe. Aucune action externe."],
+  ["02", "Prépare", "SESIRA prépare ce qu’il aurait fait, sans envoyer."],
+  ["03", "Vous validez", "Votre équipe valide, modifie ou refuse avant envoi."],
+  ["04", "Automatique", "Uniquement pour les cas simples que vous avez autorisés."],
 ] as const;
 
-export function OnboardingExperience() {
+export function OnboardingExperience({
+  initialDraft,
+  canSave,
+}: {
+  initialDraft: Partial<OnboardingDraft> | null;
+  canSave: boolean;
+}) {
   const [step, setStep] = useState(0);
   const [furthestStep, setFurthestStep] = useState(0);
-  const [draft, setDraft] = useState<OnboardingDraft>(EMPTY_DRAFT);
+  const [draft, setDraft] = useState<OnboardingDraft>({ ...EMPTY_DRAFT, ...(initialDraft ?? {}) });
   const [review, setReview] = useState(false);
+  const [saveState, setSaveState] = useState<SaveState>({ kind: initialDraft ? "saved" : "idle" });
+  const [isSaving, startSaving] = useTransition();
   const current = steps[step];
 
   const completedFields = useMemo(() => Object.values(draft).filter((value) => value.trim().length > 0).length, [draft]);
@@ -120,6 +131,7 @@ export function OnboardingExperience() {
   function updateField(key: DraftKey, value: string) {
     setDraft((previous) => ({ ...previous, [key]: value }));
     setReview(false);
+    setSaveState({ kind: "idle" });
   }
 
   function next(event: FormEvent<HTMLFormElement>) {
@@ -140,6 +152,19 @@ export function OnboardingExperience() {
     }
   }
 
+  function save() {
+    if (!canSave || isSaving) return;
+    setSaveState({ kind: "idle" });
+    startSaving(async () => {
+      const result = await saveOnboardingDraftAction(draft);
+      if (result.ok) {
+        setSaveState({ kind: "saved", message: "Configuration enregistrée dans votre espace SESIRA." });
+      } else {
+        setSaveState({ kind: "error", message: result.error });
+      }
+    });
+  }
+
   return (
     <main className="onboarding-frame premium-onboarding">
       <aside className="onboarding-rail">
@@ -157,7 +182,9 @@ export function OnboardingExperience() {
             );
           })}
         </nav>
-        <p className="onboarding-rail-note">Vos réponses restent sur cet écran pour le moment. Elles ne sont pas encore sauvegardées lorsque vous quittez cette configuration.</p>
+        <p className="onboarding-rail-note">
+          {canSave ? "Vous pouvez enregistrer cette configuration à la dernière étape et la reprendre plus tard." : "Vous pouvez consulter la configuration. Seul un propriétaire ou un administrateur peut l’enregistrer."}
+        </p>
         <Link href="/app" className="text-link">Quitter la configuration</Link>
       </aside>
 
@@ -165,7 +192,15 @@ export function OnboardingExperience() {
         <header className="onboarding-mobile-head"><SesiraLogo /><span>{step + 1} / {steps.length}</span></header>
         <div className="onboarding-card premium-onboarding-card">
           {review ? (
-            <ReviewState draft={draft} completedFields={completedFields} onEdit={() => setReview(false)} />
+            <ReviewState
+              draft={draft}
+              completedFields={completedFields}
+              onEdit={() => setReview(false)}
+              onSave={save}
+              canSave={canSave}
+              isSaving={isSaving}
+              saveState={saveState}
+            />
           ) : (
             <>
               <div className="premium-onboarding-heading">
@@ -210,12 +245,28 @@ function ModePreview() {
   );
 }
 
-function ReviewState({ draft, completedFields, onEdit }: { draft: OnboardingDraft; completedFields: number; onEdit: () => void }) {
+function ReviewState({
+  draft,
+  completedFields,
+  onEdit,
+  onSave,
+  canSave,
+  isSaving,
+  saveState,
+}: {
+  draft: OnboardingDraft;
+  completedFields: number;
+  onEdit: () => void;
+  onSave: () => void;
+  canSave: boolean;
+  isSaving: boolean;
+  saveState: SaveState;
+}) {
   const groups = [
     ["Entreprise", draft.companyName || "À compléter", draft.industry || "Activité non indiquée"],
     ["Équipe", draft.teamSize || "À compléter", draft.primaryRole || "Rôle non indiqué"],
     ["Données", draft.primaryTool || "À compléter", draft.importFormat || "Format non indiqué"],
-    ["Email", draft.professionalEmail || "À compléter", draft.emailProvider || "Fournisseur non indiqué"],
+    ["Email", draft.professionalEmail || "À compléter", draft.emailProvider || "Service non indiqué"],
     ["Suivi", draft.followUpDelay || "À compléter", draft.defaultOwner || "Responsable non indiqué"],
     ["Observation", draft.observationPeriod || "À compléter", draft.primaryGoal || "Objectif non indiqué"],
   ] as const;
@@ -223,18 +274,32 @@ function ReviewState({ draft, completedFields, onEdit }: { draft: OnboardingDraf
   return (
     <div className="premium-review-state">
       <span className="eyebrow">VÉRIFICATION · {completedFields}/12 CHAMPS RENSEIGNÉS</span>
-      <h1>Votre configuration est structurée.</h1>
-      <p>Voici ce que vous avez renseigné. Aucune connexion, aucun import ni aucun succès n’est présenté comme réel sans confirmation.</p>
+      <h1>Votre configuration est prête à être enregistrée.</h1>
+      <p>Voici ce que vous avez renseigné. Une adresse email saisie ici ne crée aucune connexion et n’autorise aucun envoi.</p>
       <div className="premium-review-grid">
         {groups.map(([name, value, detail]) => <article key={name}><span>{name}</span><strong>{value}</strong><p>{detail}</p></article>)}
       </div>
-      <div className="premium-inline-notice">
+      <div className="premium-inline-notice" role={saveState.kind === "error" ? "alert" : undefined}>
         <span className="eyebrow">SAUVEGARDE</span>
-        <p>Ces réponses ne sont pas encore enregistrées lorsque vous quittez cet écran. Les connexions et données réelles se configurent directement dans l’espace SESIRA.</p>
+        <p>
+          {isSaving
+            ? "Enregistrement en cours…"
+            : saveState.kind === "saved"
+              ? saveState.message ?? "Cette configuration est enregistrée dans votre espace SESIRA."
+              : saveState.kind === "error"
+                ? saveState.message
+                : canSave
+                  ? "Enregistrez ces réponses pour les retrouver lors de votre prochaine visite."
+                  : "Seul un propriétaire ou un administrateur peut modifier cette configuration."}
+        </p>
       </div>
       <div className="onboarding-actions premium-onboarding-actions">
-        <button type="button" className="button ghost" onClick={onEdit}>Modifier</button>
-        <Link href="/app" className="button primary">Retour à l’espace</Link>
+        <button type="button" className="button ghost" onClick={onEdit} disabled={isSaving}>Modifier</button>
+        {canSave && saveState.kind !== "saved" ? (
+          <button type="button" className="button primary" onClick={onSave} disabled={isSaving}>{isSaving ? "Enregistrement…" : "Enregistrer la configuration"}</button>
+        ) : (
+          <Link href="/app" className="button primary">Retour à l’espace</Link>
+        )}
       </div>
     </div>
   );
