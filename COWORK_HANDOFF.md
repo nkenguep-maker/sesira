@@ -7,11 +7,11 @@ Read this file first on any new Claude Code session; resume from
 ## Current status
 
 - **Branch**: `claude/core-workflows`
-- **HEAD**: `ce480e5` (C29 maintenance & renewals)
+- **HEAD**: `(new)` (C30 growth core)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
-- **Driver phase**: WAVE 3 (Operations) COMPLETE — C29 landed and applied on Supabase. Wave 4 (Growth) next.
-- **NEXT_MILESTONE**: `C30 — GROWTH CORE`
+- **Driver phase**: WAVE 4 (Growth) — C30 landed and applied on Supabase.
+- **NEXT_MILESTONE**: `C31 — CONTENT + PUBLICATION + CONVERSATIONS`
 
 ## Milestone log
 
@@ -43,6 +43,7 @@ Read this file first on any new Claude Code session; resume from
 | C27 | `147284e` | DONE | Documents core (state machine + classify/validate/reject/archive) — applied on Supabase; migration renamed to `20260921000000` after Codex reconcile collision |
 | C28 | `b5900a1` | DONE | Invoice monitoring (state machine + issue/payment/overdue/dunning + read RPC) — applied on Supabase as `20260922000000` |
 | C29 | `ce480e5` | DONE | Maintenance & renewals (state machine + activate/visit/scan/notice/cancel + 2 read RPCs) — applied on Supabase as `20260923000000`. **WAVE 3 COMPLETE.** |
+| C30 | `(new)` | DONE | Growth core — 2 tables (growth_campaigns + leads) + 2 state machines + 6 write RPCs + 2 read RPCs — applied on Supabase as `20260924000000`. **WAVE 4 KICKOFF.** |
 
 ## BASELINE_FAILURE
 

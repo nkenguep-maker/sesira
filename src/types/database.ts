@@ -2148,6 +2148,91 @@ export type Database = {
           status: string
         }[]
       }
+      activate_growth_campaign: {
+        Args: {
+          target_organization_id: string
+          target_campaign_id: string
+          target_start_at: string
+          target_end_at: string | null
+          target_budget: number | null
+          target_currency: string | null
+          target_external_ref: string | null
+        }
+        Returns: boolean
+      }
+      transition_growth_campaign: {
+        Args: {
+          target_organization_id: string
+          target_campaign_id: string
+          target_new_status: string
+          target_reason: string | null
+        }
+        Returns: boolean
+      }
+      qualify_lead: {
+        Args: {
+          target_organization_id: string
+          target_lead_id: string
+          target_qualified_by_user_id: string
+          target_notes: string | null
+        }
+        Returns: boolean
+      }
+      convert_lead: {
+        Args: {
+          target_organization_id: string
+          target_lead_id: string
+          target_opportunity_id: string
+        }
+        Returns: boolean
+      }
+      disqualify_lead: {
+        Args: {
+          target_organization_id: string
+          target_lead_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      archive_lead: {
+        Args: {
+          target_organization_id: string
+          target_lead_id: string
+          target_reason: string | null
+        }
+        Returns: boolean
+      }
+      pending_leads: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          lead_id: string
+          contact_name: string
+          contact_email: string | null
+          contact_phone: string | null
+          source: string
+          source_campaign_id: string | null
+          status: string
+          created_at: string
+        }[]
+      }
+      active_growth_campaigns: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          campaign_id: string
+          name: string
+          channel: string
+          external_ref: string | null
+          budget: number | null
+          currency: string
+          start_at: string | null
+          end_at: string | null
+          status: string
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string
