@@ -1,142 +1,137 @@
 import Link from "next/link";
 
-import { MetricCard, PageHeader, StatusPill } from "@/components/sesira/ui";
+import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
-import { AUTOMATION_LEVEL_LABELS } from "@/lib/automations/view-model";
 import { getSpeedToLeadSummary } from "@/lib/data";
-import { buildResultsPeriod } from "@/lib/results/period";
-import { createSupabaseResultsRepository } from "@/lib/results/supabase-results-repository";
+import { getManagerToday, getTechnicianToday, type TodayAction } from "@/lib/data/today-c40";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+const TECH_ROLES = new Set(["TECH", "TECHNICIAN"]);
 
 export default async function DashboardPage() {
   const viewer = await getViewerContext();
   if (!viewer) return null;
 
-  const supabase = await createClient();
   const organizationId = viewer.organization.id;
+  const isTechnician = TECH_ROLES.has(viewer.role);
+
+  if (isTechnician) {
+    const today = await getTechnicianToday(organizationId, viewer.userId, currentDate());
+    return <TodayInbox organizationName={viewer.organization.name} workspace={today} technician />;
+  }
+
+  const supabase = await createClient();
   const [customersResult, quotesResult, integrationsResult, automationResult, speedToLead] = await Promise.all([
     supabase.from("customers").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
     supabase.from("quotes").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
-    supabase.from("integrations").select("id, type, status", { count: "exact" }).eq("organization_id", organizationId),
-    supabase.from("automation_configs").select("id, level, enabled").eq("organization_id", organizationId).eq("enabled", true).order("updated_at", { ascending: false }).limit(1),
+    supabase.from("integrations").select("id,type,status").eq("organization_id", organizationId),
+    supabase.from("automation_configs").select("id").eq("organization_id", organizationId).eq("enabled", true).limit(1),
     getSpeedToLeadSummary(organizationId),
   ]);
 
-  let attentionOpen: number | null = null;
-  try {
-    const repository = createSupabaseResultsRepository(supabase);
-    const summary = await repository.getSummary({ organizationId, period: buildResultsPeriod("30d") });
-    attentionOpen = summary.observed.find((metric) => metric.key === "attention_open")?.value ?? null;
-  } catch {
-    attentionOpen = null;
-  }
-
   const customerCount = customersResult.error ? null : (customersResult.count ?? 0);
   const quoteCount = quotesResult.error ? null : (quotesResult.count ?? 0);
-  const connectedEmail = (integrationsResult.data ?? []).some((item) => item.type === "EMAIL" && item.status === "CONNECTED");
-  const currentAutomation = automationResult.data?.[0];
-  const automationLevel = currentAutomation?.level && currentAutomation.level in AUTOMATION_LEVEL_LABELS
-    ? AUTOMATION_LEVEL_LABELS[currentAutomation.level as keyof typeof AUTOMATION_LEVEL_LABELS]
-    : "Non configuré";
   const hasBusinessData = (customerCount ?? 0) > 0 || (quoteCount ?? 0) > 0;
+  const connectedEmail = (integrationsResult.data ?? []).some((item) => item.type === "EMAIL" && item.status === "CONNECTED");
   const setupStateIsReliable = !customersResult.error && !quotesResult.error && !integrationsResult.error;
-  const setupRequired = setupStateIsReliable && (!hasBusinessData || !connectedEmail);
 
-  if (setupRequired) {
+  if (setupStateIsReliable && (!hasBusinessData || !connectedEmail)) {
     return (
       <FirstRunSetup
         organizationName={viewer.organization.name}
         hasBusinessData={hasBusinessData}
         connectedEmail={connectedEmail}
         policyConfigured={speedToLead?.configured === true}
-        automationConfigured={Boolean(currentAutomation)}
+        automationConfigured={Boolean(automationResult.data?.length)}
       />
     );
   }
+
+  const today = await getManagerToday(organizationId, {
+    includePlatform: ["OWNER", "ADMIN"].includes(viewer.role),
+  });
+  return <TodayInbox organizationName={viewer.organization.name} workspace={today} />;
+}
+
+function TodayInbox({
+  organizationName,
+  workspace,
+  technician = false,
+}: {
+  organizationName: string;
+  workspace: { actions: TodayAction[]; unavailable: string[] };
+  technician?: boolean;
+}) {
+  const urgent = workspace.actions.filter((item) => item.priority === 1).length;
+  const humanDecisions = workspace.actions.filter((item) => ["Valider", "Décider", "Arbitrer"].includes(item.action)).length;
+  const categories = new Set(workspace.actions.map((item) => item.category)).size;
 
   return (
     <>
       <PageHeader
         eyebrow="AUJOURD’HUI"
-        title="Vue d’ensemble"
-        description={`Ce qui mérite une action dans ${viewer.organization.name}.`}
+        title={technician ? "Ma journée" : "Ce qui attend quelqu’un"}
+        description={technician
+          ? `Vos interventions et les données terrain à vérifier aujourd’hui chez ${organizationName}.`
+          : `SESIRA rassemble ici ce qui est resté en plan chez ${organizationName}. Aucun élément n’est créé pour remplir l’écran.`}
+        actions={technician ? <Link className="button primary small" href="/app/terrain">Ouvrir le terrain</Link> : undefined}
       />
 
-      <section className="metrics-grid app-metrics-strip" aria-label="Indicateurs principaux">
-        <MetricCard label="Clients" value={formatCount(customerCount)} />
-        <MetricCard label="Devis" value={formatCount(quoteCount)} />
-        <MetricCard label="À traiter" value={formatCount(attentionOpen)} />
-        <MetricCard label="Messagerie" value={integrationsResult.error ? "—" : connectedEmail ? "Connectée" : "À relier"} />
+      <section className="workspace-stat-strip" aria-label="Résumé de la journée">
+        <div><strong>{workspace.actions.length}</strong><span>À traiter</span></div>
+        <div><strong>{urgent}</strong><span>À regarder d’abord</span></div>
+        <div><strong>{humanDecisions}</strong><span>Décisions humaines</span></div>
+        <div><strong>{categories}</strong><span>Types de sujets</span></div>
       </section>
 
-      <section className="app-primary-block">
-        <div className="app-section-heading">
-          <div>
-            <span className="eyebrow">PRISE EN CHARGE</span>
-            <h2>Nouvelles demandes en attente</h2>
-            <p>Repérez rapidement ce qui n’a pas encore reçu de première prise en charge interne.</p>
-          </div>
-          {speedToLead?.enabled ? (
-            <StatusPill tone={speedToLead.overdueCount > 0 ? "warning" : "good"}>Cible {formatDuration(speedToLead.targetMinutes)}</StatusPill>
-          ) : (
-            <Link href="/app/parametres/politiques" className="policy-action-chip">
-              Activer la politique
-            </Link>
-          )}
-        </div>
+      {workspace.unavailable.length ? (
+        <section className="workspace-boundary-note">
+          <StatusPill tone="warning">Lecture partielle</StatusPill>
+          <p>{workspace.unavailable.join(" · ")} : ces données ne sont pas lisibles actuellement. Elles ne sont pas remplacées par zéro.</p>
+        </section>
+      ) : null}
 
-        {!speedToLead ? (
-          <div className="app-state-message">
-            <strong>Mesure indisponible</strong>
-            <p>SESIRA ne peut pas lire cette mesure pour le moment. Aucune valeur de remplacement n’est affichée.</p>
-          </div>
-        ) : (
-          <>
-            <div className="app-operational-stats">
-              <div><strong>{formatCount(speedToLead.pendingCount)}</strong><span>En attente</span></div>
-              <div><strong>{speedToLead.enabled ? formatCount(speedToLead.overdueCount) : "—"}</strong><span>Hors délai</span></div>
-              <div><strong>{speedToLead.averageHandlingMinutes === null ? "—" : formatDuration(speedToLead.averageHandlingMinutes)}</strong><span>Moyenne observée · 30 j</span></div>
-            </div>
+      {workspace.actions.length ? (
+        <section className="workspace-list" aria-label="Travail à traiter aujourd’hui">
+          {workspace.actions.map((item) => (
+            <article className="workspace-row" key={item.id}>
+              <div className="workspace-row-main">
+                <div className="workspace-row-heading">
+                  <div>
+                    <span className="eyebrow">{categoryLabel(item.category)}</span>
+                    <h2>{item.title}</h2>
+                  </div>
+                  <StatusPill tone={item.priority === 1 ? "warning" : "neutral"}>
+                    {item.priority === 1 ? "À regarder" : "À traiter"}
+                  </StatusPill>
+                </div>
+                <p className="workspace-description">{item.detail}</p>
+              </div>
+              <div className="workspace-row-actions">
+                <Link className={item.priority === 1 ? "button primary small" : "button ghost small"} href={item.href}>
+                  {item.action}
+                </Link>
+              </div>
+            </article>
+          ))}
+        </section>
+      ) : (
+        <EmptyState
+          title={technician ? "Rien d’assigné aujourd’hui" : "Rien ne demande d’action actuellement"}
+          description={technician
+            ? "Aucune intervention ni donnée terrain à vérifier n’est remontée pour cette journée."
+            : "SESIRA ne fabrique pas une liste de tâches quand les données ne montrent rien à reprendre."}
+        />
+      )}
 
-            <div className="app-primary-actions">
-              <Link href="/app/suivi" className="button primary small">Voir le suivi</Link>
-              <Link href="/app/parametres/politiques" className="secondary-action-link">Régler le délai</Link>
-            </div>
-
-            <p className="app-method-note">Mesure basée sur la première transition interne hors de « Nouvelle ». Échantillon observé sur 30 jours : {speedToLead.handledSampleCount}. Ce n’est pas présenté comme un temps de réponse envoyé au client.</p>
-          </>
-        )}
-      </section>
-
-      <section className="app-dashboard-grid">
-        <article className="app-work-card">
-          <div className="app-card-heading">
-            <div><span className="eyebrow">ATTENTION</span><h2>Décisions à reprendre</h2></div>
-            <StatusPill tone={attentionOpen && attentionOpen > 0 ? "warning" : "neutral"}>
-              {attentionOpen === null ? "Indisponible" : attentionOpen > 0 ? `${attentionOpen} ouvertes` : "À jour"}
-            </StatusPill>
-          </div>
-          <p>{attentionOpen === null
-            ? "La lecture des éléments à traiter est indisponible. SESIRA ne remplace pas cette donnée par zéro."
-            : attentionOpen > 0
-              ? "Ouvrez le suivi pour retrouver les dossiers concernés, leur contexte et la décision attendue."
-              : "Aucun arbitrage ouvert n’est visible actuellement."}</p>
-          <Link href="/app/suivi" className="secondary-action-link">Ouvrir le suivi</Link>
-        </article>
-
-        <article className="app-work-card compact-system-card">
-          <div className="app-card-heading"><div><span className="eyebrow">ESPACE</span><h2>État du système</h2></div></div>
-          <dl className="app-definition-list">
-            <div><dt>Organisation</dt><dd>{organizationStatusLabel(viewer.organization.status)}</dd></div>
-            <div><dt>Mode SESIRA</dt><dd>{automationLevel}</dd></div>
-            <div><dt>Messagerie</dt><dd>{integrationsResult.error ? "Indisponible" : connectedEmail ? "Connectée" : "À relier"}</dd></div>
-            <div><dt>Connexions</dt><dd>{integrationsResult.error ? "Indisponible" : String(integrationsResult.data?.length ?? 0)}</dd></div>
-          </dl>
-          <Link href="/app/integrations" className="secondary-action-link">Gérer les connexions</Link>
-        </article>
-      </section>
+      {!technician ? (
+        <section className="workspace-boundary-note">
+          <StatusPill tone="neutral">Votre décision reste visible</StatusPill>
+          <p>Prix, remises, litiges, financement, validation réglementaire et arrêt d’un service restent des décisions humaines. Aujourd’hui les fait remonter ; il ne les prend pas à votre place.</p>
+        </section>
+      ) : null}
     </>
   );
 }
@@ -163,56 +158,21 @@ function FirstRunSetup({
       <header className="setup-home-header">
         <span className="eyebrow">MISE EN ROUTE · {requiredComplete}/2 ESSENTIELS</span>
         <h1>Préparer {organizationName}</h1>
-        <p>Avant d’afficher un tableau de bord vide, SESIRA vous guide vers les deux éléments nécessaires pour commencer à travailler : vos données et votre messagerie.</p>
+        <p>Pour commencer à faire remonter ce qui reste en plan, SESIRA a besoin de vos données et de votre messagerie professionnelle.</p>
         <Link href={nextHref} className="button primary">{nextLabel}</Link>
       </header>
 
       <div className="setup-checklist" aria-label="Étapes de mise en route">
-        <SetupItem
-          done={hasBusinessData}
-          title="Ajouter vos données"
-          description="Importez ou créez vos premiers clients et devis."
-          href="/app/imports"
-          action="Ouvrir les imports"
-          required
-        />
-        <SetupItem
-          done={connectedEmail}
-          title="Connecter la messagerie"
-          description="Reliez la boîte professionnelle que SESIRA doit observer."
-          href="/app/integrations"
-          action="Gérer les connexions"
-          required
-        />
-        <SetupItem
-          done={policyConfigured}
-          title="Définir votre délai de prise en charge"
-          description="Choisissez quand une nouvelle demande doit remonter dans le suivi."
-          href="/app/parametres/politiques"
-          action="Régler la politique"
-        />
-        <SetupItem
-          done={automationConfigured}
-          title="Choisir le niveau d’automatisation"
-          description="Commencez en observation et augmentez le niveau de confiance lorsque vous le décidez."
-          href="/app/automatisations"
-          action="Voir les automatisations"
-        />
+        <SetupItem done={hasBusinessData} title="Ajouter vos données" description="Importez vos premiers clients. Les devis apparaissent lorsqu’ils sont créés ou synchronisés." href="/app/imports" action="Ouvrir les imports" required />
+        <SetupItem done={connectedEmail} title="Connecter la messagerie" description="Reliez la boîte professionnelle que SESIRA doit observer." href="/app/integrations" action="Gérer les connexions" required />
+        <SetupItem done={policyConfigured} title="Définir votre délai de prise en charge" description="Choisissez quand une nouvelle demande doit remonter dans Aujourd’hui." href="/app/parametres/politiques" action="Régler le délai" />
+        <SetupItem done={automationConfigured} title="Choisir ce que SESIRA peut faire" description="Commencez en observation et autorisez davantage seulement quand vous le décidez." href="/app/automatisations" action="Voir les automatisations" />
       </div>
-
-      <p className="setup-home-note">Les deux premières étapes conditionnent l’affichage du tableau de bord. Les réglages suivants peuvent être complétés progressivement.</p>
     </section>
   );
 }
 
-function SetupItem({
-  done,
-  title,
-  description,
-  href,
-  action,
-  required = false,
-}: {
+function SetupItem({ done, title, description, href, action, required = false }: {
   done: boolean;
   title: string;
   description: string;
@@ -224,10 +184,7 @@ function SetupItem({
     <article className={done ? "setup-item done" : "setup-item"}>
       <div className="setup-item-status" aria-hidden="true">{done ? "✓" : ""}</div>
       <div className="setup-item-copy">
-        <div className="setup-item-title-row">
-          <h2>{title}</h2>
-          {required ? <span>Essentiel</span> : <span>Ensuite</span>}
-        </div>
+        <div className="setup-item-title-row"><h2>{title}</h2><span>{required ? "Essentiel" : "Ensuite"}</span></div>
         <p>{description}</p>
       </div>
       <Link href={href} className="secondary-action-link">{done ? "Vérifier" : action}</Link>
@@ -235,22 +192,20 @@ function SetupItem({
   );
 }
 
-function formatCount(value: number | null | undefined) {
-  return value === null || value === undefined ? "—" : new Intl.NumberFormat("fr-FR").format(value);
-}
-
-function formatDuration(minutes: number | null | undefined) {
-  if (minutes === null || minutes === undefined) return "—";
-  if (minutes < 60) return `${Math.round(minutes)} min`;
-  const hours = minutes / 60;
-  return hours < 24 ? `${Math.round(hours * 10) / 10} h` : `${Math.round((hours / 24) * 10) / 10} j`;
-}
-
-function organizationStatusLabel(status: string) {
-  const labels: Record<string, string> = {
-    ACTIVE: "Active",
-    INACTIVE: "Inactive",
-    SUSPENDED: "Suspendue",
+function categoryLabel(category: TodayAction["category"]) {
+  const labels: Record<TodayAction["category"], string> = {
+    COMMERCIAL: "DEVIS & CLIENTS",
+    CHANTIER: "CHANTIER",
+    RAPPORT: "RAPPORT TERRAIN",
+    FACTURE: "FACTURE",
+    ENTRETIEN: "ENTRETIEN",
+    OBLIGATION: "OBLIGATION CVC",
+    TERRAIN: "TERRAIN",
+    SESIRA: "ÉTAT SESIRA",
   };
-  return labels[status] ?? "État non renseigné";
+  return labels[category];
+}
+
+function currentDate() {
+  return new Date().toISOString().slice(0, 10);
 }
