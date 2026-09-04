@@ -45,9 +45,22 @@ describe("U25-U32 operations and growth workspace", () => {
     const invoices = source("src/app/app/factures/page.tsx");
     const maintenance = source("src/app/app/maintenance/page.tsx");
     expect(invoices).toContain("Décision financière humaine");
-    expect(invoices).toContain("ne modifie pas un montant");
+    expect(invoices).toContain("ne change ni le montant");
     expect(maintenance).toContain("ne renouvelle pas un contrat");
     expect(maintenance).toContain("ne change pas son prix");
+  });
+
+  it("models payment promises and disputes without a universal age escalation", () => {
+    const migration = source("supabase/migrations/20260926130000_invoice_collection_states.sql");
+    const page = source("src/app/app/factures/page.tsx");
+    expect(migration).toContain("PROMISE_TO_PAY");
+    expect(migration).toContain("DISPUTED");
+    expect(migration).toContain("record_invoice_payment_promise");
+    expect(migration).toContain("open_invoice_dispute");
+    expect(migration).toContain("resolve_invoice_dispute");
+    expect(migration).toContain("No universal age threshold chooses the business escalation");
+    expect(page).not.toContain("60 jours");
+    expect(page).toContain("La prochaine décision reste humaine");
   });
 
   it("hardens C25-C32 lifecycle transitions and provider-confirmed terminal states", () => {
