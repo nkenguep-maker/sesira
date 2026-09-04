@@ -2931,6 +2931,149 @@ export type Database = {
           uploaded_at: string
         }[]
       }
+      upsert_voice_policy: {
+        Args: {
+          target_organization_id: string
+          target_actor_user_id: string
+          target_ai_disclosure_message: string
+          target_ai_disclosure_version: string
+          target_recording_notice_message: string
+          target_recording_notice_version: string
+          target_retention_recording_days: number
+          target_retention_transcript_days: number
+          target_opt_out_behavior: string
+          target_synthetic_audio_watermark_enabled: boolean
+          target_legal_hold_finality_note: string | null
+        }
+        Returns: string
+      }
+      mark_voice_policy_europe_verified: {
+        Args: {
+          target_organization_id: string
+          target_verified_by_user_id: string
+          target_verification_note: string
+        }
+        Returns: boolean
+      }
+      record_voice_call_received: {
+        Args: {
+          target_organization_id: string
+          target_provider_kind: string
+          target_external_call_ref: string
+          target_caller_phone: string | null
+          target_started_at: string | null
+        }
+        Returns: string
+      }
+      mark_voice_call_disclosures_played: {
+        Args: {
+          target_organization_id: string
+          target_call_id: string
+        }
+        Returns: boolean
+      }
+      mark_voice_call_opted_out: {
+        Args: {
+          target_organization_id: string
+          target_call_id: string
+        }
+        Returns: boolean
+      }
+      record_voice_call_recording: {
+        Args: {
+          target_organization_id: string
+          target_call_id: string
+          target_recording_ref: string
+          target_duration_ms: number | null
+        }
+        Returns: boolean
+      }
+      record_voice_call_transcript: {
+        Args: {
+          target_organization_id: string
+          target_call_id: string
+          target_transcript_ref: string
+        }
+        Returns: boolean
+      }
+      record_voice_call_processed: {
+        Args: {
+          target_organization_id: string
+          target_call_id: string
+          target_processed_ai_run_id: string | null
+          target_matched_customer_id: string | null
+          target_matched_lead_id: string | null
+          target_processed_request_id: string | null
+          target_processed_attention_id: string | null
+          target_metadata: Json
+        }
+        Returns: boolean
+      }
+      close_voice_call: {
+        Args: {
+          target_organization_id: string
+          target_call_id: string
+          target_ended_at: string | null
+        }
+        Returns: boolean
+      }
+      purge_expired_voice_recordings: {
+        Args: {
+          target_organization_id: string
+          target_batch_limit: number
+        }
+        Returns: number
+      }
+      purge_expired_voice_transcripts: {
+        Args: {
+          target_organization_id: string
+          target_batch_limit: number
+        }
+        Returns: number
+      }
+      voice_policy_for: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          policy_id: string
+          ai_disclosure_message: string
+          ai_disclosure_message_version: string
+          recording_notice_message: string
+          recording_notice_message_version: string
+          retention_recording_days: number
+          retention_transcript_days: number
+          opt_out_behavior: string
+          synthetic_audio_watermark_enabled: boolean
+          region_europe_verified: boolean
+          region_verified_at: string | null
+          legal_hold_finality_note: string | null
+        }[]
+      }
+      voice_calls_for: {
+        Args: {
+          target_organization_id: string
+          target_status_filter: string | null
+        }
+        Returns: {
+          call_id: string
+          provider_kind: string
+          external_call_ref: string
+          caller_phone: string | null
+          matched_customer_id: string | null
+          matched_lead_id: string | null
+          status: string
+          ai_disclosure_played_at: string | null
+          recording_notice_played_at: string | null
+          opt_out_at: string | null
+          duration_ms: number | null
+          started_at: string
+          ended_at: string | null
+          retention_expires_at: string
+          purged_recording_at: string | null
+          purged_transcript_at: string | null
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string

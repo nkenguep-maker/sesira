@@ -8,11 +8,11 @@ Read this file first on any new Claude Code session; resume from
 
 - **Branch**: `claude/core-workflows`
 - **HEAD**: run `git log -1 --oneline` at session start; do not trust a hard-coded hash in this handoff.
-- **Last product milestone**: C36 technician field core (see milestone log for hash)
+- **Last product milestone**: C37 voice intake (see milestone log for hash)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
-- **Driver phase**: WAVE 5 (Compliance) — **C33 ✓ C34 ✓ C35 ✓ C36 ✓**. Next: C37 voice (READ `REGULATORY.md` §4 BEFORE — AI Act art. 50 + CNIL enregistrement + Europe-only). U36 mobile UI is separate (codex branch).
-- **NEXT_MILESTONE**: `C37 — VOICE / accueil téléphonique (provider abstraction, disclosure, opt-out, no emotion analysis)`
+- **Driver phase**: **WAVE 5 (Compliance & Expansion) COMPLETE** — C33 F-Gas ✓ C34 e-invoicing ✓ C35 financing ✓ C36 field ✓ C37 voice ✓. Next: WAVE 6 (Platform Maturity) — C38 observability + costs.
+- **NEXT_MILESTONE**: `C38 — CONTROL CENTER / OBSERVABILITY / COSTS`
 
 ## Milestone log
 
@@ -53,6 +53,7 @@ Read this file first on any new Claude Code session; resume from
 | C34 | `b39e316` | DONE | E-invoicing provider abstraction — 3 tables (`einvoicing_providers`, `einvoicing_submissions`, `einvoicing_provider_events`) + state machine trigger + `configure_einvoicing_provider` (TEST or PENDING sentinel) + `prepare_einvoicing_submission` + `mark_einvoicing_submission_exported` (INV-04) + `record_einvoicing_provider_event` (doctrine gate: SUBMITTED/ACCEPTED/REJECTED only via service_role OR TEST provider) + `cancel_einvoicing_submission` + read helpers + TS `EInvoicingProvider` interface (TestEInvoicingProvider + PendingProductionEInvoicingProvider) — applied on Supabase as `20260930000000`. **Zero fake provider success enforced at SQL + TS layers.** |
 | C35 | `055e473` | DONE | Financing indicator (Option A, R519-2 CMF) — 2 tables (`financing_partners`, `financing_referrals`) + state machine trigger + 5 write RPCs (`configure_financing_partner`, `archive_financing_partner`, `initiate_financing_referral` [consent REQUIRED], `transition_financing_referral_status` [human-declared, ACTIVE member], `record_financing_commission` [audit-only, INV-05]) + 2 read helpers — applied on Supabase as `20261001000000`. **Schema explicitly excludes income/score/rate/monthly_payment fields (INV-06). No FK to documents (financing docs stay client-side).** |
 | C36 | `5165fdb` | DONE | Technician field core (BACKEND contracts) — ALTER interventions (arrived_at, started_at, offline_start_client_id) + NEW `intervention_field_artifacts` table (PHOTO/PART_USED/MEASUREMENT/ANOMALY/SIGNATURE/NOTE with per-kind payload validation) + offline-safe idempotent sync via offline_client_id + CONFLICT flag (never silently drops) + 6 RPCs (arrive, start, submit_artifact, resolve_conflict, technician_day, artifacts_for, pending_conflicts) — applied on Supabase as `20261002000000`. **AI must NEVER fabricate raw facts — captured_by_user_id REQUIRED on every artifact.** U36 mobile UI = codex branch. |
+| C37 | `(new)` | DONE | Voice intake — 2 tables (`voice_policies`, `voice_calls`) + state machine trigger + 11 RPCs (upsert_voice_policy, mark_voice_policy_europe_verified [D-5 gate service_role], record_voice_call_received [refuses if no policy + refuses production provider unless region_europe_verified], mark_voice_call_disclosures_played [art.50 proof in audit_logs with message snapshots], mark_voice_call_opted_out [purges recording+transcript in same statement], record_voice_call_recording, record_voice_call_transcript, record_voice_call_processed [refuses forbidden metadata keys emotion/sentiment/diagnosis/price/scoring], close_voice_call, purge_expired_voice_recordings, purge_expired_voice_transcripts) + 2 read helpers + TS provider abstractions (VoiceProvider + SpeechToTextProvider — separated; Test + PendingProduction impls for each) — applied on Supabase as `20261003000000`. **WAVE 5 COMPLETE.** |
 
 ## BASELINE_FAILURE
 
