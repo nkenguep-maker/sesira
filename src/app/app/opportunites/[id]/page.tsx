@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CommercialSignalsPanel } from "@/components/opportunities/commercial-signals-panel";
+import { FinancingPanel } from "@/components/opportunities/financing-panel";
 import { PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import {
@@ -11,6 +12,7 @@ import {
   getOpportunityOperationalState,
   getSoldNotScheduledPolicy,
 } from "@/lib/data";
+import { getFinancingForOpportunity } from "@/lib/data/c40-ui";
 import {
   OPPORTUNITY_STATES,
   canTransitionOpportunity,
@@ -28,12 +30,13 @@ export default async function OpportunityDetailPage({ params }: PageProps) {
   if (!viewer) return null;
 
   const organizationId = viewer.organization.id;
-  const [opportunity, customers, operational, valuePolicy, commercialSnapshot] = await Promise.all([
+  const [opportunity, customers, operational, valuePolicy, commercialSnapshot, financing] = await Promise.all([
     getOpportunityDetail(organizationId, route.id),
     getCustomerList(organizationId, { limit: 500 }),
     getOpportunityOperationalState(organizationId, route.id),
     getSoldNotScheduledPolicy(organizationId),
     getOpportunityCommercialSnapshot(organizationId, route.id),
+    getFinancingForOpportunity(organizationId, route.id),
   ]);
   if (!opportunity) notFound();
 
@@ -61,6 +64,21 @@ export default async function OpportunityDetailPage({ params }: PageProps) {
       </section>
 
       <CommercialSignalsPanel opportunityId={opportunity.id} snapshot={commercialSnapshot} />
+
+      {financing.status === "OK" ? (
+        <FinancingPanel
+          organizationRole={viewer.role}
+          opportunityId={opportunity.id}
+          customerId={opportunity.customerId}
+          partners={financing.data.partners}
+          referrals={financing.data.referrals}
+        />
+      ) : (
+        <section className="workspace-boundary-note">
+          <StatusPill tone="warning">Financement indisponible</StatusPill>
+          <p>Les partenaires et signalements ne sont pas lisibles actuellement. SESIRA n’affiche aucun statut de remplacement.</p>
+        </section>
+      )}
 
       <section className="panel">
         <div className="panel-head">
