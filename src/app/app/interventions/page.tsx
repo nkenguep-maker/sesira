@@ -22,7 +22,7 @@ export default async function InterventionsPage({ searchParams }: { searchParams
   if (result.status === "ERROR") {
     return (
       <>
-        <PageHeader eyebrow="OPÉRATIONS" title="Interventions" description="Planification légère et exécution des interventions reliées aux dossiers clients." />
+        <PageHeader eyebrow="OPÉRATIONS" title="Interventions" description="Planification et exécution des interventions reliées aux dossiers clients." />
         <UnavailableState />
       </>
     );
@@ -33,23 +33,26 @@ export default async function InterventionsPage({ searchParams }: { searchParams
   const scheduled = rows.filter((row) => ["PLANNED", "CONFIRMED"].includes(row.status) && row.scheduledAt).length;
   const inProgress = rows.filter((row) => row.status === "IN_PROGRESS").length;
   const blocked = rows.filter((row) => row.status === "NEEDS_ATTENTION").length;
+  const showStats = new Set([toSchedule, scheduled, inProgress, blocked]).size > 1;
 
   return (
     <>
       <PageHeader
         eyebrow="OPÉRATIONS"
         title="Interventions"
-        description="Ce qui doit être planifié, exécuté ou repris. SESIRA ne remplace pas un ERP de planning."
+        description="Ce qui doit être planifié, exécuté ou repris."
       />
 
       <ResultNotice result={params.result} />
 
-      <section className="workspace-stat-strip" aria-label="État des interventions">
-        <div><strong>{toSchedule}</strong><span>À planifier</span></div>
-        <div><strong>{scheduled}</strong><span>Planifiées</span></div>
-        <div><strong>{inProgress}</strong><span>En cours</span></div>
-        <div><strong>{blocked}</strong><span>À reprendre</span></div>
-      </section>
+      {showStats ? (
+        <section className="workspace-stat-strip" aria-label="État des interventions">
+          <div><strong>{toSchedule}</strong><span>À planifier</span></div>
+          <div><strong>{scheduled}</strong><span>Planifiées</span></div>
+          <div><strong>{inProgress}</strong><span>En cours</span></div>
+          <div><strong>{blocked}</strong><span>À reprendre</span></div>
+        </section>
+      ) : null}
 
       {rows.length ? (
         <section className="workspace-list" aria-label="Interventions">
@@ -103,12 +106,12 @@ export default async function InterventionsPage({ searchParams }: { searchParams
 function ResultNotice({ result }: { result?: string }) {
   if (!result) return null;
   return result === "saved"
-    ? <section className="premium-inline-notice"><StatusPill tone="good">Enregistré</StatusPill><p>La modification a été confirmée par SESIRA.</p></section>
+    ? <section className="premium-inline-notice"><StatusPill tone="good">Enregistré</StatusPill><p>La modification a été enregistrée.</p></section>
     : <section className="premium-inline-notice"><StatusPill tone="warning">Non appliqué</StatusPill><p>L’état n’a pas été modifié. Vérifiez les données ou l’état actuel du dossier.</p></section>;
 }
 
 function UnavailableState() {
-  return <section className="app-state-message"><strong>Interventions indisponibles</strong><p>SESIRA ne peut pas lire ce module pour le moment. Aucun zéro de remplacement n’est affiché.</p></section>;
+  return <section className="app-state-message"><strong>Interventions indisponibles</strong><p>SESIRA ne peut pas lire ce module pour le moment.</p></section>;
 }
 
 function interventionTone(status: string): "good" | "warning" | "neutral" {
