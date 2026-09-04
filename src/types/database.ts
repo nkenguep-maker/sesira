@@ -2491,6 +2491,110 @@ export type Database = {
           days_until_expiry: number
         }[]
       }
+      compute_equipment_tco2eq: {
+        Args: {
+          target_organization_id: string
+          target_equipment_id: string
+          target_at: string | null
+        }
+        Returns: {
+          tco2eq: number
+          fluid_code: string
+          charge_kg: number
+          gwp_value_id: string
+          gwp_100y: number
+          ipcc_assessment: string
+          gwp_source_ref: string
+          at_date: string
+        }[]
+      }
+      compute_next_leak_check_due: {
+        Args: {
+          target_organization_id: string
+          target_equipment_id: string
+          target_at: string | null
+        }
+        Returns: {
+          next_due_at: string
+          cadence_days: number
+          matched_rule_id: string
+          matched_rule_code: string
+          rule_source_ref: string
+          hermetic_exempt: boolean
+          mobile_not_yet_applies: boolean
+          detector_doubled: boolean
+          tco2eq_snapshot: number
+          gwp_value_id_snapshot: string
+          at_date: string
+        }[]
+      }
+      emit_regulatory_leak_check_attention: {
+        Args: {
+          target_organization_id: string
+          target_equipment_id: string
+        }
+        Returns: string | null
+      }
+      emit_regulatory_attestation_expiry_attention: {
+        Args: {
+          target_organization_id: string
+          target_attestation_id: string
+          target_days_before: number
+        }
+        Returns: string | null
+      }
+      mark_regulatory_attention_seen: {
+        Args: {
+          target_organization_id: string
+          target_attention_id: string
+          target_seen_by_user_id: string
+        }
+        Returns: boolean
+      }
+      resolve_regulatory_attention: {
+        Args: {
+          target_organization_id: string
+          target_attention_id: string
+          target_resolved_by_user_id: string
+          target_note: string | null
+        }
+        Returns: boolean
+      }
+      open_regulatory_attentions: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          attention_id: string
+          category: string
+          priority: string
+          entity_type: string
+          entity_id: string
+          title: string
+          explanation: string | null
+          suggested_action: string | null
+          rule_snapshot: Json
+          seen_at: string | null
+          seen_by_user_id: string | null
+          created_at: string
+        }[]
+      }
+      equipment_leak_check_pipeline: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          equipment_id: string
+          label: string
+          external_ref: string | null
+          fluid_code: string
+          charge_kg: number
+          tco2eq: number
+          last_leak_check_at: string | null
+          next_due_at: string | null
+          matched_rule_code: string | null
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string

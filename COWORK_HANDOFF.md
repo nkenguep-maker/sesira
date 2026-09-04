@@ -8,11 +8,11 @@ Read this file first on any new Claude Code session; resume from
 
 - **Branch**: `claude/core-workflows`
 - **HEAD**: run `git log -1 --oneline` at session start; do not trust a hard-coded hash in this handoff.
-- **Last product milestone**: C33.1 regulatory reference data foundation (see milestone log for hash — split into 3 sub-milestones)
+- **Last product milestone**: C33.2 equipment + regulatory attentions (see milestone log for hash — split into 3 sub-milestones)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
-- **Driver phase**: WAVE 5 (Compliance) — C33 in progress (3-part split: **C33.1 reference data ✓**, C33.2 equipment/calc/attentions pending, C33.3 CERFA/bilan exports pending). **READ `REGULATORY.md` BEFORE C33.2.**
-- **NEXT_MILESTONE**: `C33.2 — EQUIPMENT + tCO₂eq / NEXT-CHECK + REGULATORY ATTENTIONS`
+- **Driver phase**: WAVE 5 (Compliance) — C33 in progress (3-part split: **C33.1 reference data ✓**, **C33.2 equipment/calc/attentions ✓**, C33.3 CERFA/bilan exports pending). **READ `REGULATORY.md` BEFORE C33.3.**
+- **NEXT_MILESTONE**: `C33.3 — CERFA 15497*04 + ANNUAL BILAN EXPORTS`
 
 ## Milestone log
 
@@ -48,6 +48,7 @@ Read this file first on any new Claude Code session; resume from
 | C31 | `c6a83a4` | DONE | Growth publishing + conversations — 3 tables + 3 state machines + 8 write RPCs + 3 read RPCs — applied on Supabase as `20260925000000`. Content/publication/reply always human-gated (ACTIVE member). |
 | C32 | `2d497be` | DONE | Honest attribution (OBSERVED / ESTIMATED / UNKNOWN) — 1 table + 2 write RPCs + 2 read RPCs — applied on Supabase as `20260926000000`. Reports MUST break down by confidence; UNKNOWN kept visible. **WAVE 4 COMPLETE.** |
 | C33.1 | `9ad16dc` | DONE | Regulatory reference data — 3 versioned global tables (gwp_values, leak_check_rules, market_bans) + org-scoped attestations + immutability triggers + 5 write RPCs + 3 read RPCs — applied on Supabase as `20260927000000`. Seed script `supabase/seeds/regulatory_fgas_iii.example.sql` shipped, NOT applied (data-ops job). **WAVE 5 KICKOFF.** |
+| C33.2 | `(new)` | DONE | Equipment + regulatory attentions — `equipment` table + `regulatory_attentions` table (INV-02 immutable created_at + seen_at) + patch C33.1 (kg thresholds, hermetic exempt, mobile from-date, attestation scope A1..E) + `compute_equipment_tco2eq`, `compute_next_leak_check_due` (double threshold), `emit_regulatory_leak_check_attention`, `emit_regulatory_attestation_expiry_attention`, `mark_regulatory_attention_seen`, `resolve_regulatory_attention`, 2 read helpers — applied on Supabase as `20260928000000`. |
 
 ## BASELINE_FAILURE
 
