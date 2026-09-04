@@ -19,6 +19,25 @@ export const SESIRA_APP_NAV_GROUPS = [
     ],
   },
   {
+    label: "Opérations",
+    items: [
+      { href: "/app/interventions", label: "Interventions" },
+      { href: "/app/rapports", label: "Rapports terrain" },
+      { href: "/app/documents", label: "Documents" },
+      { href: "/app/factures", label: "Factures" },
+      { href: "/app/maintenance", label: "Maintenance" },
+    ],
+  },
+  {
+    label: "Croissance",
+    items: [
+      { href: "/app/croissance", label: "Vue croissance" },
+      { href: "/app/croissance/contenus", label: "Contenus" },
+      { href: "/app/croissance/conversations", label: "Conversations" },
+      { href: "/app/croissance/attribution", label: "Attribution" },
+    ],
+  },
+  {
     label: "Système",
     items: [
       { href: "/app/imports", label: "Imports" },
