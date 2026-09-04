@@ -47,7 +47,7 @@ describe("C22/U22 Speed to Lead integration contracts", () => {
     const dashboard = source("src/app/app/page.tsx");
     expect(settings).toContain("saveSpeedToLeadPolicyAction");
     expect(settings).toContain("prise en charge interne");
-    expect(settings).toContain("ne prétend jamais qu’une réponse a été envoyée au client");
+    expect(settings).toContain("Cette mesure ne signifie pas qu’une réponse a été envoyée au client");
     expect(dashboard).toContain("getSpeedToLeadSummary");
     expect(dashboard).toContain("première transition interne hors de Nouvelle");
     expect(dashboard).toContain("ne présente pas cette mesure comme un temps de réponse envoyé au client");
