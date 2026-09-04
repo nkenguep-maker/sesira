@@ -78,8 +78,11 @@ if [ -n "$hits2" ]; then
   fail=1
 fi
 
-# La landing actuelle vit dans src/app/page.tsx : on l'ajoute à la surface marketing réelle du repo.
+# Surfaces publiques d'acquisition qui vivent sous src/.
 mkt="src/app/page.tsx"$'\n'
+mkt+="src/app/diagnostic/page.tsx"$'\n'
+mkt+="src/components/diagnostic/diagnostic-experience.tsx"$'\n'
+mkt+="src/app/automatisation/page.tsx"$'\n'
 for p in "${MKT_PATHS[@]}"; do
   [ -d "$p" ] || continue
   mkt="$mkt$(find "$p" -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.md' -o -name '*.mdx' \
