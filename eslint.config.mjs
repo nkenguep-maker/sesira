@@ -5,6 +5,12 @@ import nextTypeScript from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextCoreWebVitals,
   ...nextTypeScript,
+  {
+    files: ["src/app/page.tsx"],
+    rules: {
+      "react/no-unescaped-entities": "off",
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",
