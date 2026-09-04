@@ -3074,6 +3074,133 @@ export type Database = {
           purged_transcript_at: string | null
         }[]
       }
+      configure_platform_component: {
+        Args: {
+          target_organization_id: string
+          target_actor_user_id: string
+          target_component_kind: string
+          target_display_label: string
+          target_provider_kind: string | null
+          target_region: string | null
+          target_config: Json
+        }
+        Returns: string
+      }
+      engage_kill_switch: {
+        Args: {
+          target_organization_id: string
+          target_component_kind: string
+          target_actor_user_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      release_kill_switch: {
+        Args: {
+          target_organization_id: string
+          target_component_kind: string
+          target_actor_user_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      is_platform_component_enabled: {
+        Args: {
+          target_organization_id: string
+          target_component_kind: string
+        }
+        Returns: boolean
+      }
+      record_platform_component_event: {
+        Args: {
+          target_organization_id: string
+          target_component_kind: string
+          target_event_kind: string
+          target_severity: string
+          target_latency_ms: number | null
+          target_external_ref: string | null
+          target_error_code: string | null
+          target_error_message: string | null
+          target_metadata: Json
+        }
+        Returns: string
+      }
+      record_platform_component_backlog: {
+        Args: {
+          target_organization_id: string
+          target_component_kind: string
+          target_backlog_size: number
+          target_oldest_item_age_seconds: number | null
+          target_metadata: Json
+        }
+        Returns: string
+      }
+      platform_component_dashboard: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          component_id: string
+          component_kind: string
+          display_label: string
+          provider_kind: string | null
+          region: string | null
+          status: string
+          status_reason: string | null
+          status_changed_at: string | null
+          config: Json
+          last_heartbeat_at: string | null
+          last_success_at: string | null
+          last_error_at: string | null
+          last_error_message: string | null
+          success_count_last_hour: number
+          error_count_last_hour: number
+          retry_count_last_hour: number
+          fallback_count_last_hour: number
+          avg_latency_ms_last_hour: number | null
+          latest_backlog_size: number | null
+          latest_backlog_measured_at: string | null
+          latest_backlog_oldest_age_seconds: number | null
+        }[]
+      }
+      platform_component_events_for: {
+        Args: {
+          target_organization_id: string
+          target_component_kind: string
+          target_since: string | null
+          target_severity_filter: string | null
+        }
+        Returns: {
+          event_id: string
+          event_kind: string
+          severity: string
+          latency_ms: number | null
+          external_ref: string | null
+          error_code: string | null
+          error_message: string | null
+          metadata: Json
+          recorded_at: string
+        }[]
+      }
+      ai_provider_stats: {
+        Args: {
+          target_organization_id: string
+          target_since: string
+          target_until: string
+        }
+        Returns: {
+          model: string
+          provider: string
+          call_count: number
+          success_count: number
+          error_count: number
+          tokens_input: number
+          tokens_output: number
+          total_estimated_cost: number
+          avg_latency_ms: number | null
+          p95_latency_ms: number | null
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string

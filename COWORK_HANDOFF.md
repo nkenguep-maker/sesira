@@ -8,11 +8,11 @@ Read this file first on any new Claude Code session; resume from
 
 - **Branch**: `claude/core-workflows`
 - **HEAD**: run `git log -1 --oneline` at session start; do not trust a hard-coded hash in this handoff.
-- **Last product milestone**: C37 voice intake (see milestone log for hash)
+- **Last product milestone**: C38 platform observability (see milestone log for hash)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
-- **Driver phase**: **WAVE 5 (Compliance & Expansion) COMPLETE** — C33 F-Gas ✓ C34 e-invoicing ✓ C35 financing ✓ C36 field ✓ C37 voice ✓. Next: WAVE 6 (Platform Maturity) — C38 observability + costs.
-- **NEXT_MILESTONE**: `C38 — CONTROL CENTER / OBSERVABILITY / COSTS`
+- **Driver phase**: WAVE 6 (Platform Maturity) — **C38 ✓**. Next: C39 security + recovery + scale (offensive tests + synthetic volumes).
+- **NEXT_MILESTONE**: `C39 — SECURITY / RECOVERY / SCALE (offensive tests + synthetic volumes)`
 
 ## Milestone log
 
@@ -54,6 +54,7 @@ Read this file first on any new Claude Code session; resume from
 | C35 | `055e473` | DONE | Financing indicator (Option A, R519-2 CMF) — 2 tables (`financing_partners`, `financing_referrals`) + state machine trigger + 5 write RPCs (`configure_financing_partner`, `archive_financing_partner`, `initiate_financing_referral` [consent REQUIRED], `transition_financing_referral_status` [human-declared, ACTIVE member], `record_financing_commission` [audit-only, INV-05]) + 2 read helpers — applied on Supabase as `20261001000000`. **Schema explicitly excludes income/score/rate/monthly_payment fields (INV-06). No FK to documents (financing docs stay client-side).** |
 | C36 | `5165fdb` | DONE | Technician field core (BACKEND contracts) — ALTER interventions (arrived_at, started_at, offline_start_client_id) + NEW `intervention_field_artifacts` table (PHOTO/PART_USED/MEASUREMENT/ANOMALY/SIGNATURE/NOTE with per-kind payload validation) + offline-safe idempotent sync via offline_client_id + CONFLICT flag (never silently drops) + 6 RPCs (arrive, start, submit_artifact, resolve_conflict, technician_day, artifacts_for, pending_conflicts) — applied on Supabase as `20261002000000`. **AI must NEVER fabricate raw facts — captured_by_user_id REQUIRED on every artifact.** U36 mobile UI = codex branch. |
 | C37 | `50e9908` | DONE | Voice intake — 2 tables (`voice_policies`, `voice_calls`) + state machine trigger + 11 RPCs (upsert_voice_policy, mark_voice_policy_europe_verified [D-5 gate service_role], record_voice_call_received [refuses if no policy + refuses production provider unless region_europe_verified], mark_voice_call_disclosures_played [art.50 proof in audit_logs with message snapshots], mark_voice_call_opted_out [purges recording+transcript in same statement], record_voice_call_recording, record_voice_call_transcript, record_voice_call_processed [refuses forbidden metadata keys emotion/sentiment/diagnosis/price/scoring], close_voice_call, purge_expired_voice_recordings, purge_expired_voice_transcripts) + 2 read helpers + TS provider abstractions (VoiceProvider + SpeechToTextProvider — separated; Test + PendingProduction impls for each) — applied on Supabase as `20261003000000`. **WAVE 5 COMPLETE.** |
+| C38 | `(new)` | DONE | Control Center / observability / costs (BACKEND contracts) — 3 tables (`platform_components`, `platform_component_events`, `platform_component_backlogs`) + 10 RPCs (configure_platform_component, engage_kill_switch [ACTIVE member + audit], release_kill_switch, is_platform_component_enabled [worker seam], record_platform_component_event [service_role], record_platform_component_backlog [service_role], platform_component_dashboard [aggregates last hour + last backlog, NEVER synthesizes], platform_component_events_for, ai_provider_stats [reads from ai_runs — the source of truth]) — applied on Supabase as `20261004000000`. **« Pas de métrique inventée » enforced: every dashboard number traces to a real event, backlog, or ai_runs row.** **WAVE 6 KICKOFF.** |
 
 ## BASELINE_FAILURE
 
