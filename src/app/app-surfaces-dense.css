@@ -1,0 +1,317 @@
+/* Dense overrides for existing SESIRA product modules. */
+
+.app-frame .premium-section-heading {
+  align-items: flex-start;
+  padding-bottom: 14px;
+  border-bottom-color: var(--app-border);
+}
+
+.app-frame .premium-section-heading h2 {
+  margin: 5px 0 0;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: -.025em;
+  font-weight: 700;
+}
+
+.app-frame .premium-muted-copy,
+.app-frame .premium-connection-card > p,
+.app-frame .premium-automation-card header p,
+.app-frame .premium-import-hero > div:first-child p,
+.app-frame .premium-trust-note p,
+.app-frame .premium-empty-editorial > p {
+  max-width: 70ch;
+  color: var(--app-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.app-frame .premium-results-section,
+.app-frame .premium-automation-card,
+.app-frame .premium-connection-card,
+.app-frame .premium-import-hero,
+.app-frame .panel,
+.app-frame .premium-unknown-zone {
+  padding: 18px;
+  border-color: var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface-strong);
+}
+
+.app-frame .premium-results-section {
+  margin-top: 12px;
+}
+
+.app-frame .premium-data-list {
+  margin-top: 16px;
+}
+
+.app-frame .premium-data-list > div,
+.app-frame .premium-data-list.compact > div {
+  padding: 9px 0;
+  border-top-color: var(--app-border);
+}
+
+.app-frame .premium-data-list span,
+.app-frame .premium-data-list strong {
+  font-size: 11px;
+}
+
+.app-frame .premium-inline-notice {
+  margin: 12px 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border-color: rgba(168, 67, 39, .3);
+  background: rgba(168, 67, 39, .06);
+}
+
+.app-frame .premium-inline-notice p {
+  color: var(--app-muted);
+  font-size: 12px;
+}
+
+.app-frame .premium-connection-summary,
+.app-frame .premium-automation-summary,
+.app-frame .control-premium-metrics {
+  border-color: var(--app-border);
+  background: var(--app-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.app-frame .premium-connection-summary > div,
+.app-frame .premium-automation-summary > div,
+.app-frame .control-premium-metrics > article {
+  min-height: 84px;
+  padding: 13px 15px;
+  background: var(--app-surface-strong);
+}
+
+.app-frame .premium-connection-summary strong,
+.app-frame .premium-automation-summary strong,
+.app-frame .control-premium-metrics strong {
+  margin: 9px 0 4px;
+  font-size: 23px;
+  font-weight: 650;
+}
+
+.app-frame .premium-connection-summary span,
+.app-frame .premium-automation-summary span,
+.app-frame .control-premium-metrics span {
+  color: var(--app-muted);
+  font-size: 9px;
+}
+
+.app-frame .premium-connection-grid,
+.app-frame .premium-automation-list {
+  gap: 10px;
+}
+
+.app-frame .premium-connection-card h2,
+.app-frame .premium-automation-card h2,
+.app-frame .premium-import-hero h2,
+.app-frame .premium-unknown-zone h2,
+.app-frame .panel-head h2 {
+  margin: 5px 0 0;
+  font-size: 18px;
+  letter-spacing: -.02em;
+}
+
+.app-frame .premium-connection-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--ink);
+}
+
+.app-frame .premium-trust-note,
+.app-frame .estimate-zone {
+  margin-top: 12px;
+  padding: 18px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: #f4eee7;
+  color: var(--ink);
+}
+
+.app-frame .premium-trust-note .eyebrow,
+.app-frame .estimate-zone .eyebrow {
+  color: var(--app-action-strong);
+}
+
+.app-frame .premium-trust-note h2 {
+  margin: 5px 0 7px;
+  font-size: 20px;
+  letter-spacing: -.02em;
+}
+
+.app-frame .estimate-zone .premium-section-heading {
+  border-color: var(--app-border);
+}
+
+.app-frame .premium-estimate-grid {
+  margin-top: 16px;
+  border-color: var(--app-border);
+  background: var(--app-border);
+}
+
+.app-frame .premium-estimate-grid article {
+  min-height: 120px;
+  padding: 16px;
+  background: var(--app-surface-strong);
+  color: var(--ink);
+}
+
+.app-frame .premium-estimate-grid span,
+.app-frame .premium-estimate-grid p,
+.app-frame .premium-hypotheses p,
+.app-frame .premium-no-estimate,
+.app-frame .premium-no-estimate p {
+  color: var(--app-muted);
+}
+
+.app-frame .premium-estimate-grid strong {
+  margin: 12px 0 8px;
+  font-size: 27px;
+}
+
+.app-frame .premium-observed-grid {
+  margin-top: 16px;
+  border-color: var(--app-border);
+  background: var(--app-border);
+}
+
+.app-frame .premium-observed-grid article {
+  min-height: 100px;
+  padding: 14px;
+  background: var(--app-surface-strong);
+}
+
+.app-frame .premium-observed-grid article > span,
+.app-frame .premium-observed-grid p {
+  color: var(--app-muted);
+}
+
+.app-frame .premium-observed-grid strong {
+  margin: 12px 0 5px;
+  font-size: 26px;
+  font-weight: 650;
+}
+
+.app-frame .premium-empty-editorial,
+.app-frame .empty-state {
+  min-height: 220px;
+  padding: 28px;
+  border-color: var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface);
+}
+
+.app-frame .premium-empty-editorial h2,
+.app-frame .empty-state h2 {
+  margin: 8px 0;
+  font-size: 22px;
+  line-height: 1.15;
+  letter-spacing: -.025em;
+}
+
+.app-frame .premium-empty-editorial > div {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top-color: var(--app-border);
+}
+
+.app-frame .premium-focus-actions {
+  gap: 14px;
+  padding-top: 14px;
+  border-top-color: var(--app-border);
+}
+
+.app-frame .premium-period-nav {
+  gap: 5px;
+  margin: -4px 0 16px;
+}
+
+.app-frame .premium-period-nav a {
+  padding: 7px 10px;
+  border-color: var(--app-border);
+  background: transparent;
+  color: var(--app-muted);
+}
+
+.app-frame .premium-period-nav a.active {
+  border-color: rgba(168, 67, 39, .3);
+  background: rgba(168, 67, 39, .08);
+  color: var(--app-action-strong);
+}
+
+.app-frame .premium-automation-body {
+  gap: 24px;
+  margin-top: 18px;
+  border-top-color: var(--app-border);
+}
+
+.app-frame .premium-automation-policy {
+  padding-top: 18px;
+}
+
+.app-frame .premium-activity-strip {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--app-surface);
+}
+
+.app-frame .premium-catalog-section {
+  margin-top: 26px;
+}
+
+.app-frame .premium-catalog-grid {
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.app-frame .premium-catalog-grid article {
+  min-height: 118px;
+  padding: 16px;
+  border-color: var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+}
+
+.app-frame .premium-import-hero {
+  gap: 26px;
+}
+
+.app-frame .premium-unknown-zone > div {
+  gap: 12px;
+}
+
+.app-frame .premium-unknown-zone > strong {
+  margin-top: 18px;
+  color: var(--app-action-strong);
+}
+
+@media (max-width: 900px) {
+  .app-frame .premium-observed-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-frame .premium-connection-grid,
+  .app-frame .premium-catalog-grid,
+  .app-frame .premium-import-hero,
+  .app-frame .premium-automation-body,
+  .app-frame .premium-unknown-zone > div {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .app-frame .premium-connection-summary,
+  .app-frame .premium-automation-summary,
+  .app-frame .control-premium-metrics,
+  .app-frame .premium-observed-grid,
+  .app-frame .premium-estimate-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
