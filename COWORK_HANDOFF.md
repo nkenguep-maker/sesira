@@ -7,11 +7,12 @@ Read this file first on any new Claude Code session; resume from
 ## Current status
 
 - **Branch**: `claude/core-workflows`
-- **HEAD**: `2d497be` (C32 honest attribution)
+- **HEAD**: `70ed814` (regulatory operating reference added after C32)
+- **Last product milestone**: `2d497be` (C32 honest attribution)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
 - **Driver phase**: WAVE 4 (Growth) COMPLETE — C32 landed and applied on Supabase. Wave 5 (Compliance & Expansion) next.
-- **NEXT_MILESTONE**: `C33 — F-GAS / CERFA (VERIFY REGULATION FIRST)`
+- **NEXT_MILESTONE**: `C33 — F-GAS / CERFA — READ REGULATORY.md FIRST`
 
 ## Milestone log
 
@@ -82,18 +83,38 @@ Read this file first on any new Claude Code session; resume from
 - **Manual types**: `src/types/database.ts` maintained by hand (project convention).
 - **Minimal deps**: fetch used directly for external APIs (Resend, Claude, Svix) — no SDKs added.
 - **iCloud dupe quarantine**: `.git/refs/heads/main 2` quarantined into `.quarantine-icloud-dupes/git-refs/` earlier this session; not tracked.
+- **Regulatory source of truth (2026-09-04 user directive)**: `REGULATORY.md` is mandatory reading before C33, C34, C35 and C37. Claude Code codes against that file, not memory. Dated regulatory thresholds are versioned reference data with `effective_from` / `effective_to`, never hard-coded date branches.
+- **Precedence**: if roadmap prose conflicts with `REGULATORY.md`, apply the more conservative boundary in `REGULATORY.md` unless the item is explicitly marked `⚖ AVOCAT` and unresolved.
 
 ## Regulatory items
 
-None open yet. Reserved for C33 (F-Gas / CERFA) and C34 (Peppol / e-invoicing).
+### Closed product decisions
+
+- **C33 — export only**: SESIRA produces the CERFA data/export and annual-balance export; the customer deposits with the approved body. Never write **« SESIRA déclare pour vous »** in UI, contracts, exports or sales copy. Product wording: « Préparer le bilan », « Produire l'export », « Exporter le dossier ».
+- **C34 — provider abstraction first**: build `EInvoicingProvider` + deterministic test double. No real PA API at initial C34 technical maturity. Keep `PRODUCTION_PROVIDER_INTEGRATION_PENDING` until Paul selects a PA and a real adapter exists. Provider success states are impossible in production without a real provider callback.
+- **C35 — Indicateur, Option A**: no IOBSP in V1. SESIRA may signal a financing partner, transmit prospect identity/contact with consent and track a human-declared status. It must not collect/transmit financing documents, compare offers, calculate rates/monthly payments, advise, score or assess solvency. Required documents = checklist only; financing documents do not enter C27 Documents.
+- **C37 / RGPD — Europe only**: SESIRA data and processing must be hosted exclusively in Europe. Production C37 is blocked until Supabase, Vercel and the voice provider regions are verified/documented as European.
+- **DPA**: Paul will produce the SESIRA DPA. Claude Code must not invent substitute legal clauses. Product/contract onboarding only needs a reference to the supplied DPA before the first paid customer; C27 Documents and C37 voice must be explicitly covered.
+
+### Still open
+
+- Company establishment country (DE or FR), affecting SESIRA's own e-invoicing obligations and partner contracting.
+- DREAL leakage/release declaration rule: do not model until confirmed on Légifrance.
+- Future PA partner choice and production API adapter: not a blocker for C34 technical maturity, but a blocker for production submission.
 
 ## External-provider blockers
 
-None open yet. Reserved for C34 (e-invoicing production provider) and C37 (voice provider).
+- **C34**: production PA adapter intentionally pending. Implement interface, contracts, idempotency, callback handling, test double, operator visibility and fail-closed states; label `PRODUCTION_PROVIDER_INTEGRATION_PENDING`.
+- **C37**: production voice provider may remain pending, but the abstraction, retention/purge policy, AI disclosure proof, opt-out behavior, errors and operator visibility must be complete. Any selected provider must keep SESIRA data/processing in Europe.
 
 ## Notes to next session
 
+- **Before C33**: read `REGULATORY.md` in full, then inspect the current repo/schema and implement only rules supported by that reference.
 - The driver requires: after each milestone, ONE focused local commit + this file updated + immediate continuation.
 - Never ask the user for continuation between milestones.
 - Never delete/skip/xit failing tests to make suite green.
 - Sensitive decisions (price, discount, complaint, contract, financing, regulatory) MUST remain human across every milestone.
+- C33 must never emit a compliance verdict and must never claim to submit a regulatory declaration.
+- C34 technical completion does not require a live PA API; production provider integration remains a separate pending gate.
+- C35 V1 is indicator-only; do not drift into IOBSP functionality.
+- C37 production requires Europe-only hosting verification and a supplied DPA reference.
