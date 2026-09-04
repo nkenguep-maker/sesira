@@ -1,6 +1,6 @@
 import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
-import { getAttributionWorkspace } from "@/lib/data/c32-workspaces";
+import { getAttributionWorkspace, type AttributionRow } from "@/lib/data/c32-workspaces";
 
 export const dynamic = "force-dynamic";
 
@@ -41,41 +41,16 @@ export default async function AttributionPage() {
 
       {rows.length ? (
         <div className="attribution-zones">
-          <AttributionZone
-            label="OBSERVÉ"
-            title="Origine appuyée par un signal technique ou une attestation humaine"
-            rows={observed}
-            tone="good"
-          />
-          <AttributionZone
-            label="ESTIMÉ"
-            title="Association plausible, mais non prouvée"
-            rows={estimated}
-            tone="warning"
-          />
-          <AttributionZone
-            label="INCONNU"
-            title="Origine non établie"
-            rows={unknown}
-            tone="neutral"
-          />
+          <AttributionZone label="OBSERVÉ" title="Origine appuyée par un signal technique ou une attestation humaine" rows={observed} tone="good" />
+          <AttributionZone label="ESTIMÉ" title="Association plausible, mais non prouvée" rows={estimated} tone="warning" />
+          <AttributionZone label="INCONNU" title="Origine non établie" rows={unknown} tone="neutral" />
         </div>
       ) : <EmptyState title="Aucune attribution enregistrée" description="SESIRA laissera l’origine inconnue tant qu’aucune preuve ou estimation explicitement documentée n’existe." />}
     </>
   );
 }
 
-function AttributionZone({
-  label,
-  title,
-  rows,
-  tone,
-}: {
-  label: string;
-  title: string;
-  rows: Awaited<ReturnType<typeof getAttributionWorkspace>> extends { status: "OK"; rows: infer T } ? T : never;
-  tone: "good" | "warning" | "neutral";
-}) {
+function AttributionZone({ label, title, rows, tone }: { label: string; title: string; rows: AttributionRow[]; tone: "good" | "warning" | "neutral" }) {
   return (
     <section className="attribution-zone">
       <div className="workspace-section-heading">
