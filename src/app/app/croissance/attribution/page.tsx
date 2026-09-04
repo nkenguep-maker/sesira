@@ -1,6 +1,7 @@
 import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
-import { getAttributionWorkspace, type AttributionRow } from "@/lib/data/c32-workspaces";
+import { getRecentAttributionWorkspace } from "@/lib/data/attribution-report";
+import type { AttributionRow } from "@/lib/data/c32-workspaces";
 
 export const dynamic = "force-dynamic";
 
@@ -8,9 +9,7 @@ export default async function AttributionPage() {
   const viewer = await getViewerContext();
   if (!viewer) return null;
 
-  const until = new Date();
-  const since = new Date(until.getTime() - 90 * 86_400_000);
-  const result = await getAttributionWorkspace(viewer.organization.id, since, until);
+  const result = await getRecentAttributionWorkspace(viewer.organization.id);
 
   if (result.status === "ERROR") {
     return (
@@ -72,7 +71,7 @@ function AttributionZone({ label, title, rows, tone }: { label: string; title: s
                   <span><b>Valeur estimée associée</b>{formatValue(row.totalEstimatedValue, row.currencyMix)}</span>
                   <span><b>Devises</b>{row.currencyMix.length ? row.currencyMix.join(", ") : "Inconnues"}</span>
                 </div>
-                {row.currencyMix.length > 1 ? <p className="workspace-action-note">Plusieurs devises sont présentes. La valeur n’est pas convertie ni additionnée comme un montant financier homogène.</p> : null}
+                {row.currencyMix.length > 1 ? <p className="workspace-action-note">Plusieurs devises sont présentes. La somme brute retournée par le Core n’est pas affichée : sans conversion explicite, elle n’est pas un montant financier agrégeable.</p> : null}
               </div>
             </article>
           ))}
@@ -85,4 +84,8 @@ function AttributionZone({ label, title, rows, tone }: { label: string; title: s
 function sourceLabel(source: string) { return ({ CAMPAIGN: "Campagne", LEAD: "Lead", CONVERSATION: "Conversation", PUBLICATION: "Publication", MANUAL: "Saisie humaine", UNKNOWN: "Inconnue" } as Record<string, string>)[source] ?? source; }
 function confidenceLabel(value: string) { return ({ OBSERVED: "Observé", ESTIMATED: "Estimé", UNKNOWN: "Inconnu" } as Record<string, string>)[value] ?? "Inconnu"; }
 function shortId(value: string) { return value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-5)}` : value; }
-function formatValue(value: number, currencies: string[]) { if (!currencies.length) return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(value); if (currencies.length > 1) return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(value)} · non converti`; return new Intl.NumberFormat("fr-FR", { style: "currency", currency: currencies[0], maximumFractionDigits: 0 }).format(value); }
+function formatValue(value: number, currencies: string[]) {
+  if (currencies.length > 1) return "Non agrégeable";
+  if (!currencies.length) return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: currencies[0], maximumFractionDigits: 0 }).format(value);
+}

@@ -59,8 +59,6 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
       {rows.length ? (
         <section className="workspace-list" aria-label="Factures suivies">
           {rows.map((row) => {
-            const pastDueDays = row.dueAt && ["OVERDUE", "ISSUED"].includes(row.status) ? daysPastDue(row.dueAt) : null;
-            const promiseLate = row.collectionState === "PROMISE_TO_PAY" && row.paymentPromiseDueAt ? new Date(row.paymentPromiseDueAt).getTime() < Date.now() : false;
             const editableCollection = ["ISSUED", "OVERDUE"].includes(row.status);
 
             return (
@@ -80,15 +78,15 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
                   <div className="workspace-meta">
                     <span><b>Montant</b>{formatAmount(row.amount, row.currency)}</span>
                     <span><b>Échéance</b>{row.dueAt ? formatDate(row.dueAt) : "Non renseignée"}</span>
-                    <span><b>Retard observé</b>{pastDueDays !== null && pastDueDays > 0 ? `${pastDueDays} j` : "Aucun"}</span>
+                    <span><b>Retard observé</b>{row.pastDueDays !== null && row.pastDueDays > 0 ? `${row.pastDueDays} j` : "Aucun"}</span>
                     <span><b>Relances enregistrées</b>{row.reminderStage ? `Niveau ${row.reminderStage}` : "Aucune"}</span>
                   </div>
 
                   {row.collectionState === "PROMISE_TO_PAY" ? (
-                    <div className={promiseLate ? "workspace-gap-box" : "workspace-preview"}>
+                    <div className={row.paymentPromiseLate ? "workspace-gap-box" : "workspace-preview"}>
                       <span>Promesse de paiement</span>
                       <p>Échéance promise : {row.paymentPromiseDueAt ? formatDateTime(row.paymentPromiseDueAt) : "Non renseignée"}{row.paymentPromiseNote ? ` · ${row.paymentPromiseNote}` : ""}</p>
-                      {promiseLate ? <p>La date promise est dépassée. SESIRA fait remonter le fait, sans choisir la suite.</p> : null}
+                      {row.paymentPromiseLate ? <p>La date promise est dépassée. SESIRA fait remonter le fait, sans choisir la suite.</p> : null}
                     </div>
                   ) : null}
 
@@ -100,9 +98,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
                   ) : null}
 
                   {row.reminderLastSentAt ? <p className="workspace-description">Dernière relance enregistrée : {formatDateTime(row.reminderLastSentAt)}.</p> : null}
-                  {row.reminderStage === 3 && row.status === "OVERDUE" && row.collectionState === "NORMAL" ? (
-                    <p className="workspace-action-note">Le dernier niveau de relance enregistré a été atteint. La prochaine décision reste humaine.</p>
-                  ) : null}
+                  {row.reminderStage === 3 && row.status === "OVERDUE" && row.collectionState === "NORMAL" ? <p className="workspace-action-note">Le dernier niveau de relance enregistré a été atteint. La prochaine décision reste humaine.</p> : null}
                 </div>
 
                 {editableCollection ? (
@@ -150,7 +146,6 @@ function ResultNotice({ result }: { result?: string }) {
 function invoiceTone(status: string): "good" | "warning" | "neutral" { if (status === "PAID") return "good"; if (status === "OVERDUE") return "warning"; return "neutral"; }
 function invoiceLabel(status: string) { return ({ DRAFT: "Brouillon", ISSUED: "Émise", OVERDUE: "En retard", PAID: "Payée", CANCELLED: "Annulée" } as Record<string, string>)[status] ?? status; }
 function collectionLabel(status: string) { return ({ PROMISE_TO_PAY: "Promesse enregistrée", DISPUTED: "Litige" } as Record<string, string>)[status] ?? status; }
-function daysPastDue(value: string) { const due = new Date(value).getTime(); return Number.isNaN(due) ? 0 : Math.max(0, Math.floor((Date.now() - due) / 86_400_000)); }
 function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "Date inconnue" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(date); }
 function formatDateTime(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "Date inconnue" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(date); }
 function formatAmount(amount: number, currency: string) { return new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount); }

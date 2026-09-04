@@ -38,13 +38,13 @@ export default async function ConversationsPage() {
       <section className="workspace-stat-strip" aria-label="État des conversations">
         <div><strong>{rows.filter((row) => row.status === "OPEN").length}</strong><span>Ouvertes</span></div>
         <div><strong>{rows.filter((row) => row.status === "PENDING_REPLY").length}</strong><span>Réponse attendue</span></div>
-        <div><strong>{rows.filter((row) => row.status === "REPLIED").length}</strong><span>Réponse enregistrée</span></div>
+        <div><strong>{rows.filter((row) => row.status === "REPLIED").length}</strong><span>Réponses enregistrées</span></div>
         <div><strong>{rows.filter((row) => row.assignedUserId === null && !["CLOSED", "ARCHIVED"].includes(row.status)).length}</strong><span>Non assignées</span></div>
       </section>
 
       <section className="workspace-boundary-note">
-        <StatusPill>Provider comme preuve</StatusPill>
-        <p>Cette vue n’envoie aucun message. Une réponse n’est affichée comme enregistrée que si le workflow a reçu l’information correspondante ; le texte du message reste chez le provider.</p>
+        <StatusPill>Trace de workflow</StatusPill>
+        <p>Cette vue n’envoie aucun message. REPLIED signifie qu’un membre a enregistré une réponse après l’action externe ; C31 ne conserve pas de reçu provider pour le message individuel, donc cet état n’est pas présenté comme une preuve de livraison.</p>
       </section>
 
       {rows.length ? (
@@ -60,11 +60,11 @@ export default async function ConversationsPage() {
                   <span><b>Lead</b>{row.leadId ? leads.get(row.leadId) ?? "Lead lié" : "Aucun"}</span>
                   <span><b>Campagne</b>{row.campaignId ? campaigns.get(row.campaignId) ?? "Campagne liée" : "Aucune"}</span>
                   <span><b>Dernier entrant</b>{row.lastInboundAt ? formatDateTime(row.lastInboundAt) : "Non renseigné"}</span>
-                  <span><b>Dernier sortant</b>{row.lastOutboundAt ? formatDateTime(row.lastOutboundAt) : "Non renseigné"}</span>
+                  <span><b>Dernier sortant enregistré</b>{row.lastOutboundAt ? formatDateTime(row.lastOutboundAt) : "Non renseigné"}</span>
                 </div>
                 <div className="workspace-meta single-line">
                   <span><b>Assignation</b>{row.assignedUserId ? "Attribuée" : "Non assignée"}</span>
-                  <span><b>Référence provider</b>{row.externalThreadRef ?? "Absente"}</span>
+                  <span><b>Référence du fil provider</b>{row.externalThreadRef ?? "Absente"}</span>
                 </div>
                 {row.status === "PENDING_REPLY" ? <div className="workspace-gap-box"><strong>Action humaine</strong><p>Une réponse est attendue. Ouvrez le provider ou le canal connecté pour répondre ; SESIRA ne simule pas l’envoi depuis cette vue.</p></div> : null}
               </div>

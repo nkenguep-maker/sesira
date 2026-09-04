@@ -17,11 +17,15 @@ describe("U25-U32 operations and growth workspace", () => {
     expect(nav).not.toMatch(/\{ href: "\/app\/interventions", label: "\d/);
   });
 
-  it("does not expose a fake field-report send control", () => {
+  it("does not expose a fake field-report send control and requires provider delivery evidence", () => {
     const page = source("src/app/app/rapports/page.tsx");
+    const delivery = source("src/lib/data/field-report-delivery.ts");
     const actions = source("src/app/app/c32-actions.ts");
-    expect(page).toContain("Preuve d’envoi séparée");
+    expect(page).toContain("Preuve de livraison provider");
+    expect(page).toContain("deliveryByReport");
     expect(page).toContain("Aucun envoi n’est déclenché depuis cette page");
+    expect(delivery).toContain("delivery_provider");
+    expect(delivery).toContain("delivery_external_ref");
     expect(actions).toContain('["REVIEWED", "APPROVED"]');
     expect(actions).not.toContain('nextStatus === "SENT"');
   });
@@ -33,12 +37,21 @@ describe("U25-U32 operations and growth workspace", () => {
     expect(page).not.toContain("Publier maintenant");
   });
 
-  it("separates observed estimated and unknown attribution", () => {
+  it("separates observed estimated and unknown attribution without displaying a mixed-currency total", () => {
     const page = source("src/app/app/croissance/attribution/page.tsx");
     expect(page).toContain('row.confidence === "OBSERVED"');
     expect(page).toContain('row.confidence === "ESTIMATED"');
     expect(page).toContain('row.confidence === "UNKNOWN"');
     expect(page).toContain("ne fusionne jamais OBSERVÉ, ESTIMÉ et INCONNU");
+    expect(page).toContain('if (currencies.length > 1) return "Non agrégeable"');
+    expect(page).toContain("La somme brute retournée par le Core n’est pas affichée");
+  });
+
+  it("keeps conversation reply state distinct from provider delivery proof", () => {
+    const page = source("src/app/app/croissance/conversations/page.tsx");
+    expect(page).toContain("Trace de workflow");
+    expect(page).toContain("n’est pas présenté comme une preuve de livraison");
+    expect(page).not.toContain("Provider comme preuve");
   });
 
   it("keeps financial and maintenance decisions human", () => {
@@ -48,6 +61,15 @@ describe("U25-U32 operations and growth workspace", () => {
     expect(invoices).toContain("ne change ni le montant");
     expect(maintenance).toContain("ne renouvelle pas un contrat");
     expect(maintenance).toContain("ne change pas son prix");
+  });
+
+  it("keeps render-time clock reads out of the invoice surface", () => {
+    const page = source("src/app/app/factures/page.tsx");
+    const data = source("src/lib/data/invoice-collection.ts");
+    expect(page).not.toContain("Date.now()");
+    expect(data).toContain("const observedAt = Date.now()");
+    expect(data).toContain("paymentPromiseLate");
+    expect(data).toContain("pastDueDays");
   });
 
   it("models payment promises and disputes without a universal age escalation", () => {
