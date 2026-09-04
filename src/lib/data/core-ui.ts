@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { safeClient } from "@/lib/data/safe-client";
 
 export type CustomerListRow = {
@@ -84,9 +86,15 @@ export type OrganizationMemberRow = {
   id: string;
   userId: string;
   fullName: string | null;
+  email: string | null;
   role: string;
   status: string;
   createdAt: string;
+};
+
+type MemberDirectoryRow = {
+  user_id: string;
+  email: string | null;
 };
 
 export async function getOrganizationMembers(
@@ -105,16 +113,28 @@ export async function getOrganizationMembers(
   }
   const members = membersResult.data ?? [];
   const userIds = members.map((member) => member.user_id);
-  const profilesResult = userIds.length
-    ? await supabase.from("profiles").select("id, full_name").in("id", userIds)
-    : { data: [], error: null };
+  const [profilesResult, directoryResult] = await Promise.all([
+    userIds.length
+      ? supabase.from("profiles").select("id, full_name").in("id", userIds)
+      : Promise.resolve({ data: [], error: null }),
+    (supabase as unknown as SupabaseClient).rpc("organization_member_directory", {
+      target_organization_id: organizationId,
+    }),
+  ]);
+  if (directoryResult.error) {
+    console.error("[lib/data] organization_member_directory:", directoryResult.error.message);
+  }
   const profileById = new Map(
     (profilesResult.data ?? []).map((profile) => [profile.id, profile.full_name] as const),
+  );
+  const emailById = new Map(
+    ((directoryResult.data ?? []) as MemberDirectoryRow[]).map((row) => [row.user_id, row.email] as const),
   );
   return members.map((member) => ({
     id: member.id,
     userId: member.user_id,
     fullName: profileById.get(member.user_id) ?? null,
+    email: emailById.get(member.user_id) ?? null,
     role: member.role,
     status: member.status,
     createdAt: member.created_at,
