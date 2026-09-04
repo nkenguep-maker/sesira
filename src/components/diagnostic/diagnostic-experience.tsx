@@ -9,7 +9,7 @@ const VOLUMES = [
   { label: "Environ 10", value: 10 },
   { label: "Environ 25", value: 25 },
   { label: "Environ 50", value: 50 },
-  { label: "100 ou plus", value: 120 },
+  { label: "100 ou plus", value: 100 },
 ] as const;
 
 export function DiagnosticExperience() {
@@ -29,11 +29,12 @@ export function DiagnosticExperience() {
     const overdue = parseOptionalNumber(overdueInvoices);
 
     const annualQuotes = monthlyQuotes * 12;
+    const annualQuotesLabel = monthlyQuotes === 100 ? `${formatNumber(annualQuotes)}+` : formatNumber(annualQuotes);
     const annualNoFollowUp = noFollowUp === null ? null : Math.round(noFollowUp * 12);
     const quoteValue = annualNoFollowUp !== null && average !== null ? annualNoFollowUp * average : null;
 
     return {
-      annualQuotes,
+      annualQuotesLabel,
       annualNoFollowUp,
       quoteValue,
       unscheduled,
@@ -45,7 +46,9 @@ export function DiagnosticExperience() {
     if (!monthlyQuotes) return null;
     const value = parseOptionalNumber(quotesWithoutFollowUp);
     if (value === null) return null;
-    if (value > monthlyQuotes) return `Ce nombre ne peut pas dépasser les ${monthlyQuotes} devis envoyés par mois.`;
+    if (monthlyQuotes < 100 && value > monthlyQuotes) {
+      return `Ce nombre ne peut pas dépasser les ${monthlyQuotes} devis envoyés par mois.`;
+    }
     return null;
   }, [monthlyQuotes, quotesWithoutFollowUp]);
 
@@ -189,7 +192,7 @@ export function DiagnosticExperience() {
           </div>
 
           <div className="roi-result-grid">
-            <ResultCard label="Devis envoyés" value={formatNumber(result.annualQuotes)} detail="par an, d'après votre volume mensuel" />
+            <ResultCard label="Devis envoyés" value={result.annualQuotesLabel} detail="par an, d'après votre volume mensuel" />
             <ResultCard
               label="Sans réponse et sans relance"
               value={result.annualNoFollowUp === null ? "Non renseigné" : formatNumber(result.annualNoFollowUp)}
@@ -221,7 +224,7 @@ export function DiagnosticExperience() {
             <div>
               <span className="roi-kicker">SUR VOS VRAIS DEVIS</span>
               <h3>Vous voulez mesurer ça pendant 90 jours&nbsp;?</h3>
-              <p>SESIRA observe vos demandes, vos devis et vos relances. Il n&apos;envoie rien. À la fin, vous recevez les cas datés et vos délais réels.</p>
+              <p>SESIRA observe vos demandes et vos devis. Il garde aussi les relances datées. Rien n&apos;est envoyé par SESIRA pendant le constat.</p>
             </div>
             <div className="roi-offer-card">
               <strong>590 €</strong>
