@@ -2595,6 +2595,65 @@ export type Database = {
           matched_rule_code: string | null
         }[]
       }
+      generate_cerfa_intervention_export: {
+        Args: {
+          target_organization_id: string
+          target_intervention_id: string
+          target_generator_user_id: string
+        }
+        Returns: string
+      }
+      generate_annual_regulatory_bilan: {
+        Args: {
+          target_organization_id: string
+          target_year: number
+          target_generator_user_id: string
+        }
+        Returns: string
+      }
+      mark_regulatory_export_exported: {
+        Args: {
+          target_organization_id: string
+          target_export_id: string
+          target_exported_by_user_id: string
+          target_export_format: string
+        }
+        Returns: boolean
+      }
+      regulatory_exports_for: {
+        Args: {
+          target_organization_id: string
+          target_export_kind: string | null
+          target_year: number | null
+          target_intervention_id: string | null
+          target_include_superseded: boolean
+        }
+        Returns: {
+          export_id: string
+          export_kind: string
+          reference_year: number | null
+          reference_intervention_id: string | null
+          status: string
+          payload_gap_count: number
+          generated_by_user_id: string | null
+          generated_at: string
+          exported_at: string | null
+          exported_by_user_id: string | null
+          export_format: string | null
+          superseded_at: string | null
+        }[]
+      }
+      pending_cerfa_interventions: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          intervention_id: string
+          title: string
+          completed_at: string | null
+          customer_id: string
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string
