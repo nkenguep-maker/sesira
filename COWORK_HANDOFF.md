@@ -7,11 +7,11 @@ Read this file first on any new Claude Code session; resume from
 ## Current status
 
 - **Branch**: `claude/core-workflows`
-- **HEAD**: `c6a83a4` (C31 growth publishing + conversations)
+- **HEAD**: `(new)` (C32 honest attribution)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
-- **Driver phase**: WAVE 4 (Growth) — C31 landed and applied on Supabase.
-- **NEXT_MILESTONE**: `C32 — HONEST ATTRIBUTION (OBSERVED / ESTIMATED / UNKNOWN)`
+- **Driver phase**: WAVE 4 (Growth) COMPLETE — C32 landed and applied on Supabase. Wave 5 (Compliance & Expansion) next.
+- **NEXT_MILESTONE**: `C33 — F-GAS / CERFA (VERIFY REGULATION FIRST)`
 
 ## Milestone log
 
@@ -45,6 +45,7 @@ Read this file first on any new Claude Code session; resume from
 | C29 | `ce480e5` | DONE | Maintenance & renewals (state machine + activate/visit/scan/notice/cancel + 2 read RPCs) — applied on Supabase as `20260923000000`. **WAVE 3 COMPLETE.** |
 | C30 | `2016c0e` | DONE | Growth core — 2 tables (growth_campaigns + leads) + 2 state machines + 6 write RPCs + 2 read RPCs — applied on Supabase as `20260924000000`. **WAVE 4 KICKOFF.** |
 | C31 | `c6a83a4` | DONE | Growth publishing + conversations — 3 tables + 3 state machines + 8 write RPCs + 3 read RPCs — applied on Supabase as `20260925000000`. Content/publication/reply always human-gated (ACTIVE member). |
+| C32 | `(new)` | DONE | Honest attribution (OBSERVED / ESTIMATED / UNKNOWN) — 1 table + 2 write RPCs + 2 read RPCs — applied on Supabase as `20260926000000`. Reports MUST break down by confidence; UNKNOWN kept visible. **WAVE 4 COMPLETE.** |
 
 ## BASELINE_FAILURE
 

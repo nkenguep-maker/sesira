@@ -2340,6 +2340,64 @@ export type Database = {
           assigned_user_id: string | null
         }[]
       }
+      record_opportunity_attribution: {
+        Args: {
+          target_organization_id: string
+          target_opportunity_id: string
+          target_source_type: string
+          target_source_id: string | null
+          target_confidence: string
+          target_reason: string
+          target_attributed_by_user_id: string | null
+          target_provenance: Json
+        }
+        Returns: string
+      }
+      revoke_opportunity_attribution: {
+        Args: {
+          target_organization_id: string
+          target_attribution_id: string
+          target_revoked_by_user_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      attribution_report_by_source: {
+        Args: {
+          target_organization_id: string
+          target_since: string
+          target_until: string
+        }
+        Returns: {
+          source_type: string
+          source_id: string | null
+          confidence: string
+          opportunity_count: number
+          distinct_opportunities: number
+          total_estimated_value: number
+          currency_mix: string[] | null
+        }[]
+      }
+      opportunity_attributions_for: {
+        Args: {
+          target_organization_id: string
+          target_opportunity_id: string
+          target_include_revoked: boolean
+        }
+        Returns: {
+          attribution_id: string
+          source_type: string
+          source_id: string | null
+          confidence: string
+          reason: string
+          attributed_by_user_id: string | null
+          attributed_at: string
+          revoked_at: string | null
+          revoked_by_user_id: string | null
+          revoke_reason: string | null
+          provenance: Json
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string
