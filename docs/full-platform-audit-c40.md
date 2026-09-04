@@ -1,162 +1,145 @@
-# C40 — SESIRA Full Platform Maturity — FINAL AUDIT
+# C40 — SESIRA Full Platform Maturity — Integration Closure
 
-**Status:** WAVE 1–6 backend contracts complete. Signed-off gate.
-**Branch:** `claude/core-workflows`
-**Supabase:** `ubfqffhvomaxcwgerwmr` (P1)
+**Status:** C40 backend contracts retained; product integration gaps G1/G2 closed in `integration/c40-core-ui`.
+**Branch:** `integration/c40-core-ui`
+**Supabase:** `ubfqffhvomaxcwgerwmr`
 **Date:** 2026-09-04
 
-C40 is not a feature milestone. It is the gate check: 33 platform
-domains × 9 criteria, with the audit trail per cell. Where the
-backend contract is complete but the operator UI ships on the
-`codex/product-workflows` branch, the cell reads `UI (codex)`.
-Where a real integration is deliberately deferred, the cell reads
-`PROVIDER_PENDING` — the doctrine gate refuses fake success.
+This note updates the previous C40 audit only where the product integration work changed the evidence. It does **not** re-audit the underlying C5–C40 Core milestones. The existing milestone evidence remains the source of truth for those contracts.
+
+The product rule remains unchanged: where a real external service is not configured or has not confirmed an outcome, SESIRA shows the state as unavailable, pending or unknown. It never manufactures provider success.
 
 ## Criteria legend
 
-- **functional** — backend contract in place and tested manually via a fresh Supabase apply.
-- **tenant-safe** — RLS enabled, RPC gates check org membership, cross-tenant read/write blocked (offensive suite verifies).
-- **auditable** — every mutation lands in `audit_logs` OR a domain-specific event log (`platform_component_events`, `regulatory_attentions`, `einvoicing_provider_events`).
-- **idempotent** — dedup key + no side-effect on replay (offline_client_id, external_ref, idempotency_key).
-- **recoverable** — state machine transitions are typed + reversible where legal; terminals leave enough context (reason, snapshot) for a post-mortem.
-- **honest UI** — backend produces contract that surfaces raw truth; UI (Codex) must render without synthesis. Wording constraints enforced (INV-01).
-- **mobile** — where the domain touches technicians on the road, backend is offline-first (offline_client_id + CONFLICT flag).
-- **accessible** — UI concern (Codex); backend contracts include labels + free-text fields that support i18n.
-- **no fake provider success** — SUBMITTED/ACCEPTED/REJECTED (or equivalent) only enter the DB via real provider webhook (service_role) or explicit TEST simulation. Enforced at SQL layer.
+- **functional** — a real contract exists for the domain.
+- **tenant-safe** — organization scoping and RLS/guard checks apply.
+- **auditable** — mutations or external-state changes leave an audit/domain event trail.
+- **idempotent** — retries do not duplicate side effects.
+- **recoverable** — state transitions retain enough context to retry, reverse when legal, or investigate.
+- **honest UI** — the product renders recorded facts, estimates and unknowns distinctly.
+- **mobile** — road-facing workflows are usable on small screens; field capture retains device timestamps and replay keys where supported.
+- **accessible** — labels and state descriptions remain explicit rather than relying only on colour.
+- **no fake provider success** — external success is displayed only from a real external confirmation or an explicitly labelled test mode.
 
 ## Coverage grid
 
-| Domain | functional | tenant-safe | auditable | idempotent | recoverable | honest UI | mobile | accessible | no-fake-provider-success |
+| Domain | functional | tenant-safe | auditable | idempotent | recoverable | honest UI | mobile | accessible | no fake provider success |
 |---|---|---|---|---|---|---|---|---|---|
-| Auth | ✓ base | ✓ base | ✓ | N/A | ✓ | UI (codex) | N/A | UI (codex) | N/A |
-| Tenancy | ✓ base | ✓ RLS + guards | ✓ | N/A | ✓ | UI (codex) | N/A | UI (codex) | N/A |
-| RLS | ✓ 24 W5/6 tables | ✓ | N/A | N/A | ✓ | N/A | N/A | N/A | N/A |
-| Clients | ✓ base | ✓ | ✓ audit_logs | ✓ (external_ref) | ✓ | UI (codex) | UI (codex) | UI (codex) | N/A |
-| Requests | ✓ base | ✓ | ✓ | ✓ (idempotency_key) | ✓ | UI (codex) | UI (codex) | UI (codex) | N/A |
-| Quotes | ✓ base + C18 variants | ✓ | ✓ | ✓ | ✓ | UI (codex) | UI (codex) | UI (codex) | N/A |
-| Opportunities | ✓ C18 | ✓ | ✓ | ✓ | ✓ SM trigger | UI (codex) | UI (codex) | UI (codex) | N/A |
-| Follow-up | ✓ C13/C22 | ✓ | ✓ | ✓ | ✓ | UI (codex) | UI (codex) | UI (codex) | N/A |
-| Attention | ✓ C6 | ✓ | ✓ | ✓ idem key | ✓ SM | UI (codex) | UI (codex) | UI (codex) | N/A |
-| Shadow | ✓ C5 | ✓ | ✓ | ✓ | ✓ | N/A | N/A | N/A | N/A |
-| Approval | ✓ C12 | ✓ | ✓ audit_logs | ✓ | ✓ SoD | UI (codex) | UI (codex) | UI (codex) | ✓ (see Email) |
-| Email | ✓ C9 boundary | ✓ | ✓ outbound_messages | ✓ dedup | ✓ | UI (codex) | UI (codex) | UI (codex) | ✓ real Resend only |
-| Replies | ✓ C10/C11 | ✓ | ✓ | ✓ provider_message_id | ✓ SM | UI (codex) | UI (codex) | UI (codex) | N/A (inbound) |
-| AI / Mistral | ⚠ contract only | ✓ ai_runs.org_id | ✓ ai_runs table | ✓ idempotency_key | ✓ (retry_failed_run) | UI (codex) | N/A | UI (codex) | ⚠ **AIProvider seam PENDING** — apps still fetch directly. C40 gap. |
-| Interventions | ✓ C25 | ✓ | ✓ + assert_tenant_active_assignment | ✓ | ✓ SM | UI (codex) | ✓ C36 offline | UI (codex) | N/A |
-| Field reports | ✓ C26 | ✓ | ✓ | ✓ | ✓ SM | UI (codex) | ✓ via artifacts | UI (codex) | N/A |
-| Documents | ✓ C27 + C40 composite unique | ✓ RPC checks | ✓ | ✓ file_reference unique | ✓ SM | UI (codex) | UI (codex) | UI (codex) | ✓ service_role classify |
-| Invoices | ✓ C28 | ✓ | ✓ | ✓ (org, external_ref) | ✓ SM + partial payment safety | UI (codex) | UI (codex) | UI (codex) | ✓ real accounting sync |
-| Maintenance | ✓ C29 | ✓ | ✓ | ✓ per-scan attention | ✓ SM | UI (codex) | UI (codex) | UI (codex) | N/A |
-| Growth (core) | ✓ C30 | ✓ | ✓ | ✓ | ✓ SM | UI (codex) | UI (codex) | UI (codex) | N/A |
-| Publishing | ✓ C31 | ✓ | ✓ | ✓ (org, channel, external_ref) | ✓ SM | UI (codex) | UI (codex) | UI (codex) | ✓ mark_publication_published requires ACTIVE member + external_ref |
-| Conversations | ✓ C31 | ✓ | ✓ | ✓ (org, channel, external_thread_ref) | ✓ SM | UI (codex) | UI (codex) | UI (codex) | ✓ record_conversation_reply ACTIVE member |
-| Attribution | ✓ C32 | ✓ | ✓ | ✓ 2 partial unique idx | ✓ (revoke keeps audit) | UI (codex) MUST break down by confidence | UI (codex) | UI (codex) | N/A |
-| F-Gas / CERFA | ✓ C33.1/2/3 | ✓ + INV-03 snapshots | ✓ regulatory_attentions immutable | ✓ per-intervention CERFA supersede | ✓ INV-03 rule snapshot per calc | UI (codex) — INV-01 no "conforme" | UI (codex) | UI (codex) | ✓ export only, client deposits |
-| E-invoicing | ✓ C34 | ✓ | ✓ einvoicing_provider_events | ✓ (org, invoice, provider) + event dedup | ✓ SM | UI (codex) « Transmission fournisseur indisponible » | UI (codex) | UI (codex) | ✓ **PROVIDER_PENDING sentinel + service_role gate** |
-| Financing | ✓ C35 | ✓ | ✓ | ✓ | ✓ SM + status human-declared | UI (codex) | UI (codex) | UI (codex) | ✓ audit-only commission (INV-05) |
-| Technician Field | ✓ C36 backend | ✓ + assignee gate | ✓ audit_logs | ✓ offline_client_id | ✓ CONFLICT flag never drops | UI (codex U36) | ✓ offline-first | UI (codex) | N/A |
-| Voice | ✓ C37 | ✓ | ✓ audit_logs w/ disclosure snapshots | ✓ (org, provider, external_call_ref) | ✓ SM + retention purge | UI (codex) « Transmission fournisseur indisponible » | UI (codex — small screen priority) | UI (codex) | ✓ **D-5 Europe gate + service_role webhooks + PROVIDER_PENDING** |
-| Incidents | ✓ C7 | ✓ | ✓ | ✓ | ✓ | UI (codex) | UI (codex) | UI (codex) | N/A |
-| Costs | ✓ C38 | ✓ | ✓ platform_component_events | ✓ RPC-only insert | ✓ | UI (codex) « Pas de métrique inventée » | UI (codex) | UI (codex) | N/A |
-| Recovery | ✓ C39 seed + snapshots | ✓ RLS on all backup targets | ✓ audit_logs | N/A (drill) | ✓ rollback_synthetic_volume helper | N/A | N/A | N/A | N/A |
-| Security | ✓ C39 offensive suite (14 tests) | ✓ cross-tenant tests | ✓ | ✓ replay tests | ✓ | N/A | N/A | N/A | ✓ TEST vs production gates |
-| Data export | ⚠ INV-07 Data Act — backend surfaces exist per domain, but a **single "export tout l'org"** RPC is not yet unified. C40 gap. | ✓ | ✓ | ✓ | ✓ | UI (codex) | N/A | UI (codex) | N/A |
-| Regulatory auditability | ✓ INV-03 snapshots + INV-02 seen_at immutable + immutable reference tables | ✓ | ✓ | ✓ | ✓ | UI (codex) | UI (codex) | UI (codex) | N/A |
+| Auth | ✓ base | ✓ base | ✓ | N/A | ✓ | ✓ product | N/A | ✓ product | N/A |
+| Tenancy / RLS | ✓ | ✓ | ✓ | N/A | ✓ | ✓ | N/A | ✓ | N/A |
+| Clients | ✓ | ✓ | ✓ | ✓ external refs | ✓ | ✓ product | ✓ product | ✓ product | N/A |
+| Requests | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ product | ✓ product | ✓ product | N/A |
+| Quotes / Opportunities | ✓ C18+ | ✓ | ✓ | ✓ | ✓ | ✓ product | ✓ product | ✓ product | N/A |
+| Follow-up / Attention / Approval | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ product | ✓ product | ✓ product | ✓ external actions gated |
+| Email / Replies | ✓ | ✓ | ✓ | ✓ provider refs | ✓ | ✓ product | ✓ product | ✓ product | ✓ real external confirmation only |
+| AI reply classification | ✓ provider seam | ✓ ai_runs.org_id | ✓ ai_runs | ✓ idempotency key | ✓ failure classes + retry records | ✓ low confidence/sensitive → human | N/A | ✓ | ✓ no classification success when no classifier configured |
+| Interventions | ✓ C25 | ✓ | ✓ | ✓ | ✓ | ✓ product | ✓ | ✓ | N/A |
+| Field reports | ✓ C26 | ✓ | ✓ | ✓ | ✓ | ✓ product | ✓ | ✓ | ✓ delivery truth separated |
+| Documents | ✓ C27+ | ✓ | ✓ | ✓ | ✓ | ✓ product | ✓ product | ✓ | ✓ |
+| Invoices | ✓ C28 | ✓ | ✓ | ✓ | ✓ | ✓ product | ✓ product | ✓ | ✓ accounting/e-invoice truth separated |
+| Maintenance | ✓ C29 | ✓ | ✓ | ✓ | ✓ | ✓ product | ✓ product | ✓ | N/A |
+| Growth / Publishing / Conversations | ✓ C30/C31 | ✓ | ✓ | ✓ | ✓ | ✓ product | ✓ product | ✓ | ✓ external publication refs required |
+| Attribution | ✓ C32 | ✓ | ✓ | ✓ | ✓ | ✓ confidence shown | ✓ product | ✓ | N/A |
+| F-Gas / CERFA | ✓ C33 | ✓ + rule snapshots | ✓ | ✓ | ✓ | ✓ no compliance verdict | ✓ product | ✓ | ✓ SESIRA prepares; human deposits |
+| E-invoicing | ✓ C34 | ✓ | ✓ provider events | ✓ | ✓ | ✓ pending/accepted/rejected only from recorded truth | ✓ product | ✓ | ✓ pending sentinel + external confirmation gate |
+| Financing | ✓ C35 | ✓ | ✓ | ✓ | ✓ human-declared status | ✓ consent + human decision | ✓ product | ✓ | ✓ no scoring/advice/funds |
+| Technician Field | ✓ C36 | ✓ assignee gate | ✓ | ✓ offline_client_id | ✓ conflicts retained | ✓ product | ✓ structured offline queue | ✓ | N/A |
+| Voice | ✓ C37 | ✓ | ✓ disclosure snapshots | ✓ external call ref | ✓ retention/opt-out states | ✓ product | ✓ product | ✓ | ✓ region/provider state never inferred |
+| Incidents / Platform state | ✓ C38 | ✓ | ✓ | ✓ | ✓ | ✓ raw measures, no health score | ✓ product | ✓ | N/A |
+| Recovery / Security | ✓ C39 evidence retained | ✓ | ✓ | ✓ replay evidence | ✓ | N/A | N/A | N/A | ✓ test/production boundaries retained |
+| Data export | ✓ complete-org V2 | ✓ SECURITY INVOKER + RLS | ✓ export audit | N/A read operation | ✓ open JSON/CSV | ✓ downloadable product surface | N/A | ✓ | N/A |
+| Regulatory auditability | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ product | ✓ | N/A |
 
-## Open C40 gaps (2)
+## Closed integration gaps
 
-### G1 — AIProvider seam not centralized
+### G1 — AI provider seam — CLOSED
 
-**Doctrine:** « Mistral est accessed only through AIProvider »
-(REGULATORY.md invariants + C33 spec).
+The previous audit stated that no centralized AI provider contract existed. That statement is now stale.
 
-**Status:** `ai_runs` table + `estimated_cost`/`input_tokens`/
-`output_tokens` columns exist and the C38 dashboard aggregates
-them. But there is no `src/lib/ai/provider.ts` file yet — features
-still `fetch("https://api.mistral.ai/...")` directly.
+Current evidence:
 
-**Recommendation:** dedicated Wave 6 follow-up PR — introduce
-`interface AIProvider { structuredCompletion, summarize, classify, draft }`
-+ `MistralAIProvider` + `TestAIProvider`. All feature callers
-migrated. Config env `AI_PROVIDER=mistral`,
-`MISTRAL_ENDPOINT=https://api.eu.mistral.ai`.
+- `src/lib/ai/provider.ts` defines `ReplyClassifierProvider`.
+- `src/lib/ai/providers/claude.ts` contains the external API adapter; the feature layer does not call Anthropic directly.
+- `src/lib/ai/classify-reply.ts` receives the provider by dependency injection and records both successful and failed runs in `ai_runs`.
+- `src/lib/email/webhook/ingest.ts` accepts an optional classifier. Without one, the reply is ingested normally and classification is explicitly `SKIPPED`.
+- `src/app/webhooks/resend/route.ts` creates the Claude adapter only when `ANTHROPIC_API_KEY` is configured.
 
-**Blocker:** REQUIRES data-ops attestation that Mistral endpoint
-region matches D-5 policy (Europe-only). Same gate as C37 voice.
+**Closure:** the code-level provider seam for the currently implemented AI reply-classification feature exists and is auditable.
 
-**Not blocking C40 sign-off** — the backend contracts (ai_runs,
-dashboards, kill switch) are in place; the TS abstraction is a
-codebase hygiene move, not a doctrine violation as long as `ai_runs`
-is populated on every call. Track as `PLATFORM_HYGIENE_PENDING`.
+**Operational gate retained:** this does not assert that a production Anthropic key is currently provisioned, nor that a specific provider region/data-residency condition has been verified. Those remain deployment facts to verify independently before making a regional-hosting claim.
 
-### G2 — Unified "org data export" RPC
+### G2 — Complete organization export — CLOSED
 
-**Doctrine:** INV-07 (Data Act art. 23-31, in force 2025-09-12) —
-« L'export complet des données du client est gratuit, en format
-ouvert, dans tous les paliers. »
+The old `export_organization_snapshot` returned a limited V1 snapshot. It has been replaced by a real organization export.
 
-**Status:** `export_organization_snapshot` RPC exists from C16 V1
-completion, but does not yet include Wave 5/6 tables (equipment,
-regulatory_*, einvoicing_*, financing_*, voice_*,
-intervention_field_artifacts, growth_*, platform_component_*).
+Applied migrations:
 
-**Recommendation:** extend `export_organization_snapshot` to
-include all Wave 5/6 domain data. Add a versioned schema doc so
-consumers can parse the export without SESIRA-specific knowledge.
+- `20260904211858_complete_organization_export`
+- `20260904212010_secure_organization_export_invoker`
 
-**Not blocking C40 sign-off** — the LEGAL obligation is discoverability
-+ export availability; the current RPC covers the V1 tables. Wave 5/6
-data is queryable through per-domain RPCs. Track as
-`DATA_ACT_EXPORT_EXTENSION_PENDING`.
+Current contract:
 
-## Closed C40 gap
+- schema version `C40_COMPLETE_ORGANIZATION_EXPORT_V2`;
+- automatically includes every `public` table that is actually linked through `organization_id`;
+- verified against the live schema with **49 organization-scoped datasets**;
+- includes C33–C40 data such as equipment/regulatory, e-invoicing, financing, technician field artifacts, voice, growth and platform observability;
+- recursive redaction removes secret/token/credential-like keys from the exported JSON;
+- function is `SECURITY INVOKER`, therefore normal RLS remains authoritative;
+- exporting leaves an audit record;
+- product routes provide both JSON and CSV downloads from the same snapshot.
 
-### F1 — documents composite unique (C33.1 known gap)
+**Closure:** INV-07 is now implemented as an actual complete organization export rather than a collection of per-domain reads.
 
-**Fixed in this milestone** via `20261005000000_platform_maturity_fixes.sql`:
-`ALTER TABLE public.documents ADD CONSTRAINT
-documents_id_organization_id_uniq UNIQUE (id, organization_id)`.
-Future migrations can reference `documents(id, organization_id)`
-via composite FK for FK-enforced tenant safety.
-`regulatory_attestations.document_id` FK could be tightened in a
-future patch (not migrated now — the RPC-level tenant validation
-already covers it).
+### F1 — documents composite unique — CLOSED
+
+Retained from the original audit: `20261005000000_platform_maturity_fixes.sql` adds `documents_id_organization_id_uniq`, allowing tenant-safe composite references where needed.
 
 ## Doctrine sign-off checklist
 
 | Invariant | Status | Evidence |
 |---|---|---|
-| INV-01 — no "conforme" verdict | ✓ | C39 offensive test scans pg_proc descriptions |
-| INV-02 — regulatory_attentions double-immutable | ✓ | C33.2 trigger + C39 tests |
-| INV-03 — rule snapshots on every calc | ✓ | C33.2/C33.3 store gwp_value_id + leak_rule_id + source_ref |
-| INV-04 — human-traced regulatory actions | ✓ | ACTIVE-member gates on all Wave 5/6 attention/export/reply RPCs |
-| INV-05 — SESIRA never touches funds | ✓ | No IBAN/balance schema; C35 commission audit-only |
-| INV-06 — no scoring of persons | ✓ | C39 schema smoke rejects emotion/sentiment/credit_score columns |
-| INV-07 — free full-org export | ⚠ G2 | Base RPC exists; Wave 5/6 extension pending |
-| Doctrine §7 — no fake provider success | ✓ | C34 einvoicing gate + C37 voice service_role webhooks + C34 TS provider abstractions |
-| REGULATORY.md wording | ✓ | UI (codex) — backend labels use « Préparer / Prêt / Exporté » vocabulary |
-| Provider abstraction | ⚠ G1 | Voice + e-invoicing have TS interfaces; AI is next |
+| INV-01 — no compliance verdict | ✓ | Regulatory UI uses prepare/review language; no automatic compliance conclusion |
+| INV-02 — regulatory first-seen trace | ✓ | C33 contract retained |
+| INV-03 — versioned regulatory references | ✓ | C33 rule snapshots retained |
+| INV-04 — human validation for external regulatory actions | ✓ | Product prepares documents; external filing remains human |
+| INV-05 — SESIRA never touches funds | ✓ | Financing is referral/status/commission audit only |
+| INV-06 — no natural-person credit/emotion/reliability scoring | ✓ | Financing and voice product surfaces explicitly exclude those scores |
+| INV-07 — complete customer export, open format | ✓ | Complete-org V2 + JSON/CSV routes + RLS |
+| No fake external success | ✓ | Provider-pending/test states remain explicit; external states require recorded confirmation |
+| AI provider abstraction | ✓ code seam | ReplyClassifierProvider + injected Claude adapter; runtime activation remains an operational fact |
+
+## Product integration closure added after the original audit
+
+The C40 integration branch also closes the visible product gaps that were not represented in the old backend-only grid:
+
+- `/app` is now a role-aware **Aujourd’hui** work queue rather than a decorative dashboard.
+- Technicians get a reduced **Ma journée / Terrain / Rapports / Documents** navigation.
+- Structured field capture (notes, anomalies, measurements, parts) can be queued offline and replayed with `captured_at` + `offline_client_id`; conflicts remain visible for human resolution.
+- Financing is handled inside the commercial dossier with explicit customer consent and human-declared statuses; no rate/monthly-payment/credit scoring is produced.
+- Onboarding is persisted into the organization configuration for OWNER/ADMIN and reloaded on return.
+- Connexions displays only rows actually registered in `integrations`; there is no fabricated Microsoft/Gmail/CRM/calendar catalogue.
+- Paramètres exposes the complete organization export in JSON and CSV.
+- État SESIRA exposes raw technical observations and keeps absent measures absent rather than synthesizing a health score.
+
+## Honest limitations retained
+
+These are not C40 code gaps and must not be hidden:
+
+1. **Offline binary capture:** photos and signatures are not buffered offline yet. Structured text/measurement/parts capture is. Binary offline support requires dedicated IndexedDB/storage work.
+2. **External provider activation:** a provider adapter existing in code does not mean production credentials, regional hosting or external delivery are configured. SESIRA must continue to show those states exactly as recorded.
+3. **Real-world calibration:** thresholds, cadences, cost baselines, ROI and conversion impact are not market-validated merely because the platform is technically complete.
 
 ## Sign-off
 
-**Backend contracts:** C5 → C40 all landed on `origin/claude/core-workflows`
-and applied on Supabase `ubfqffhvomaxcwgerwmr`.
-- 5 waves complete: V1 + observability, commercial intelligence, operations, growth, compliance & expansion, platform maturity.
-- 5 sub-milestones inside C33 (3 parts), C36 (backend), C39 (tests+seed+doc).
-- 2 open follow-up gaps tracked (G1 AIProvider seam, G2 data export extension) — neither blocks doctrine, both actionable in a lightweight follow-up PR.
+**C40 product integration gaps tracked by this audit: 0 open code gaps.**
 
-**Labels per project doctrine:**
-- ✅ `TECHNICALLY VALIDATED` — backend contracts, offensive suite green, immutability enforced.
-- ⏳ `REAL-WORLD CALIBRATION PENDING` — thresholds, cadences, and cost baselines are seed placeholders; real customer data will replace them (see `supabase/seeds/*.example.sql`).
+The branch may be merged only after the repository verification gate (`check:wording`, lint, typecheck, tests, build) and the preview deployment are green. Production deployment remains a separate final gate.
 
 **What NOT to claim:**
-- ❌ `market validated / ROI proven / threshold calibrated / conversion improvement proven` — none of these apply until real customer data is collected. C40 does not authorize such claims.
 
-## Recommended C40 follow-up PRs (optional)
-
-1. **`feat(ai): introduce AIProvider seam + MistralAIProvider`** — closes G1. Adds `src/lib/ai/provider.ts` interface, wraps existing Mistral fetches, keeps `TestAIProvider` for tests. Requires `AI_PROVIDER=mistral`, `MISTRAL_REGION=eu`, `MISTRAL_ENDPOINT=https://api.eu.mistral.ai` in prod env.
-2. **`feat(data-act): extend export_organization_snapshot to Wave 5/6`** — closes G2. Adds JSON schema doc.
-3. **`ops: run wave5_wave6_offensive.sql on staging clone under synthetic volume`** — closes C40 sign-off condition #2.
-4. **`ops: verify Europe-only region for Supabase + Vercel + voice provider, mark voice_policies.region_europe_verified = true via mark_voice_policy_europe_verified RPC`** — closes D-5 gate for C37 production.
-
-None of these are required for the C40 gate itself — they are follow-ups the operator can prioritize.
+- market validated;
+- ROI proven;
+- threshold calibrated;
+- conversion improvement proven;
+- a provider/region is active unless the deployment record confirms it;
+- offline photo/signature support until binary persistence is implemented.
