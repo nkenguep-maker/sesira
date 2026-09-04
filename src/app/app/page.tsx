@@ -41,9 +41,10 @@ export default async function DashboardPage() {
     ? AUTOMATION_LEVEL_LABELS[currentAutomation.level as keyof typeof AUTOMATION_LEVEL_LABELS]
     : "Non configuré";
   const hasBusinessData = (customerCount ?? 0) > 0 || (quoteCount ?? 0) > 0;
-  const workspaceReady = hasBusinessData && connectedEmail;
+  const setupStateIsReliable = !customersResult.error && !quotesResult.error && !integrationsResult.error;
+  const setupRequired = setupStateIsReliable && (!hasBusinessData || !connectedEmail);
 
-  if (!workspaceReady) {
+  if (setupRequired) {
     return (
       <FirstRunSetup
         organizationName={viewer.organization.name}
@@ -67,7 +68,7 @@ export default async function DashboardPage() {
         <MetricCard label="Clients" value={formatCount(customerCount)} />
         <MetricCard label="Devis" value={formatCount(quoteCount)} />
         <MetricCard label="À traiter" value={formatCount(attentionOpen)} />
-        <MetricCard label="Messagerie" value={connectedEmail ? "Connectée" : "À relier"} />
+        <MetricCard label="Messagerie" value={integrationsResult.error ? "—" : connectedEmail ? "Connectée" : "À relier"} />
       </section>
 
       <section className="app-primary-block">
@@ -130,7 +131,7 @@ export default async function DashboardPage() {
           <dl className="app-definition-list">
             <div><dt>Organisation</dt><dd>{organizationStatusLabel(viewer.organization.status)}</dd></div>
             <div><dt>Mode SESIRA</dt><dd>{automationLevel}</dd></div>
-            <div><dt>Messagerie</dt><dd>{connectedEmail ? "Connectée" : "À relier"}</dd></div>
+            <div><dt>Messagerie</dt><dd>{integrationsResult.error ? "Indisponible" : connectedEmail ? "Connectée" : "À relier"}</dd></div>
             <div><dt>Connexions</dt><dd>{integrationsResult.error ? "Indisponible" : String(integrationsResult.data?.length ?? 0)}</dd></div>
           </dl>
           <Link href="/app/integrations" className="secondary-action-link">Gérer les connexions</Link>
