@@ -2067,6 +2067,87 @@ export type Database = {
           reminder_last_sent_at: string | null
         }[]
       }
+      activate_maintenance_contract: {
+        Args: {
+          target_organization_id: string
+          target_contract_id: string
+          target_start_date: string
+          target_end_date: string | null
+          target_cadence_days: number
+          target_amount: number | null
+          target_currency: string | null
+          target_external_ref: string | null
+        }
+        Returns: boolean
+      }
+      record_maintenance_visit: {
+        Args: {
+          target_organization_id: string
+          target_contract_id: string
+          target_intervention_id: string
+          target_visited_at: string
+        }
+        Returns: boolean
+      }
+      scan_maintenance_renewals: {
+        Args: {
+          target_organization_id: string
+          target_days_ahead: number
+        }
+        Returns: {
+          contract_id: string
+          new_status: string
+        }[]
+      }
+      record_renewal_notice: {
+        Args: {
+          target_organization_id: string
+          target_contract_id: string
+          target_sent_by_user_id: string
+        }
+        Returns: boolean
+      }
+      cancel_maintenance_contract: {
+        Args: {
+          target_organization_id: string
+          target_contract_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      due_maintenance_visits: {
+        Args: {
+          target_organization_id: string
+          target_days_ahead: number
+        }
+        Returns: {
+          contract_id: string
+          customer_id: string
+          title: string
+          external_ref: string | null
+          cadence_days: number
+          next_visit_due_at: string | null
+          last_visit_at: string | null
+          end_date: string | null
+        }[]
+      }
+      expiring_maintenance_contracts: {
+        Args: {
+          target_organization_id: string
+          target_days_ahead: number
+        }
+        Returns: {
+          contract_id: string
+          customer_id: string
+          title: string
+          external_ref: string | null
+          end_date: string | null
+          amount: number | null
+          currency: string
+          renewal_notice_sent_at: string | null
+          status: string
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string
