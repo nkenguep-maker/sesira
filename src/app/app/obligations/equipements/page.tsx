@@ -22,7 +22,7 @@ export default async function EquipmentObligationsPage() {
 
   return (
     <>
-      <PageHeader eyebrow="OBLIGATIONS CVC" title="Équipements & fluides" description="SESIRA affiche les données connues, la règle utilisée et la prochaine échéance calculée. Il ne rend aucun verdict de conformité." />
+      <PageHeader eyebrow="OBLIGATIONS CVC" title="Équipements & fluides" description="SESIRA affiche les données connues, la règle utilisée et la prochaine échéance calculée. Il ne rend aucune conclusion réglementaire." />
       <section className="workspace-stat-strip" aria-label="État des équipements">
         <div><strong>{rows.length}</strong><span>Équipements</span></div>
         <div><strong>{withDue}</strong><span>Échéances calculées</span></div>
