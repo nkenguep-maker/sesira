@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # scripts/check-wording.sh — applique docs/LEXIQUE-REGLEMENTAIRE.md
-# Deux niveaux. Niveau 1 : interdits absolus. Niveau 2 : « conforme / conformité »,
-# qui exige une exemption explicite et relue.
+# et protège le registre de langage de la landing publique.
 #
 # Exemption : ajouter  wording-ok: <raison>  sur la ligne concernée.
 # Une exemption est une décision, pas un contournement : elle se relit en revue de diff.
@@ -32,6 +31,21 @@ HARD+='|best offer|estimated monthly|eligible for financing|enhanced security'
 SOFT='conform(e|es|ité|ités)'
 # « conformément à » est une locution neutre, pas un verdict.
 SOFT_ALLOW='conformément'
+
+# ---------- Niveau 3 : registre marketing PME CVC ----------
+# Ces mots sont légitimes dans le produit, les specs et le code. Ils sont interdits uniquement
+# sur la landing et les répertoires marketing/site, où le lecteur doit voir des mots métier concrets.
+REGISTER='pilotag(e|er|ée|és|ées)?|parcours client|flux|exception(s)?'
+REGISTER_FILES="src/app/page.tsx"
+for p in marketing site; do
+  if [ -d "$p" ]; then
+    found=$(find "$p" -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' \
+      -o -name '*.json' -o -name '*.md' -o -name '*.mdx' -o -name '*.html' \) \
+      -not -path '*/node_modules/*' -not -path '*/.next/*' -not -path '*/dist/*' 2>/dev/null)
+    REGISTER_FILES="$REGISTER_FILES"$'\n'"$found"
+  fi
+done
+REGISTER_FILES=$(echo "$REGISTER_FILES" | grep -v '^$' | sort -u || true)
 
 fail=0
 files=""
@@ -71,7 +85,16 @@ if [ -n "$hits2" ]; then
   fail=1
 fi
 
+hits3=$(echo "$REGISTER_FILES" | xargs -r grep -HniE "$REGISTER" 2>/dev/null | grep -v 'wording-ok' || true)
+if [ -n "$hits3" ]; then
+  echo "❌ NIVEAU 3 — jargon marketing interdit sur la landing PME CVC"
+  echo "   Préférer des mots métier concrets : devis, chantier, planning, facture, impayé, contrat d'entretien."
+  echo "$hits3"
+  echo
+  fail=1
+fi
+
 if [ "$fail" -eq 0 ]; then
-  echo "✅ Lexique réglementaire respecté ($(echo "$files" | wc -l | tr -d ' ') fichiers scannés)"
+  echo "✅ Wording public respecté ($(echo "$files" | wc -l | tr -d ' ') fichiers scannés)"
 fi
 exit $fail
