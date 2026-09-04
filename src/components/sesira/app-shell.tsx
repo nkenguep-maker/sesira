@@ -2,42 +2,92 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SESIRA_APP_NAV, isAppNavActive } from "@/lib/navigation";
+
+import { SESIRA_APP_NAV_GROUPS, isAppNavActive } from "@/lib/navigation";
+
 import { SesiraLogo } from "./logo";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  workspaceName,
+  role,
+}: {
+  children: React.ReactNode;
+  workspaceName: string;
+  role: string;
+}) {
   const pathname = usePathname();
 
   return (
     <div className="app-frame">
       <aside className="app-sidebar">
-        <div className="sidebar-top"><SesiraLogo /></div>
-        <nav className="app-nav" aria-label="Navigation principale">
-          {SESIRA_APP_NAV.map(({ href, label, index }) => (
-            <Link key={href} href={href} className={isAppNavActive(pathname, href) ? "active" : ""}>
-              <span className="nav-index">{index}</span>
-              <span>{label}</span>
-            </Link>
-          ))}
-        </nav>
-        <div className="sidebar-foot">
-          <Link href="/app/onboarding" className="setup-link">
-            <span className="setup-dot" />
-            Reprendre la configuration
+        <div className="sidebar-top">
+          <SesiraLogo />
+          <Link href="/app" className={pathname === "/app" ? "sidebar-home active" : "sidebar-home"}>
+            Aujourd’hui
           </Link>
+        </div>
+
+        <GroupedNavigation pathname={pathname} />
+
+        <div className="sidebar-foot">
           <div className="account-row" aria-label="Espace de travail">
-            <div className="avatar" aria-hidden="true">S</div>
-            <div><strong>Espace SESIRA</strong><span>Identité fournie par le core</span></div>
+            <div className="avatar" aria-hidden="true">{workspaceInitial(workspaceName)}</div>
+            <div>
+              <strong>{workspaceName}</strong>
+              <span>{roleLabel(role)}</span>
+            </div>
           </div>
         </div>
       </aside>
+
       <div className="app-main-wrap">
         <header className="mobile-app-bar">
           <SesiraLogo />
-          <Link href="/app/onboarding" className="button ghost small">Configurer</Link>
+          <details className="mobile-nav-menu">
+            <summary>Menu</summary>
+            <div className="mobile-nav-panel">
+              <Link href="/app" className={pathname === "/app" ? "active" : ""}>Aujourd’hui</Link>
+              <GroupedNavigation pathname={pathname} mobile />
+            </div>
+          </details>
         </header>
         <main className="app-main">{children}</main>
       </div>
     </div>
   );
+}
+
+function GroupedNavigation({ pathname, mobile = false }: { pathname: string; mobile?: boolean }) {
+  return (
+    <nav className={mobile ? "app-nav mobile" : "app-nav"} aria-label={mobile ? "Navigation mobile" : "Navigation principale"}>
+      {SESIRA_APP_NAV_GROUPS.map((group) => (
+        <div className="app-nav-group" key={group.label}>
+          <span className="app-nav-group-label">{group.label}</span>
+          <div>
+            {group.items.map(({ href, label }) => (
+              <Link key={href} href={href} className={isAppNavActive(pathname, href) ? "active" : ""}>
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+function workspaceInitial(name: string) {
+  return name.trim().charAt(0).toUpperCase() || "S";
+}
+
+function roleLabel(role: string) {
+  const labels: Record<string, string> = {
+    OWNER: "Propriétaire",
+    ADMIN: "Administrateur",
+    MANAGER: "Responsable",
+    MEMBER: "Membre",
+    VIEWER: "Lecture seule",
+  };
+  return labels[role] ?? "Membre de l’équipe";
 }

@@ -15,13 +15,13 @@ export default async function ClientsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="02 · RELATIONS"
+        eyebrow="RELATIONS"
         title="Clients"
-        description="Les clients réellement enregistrés dans votre espace SESIRA. Aucun contact fictif n’est ajouté pour remplir l’écran."
+        description="Vos clients et leurs coordonnées disponibles dans SESIRA."
       />
 
       <section className="premium-connection-summary">
-        <div><strong>{customers.length}</strong><span>Clients enregistrés</span></div>
+        <div><strong>{customers.length}</strong><span>Total</span></div>
         <div><strong>{companies}</strong><span>Entreprises</span></div>
         <div><strong>{people}</strong><span>Particuliers</span></div>
       </section>
@@ -49,7 +49,7 @@ export default async function ClientsPage() {
         </section>
       ) : (
         <EmptyState
-          title="Aucun client enregistré"
+          title="Aucun client"
           description="Importez vos données ou connectez une source pour faire apparaître ici vos vrais clients."
         />
       )}

@@ -26,34 +26,34 @@ export default async function OpportunitiesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="04 · OPPORTUNITÉS"
+        eyebrow="COMMERCIAL"
         title="Opportunités"
-        description="Les dossiers commerciaux réels, leurs variantes de devis et leur état de décision."
+        description="Dossiers commerciaux, variantes de devis et décisions en cours."
       />
 
       <section className="premium-connection-summary">
-        <div><strong>{opportunities.length}</strong><span>Opportunités enregistrées</span></div>
+        <div><strong>{opportunities.length}</strong><span>Total</span></div>
         <div><strong>{open.length}</strong><span>Ouvertes</span></div>
         <div><strong>{won.length}</strong><span>Gagnées</span></div>
-        <div><strong>{formatAmount(pipelineValue, open[0]?.currency ?? "EUR")}</strong><span>Valeur ouverte connue</span></div>
+        <div><strong>{formatAmount(pipelineValue, open[0]?.currency ?? "EUR")}</strong><span>Valeur ouverte</span></div>
       </section>
 
       <section className="premium-results-section">
         <div className="premium-section-heading">
-          <div><span className="eyebrow">RÉACTIVATION · VUE DE TRAVAIL</span><h2>Dossiers sans activité récente.</h2></div>
-          <StatusPill tone={reactivationCandidates.length ? "warning" : "neutral"}>Observation uniquement</StatusPill>
+          <div><span className="eyebrow">RÉACTIVATION</span><h2>Dossiers sans activité récente</h2></div>
+          <StatusPill tone={reactivationCandidates.length ? "warning" : "neutral"}>À relire</StatusPill>
         </div>
-        <p className="premium-muted-copy">Cette vue utilise une fenêtre de travail de {REACTIVATION_WINDOW_DAYS} jours. Ce seuil n’est pas un benchmark commercial calibré. Les dossiers avec opt out ou plainte sont exclus et aucune relance ne part depuis cette vue.</p>
+        <p className="premium-muted-copy">Cette vue utilise une fenêtre de travail de {REACTIVATION_WINDOW_DAYS} jours. Ce délai n’est pas présenté comme un benchmark. Les dossiers avec opt out ou plainte sont exclus et aucune relance ne part depuis cette vue.</p>
         {reactivationCandidates.length ? (
           <div className="premium-connection-grid">
             {reactivationCandidates.slice(0, 6).map((candidate) => (
               <article key={candidate.opportunityId} className="premium-connection-card">
                 <header>
-                  <div><span className="eyebrow">CANDIDAT À RELIRE</span><h2>{customerById.get(candidate.customerId) ?? "Client non disponible"}</h2></div>
+                  <div><span className="eyebrow">À RELIRE</span><h2>{customerById.get(candidate.customerId) ?? "Client non disponible"}</h2></div>
                   <StatusPill>{candidate.dormantDays} jours</StatusPill>
                 </header>
                 <div className="premium-data-list compact">
-                  <div><span>Dernière activité observée</span><strong>{formatDate(candidate.lastActivityAt)}</strong></div>
+                  <div><span>Dernière activité</span><strong>{formatDate(candidate.lastActivityAt)}</strong></div>
                   <div><span>Valeur estimée</span><strong>{formatAmount(candidate.estimatedValue, candidate.currency)}</strong></div>
                   <div><span>État</span><strong>{stateLabel(candidate.commercialState)}</strong></div>
                 </div>
@@ -88,8 +88,8 @@ export default async function OpportunitiesPage() {
         </section>
       ) : (
         <EmptyState
-          title="Aucune opportunité enregistrée"
-          description="Les opportunités apparaîtront ici lorsqu’un dossier commercial C18 aura été créé ou importé."
+          title="Aucune opportunité"
+          description="Les opportunités apparaîtront ici lorsqu’un dossier commercial sera créé ou importé."
         />
       )}
     </>

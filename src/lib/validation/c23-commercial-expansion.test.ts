@@ -36,16 +36,17 @@ describe("C23/U23 controlled commercial expansion", () => {
 
   it("keeps reactivation explicitly observational in the canonical UI", () => {
     const page = source("src/app/app/opportunites/page.tsx");
-    expect(page).toContain("RÉACTIVATION · VUE DE TRAVAIL");
-    expect(page).toContain("Observation uniquement");
-    expect(page).toContain("Ce seuil n’est pas un benchmark commercial calibré");
+    expect(page).toContain("getReactivationCandidates");
+    expect(page).toContain("RÉACTIVATION");
+    expect(page).toContain("Ce délai n’est pas présenté comme un benchmark");
     expect(page).toContain("aucune relance ne part depuis cette vue");
+    expect(page).not.toContain("Envoyer une relance");
   });
 
   it("shows authoritative draft readiness without offering a bypass send control", () => {
     const page = source("src/app/app/devis/page.tsx");
     expect(page).toContain("getQuoteDraftReadiness");
-    expect(page).toContain("Le Core applique cette règle en base");
+    expect(page).toContain("SESIRA applique ce contrôle au moment de l’enregistrement");
     expect(page).toContain("Analyse requise");
     expect(page).not.toContain("Envoyer ce devis");
   });

@@ -60,7 +60,7 @@ const steps: Array<{
     description: "Une adresse connectée donne du contexte à SESIRA. Elle ne lui donne pas automatiquement le droit d’envoyer.",
     fields: [
       { key: "emailProvider", label: "Fournisseur email", placeholder: "Ex. Google Workspace", hint: "Microsoft 365, Gmail ou autre environnement professionnel." },
-      { key: "professionalEmail", label: "Adresse professionnelle", placeholder: "vous@entreprise.com", hint: "La connexion réelle reste gérée par le core SESIRA.", type: "email" },
+      { key: "professionalEmail", label: "Adresse professionnelle", placeholder: "vous@entreprise.com", hint: "La connexion de la messagerie se fait ensuite dans Connexions.", type: "email" },
     ],
   },
   {
@@ -157,7 +157,7 @@ export function OnboardingExperience() {
             );
           })}
         </nav>
-        <p className="onboarding-rail-note">Votre progression reste locale dans cette interface tant que la persistance onboarding du core n’est pas reliée.</p>
+        <p className="onboarding-rail-note">Vos réponses restent sur cet écran pour le moment. Elles ne sont pas encore sauvegardées lorsque vous quittez cette configuration.</p>
         <Link href="/app" className="text-link">Quitter la configuration</Link>
       </aside>
 
@@ -224,17 +224,17 @@ function ReviewState({ draft, completedFields, onEdit }: { draft: OnboardingDraf
     <div className="premium-review-state">
       <span className="eyebrow">VÉRIFICATION · {completedFields}/12 CHAMPS RENSEIGNÉS</span>
       <h1>Votre configuration est structurée.</h1>
-      <p>Voici ce que l’interface a réellement recueilli. Aucun état connecté, membre, import ou succès backend n’est inventé.</p>
+      <p>Voici ce que vous avez renseigné. Aucune connexion, aucun import ni aucun succès n’est présenté comme réel sans confirmation.</p>
       <div className="premium-review-grid">
         {groups.map(([name, value, detail]) => <article key={name}><span>{name}</span><strong>{value}</strong><p>{detail}</p></article>)}
       </div>
       <div className="premium-inline-notice">
-        <span className="eyebrow">PERSISTANCE</span>
-        <p>La sauvegarde onboarding n’est pas encore reliée au port `saveOnboardingDraft`. Rien n’est présenté comme enregistré tant que cette action n’existe pas.</p>
+        <span className="eyebrow">SAUVEGARDE</span>
+        <p>Ces réponses ne sont pas encore enregistrées lorsque vous quittez cet écran. Les connexions et données réelles se configurent directement dans l’espace SESIRA.</p>
       </div>
       <div className="onboarding-actions premium-onboarding-actions">
         <button type="button" className="button ghost" onClick={onEdit}>Modifier</button>
-        <Link href="/app" className="button primary">Retour à la vue d’ensemble</Link>
+        <Link href="/app" className="button primary">Retour à l’espace</Link>
       </div>
     </div>
   );
