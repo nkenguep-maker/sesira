@@ -25,18 +25,22 @@ describe("dense workspace UI review", () => {
   it("uses a real first-run setup instead of a dashboard full of zeroes", () => {
     const dashboard = source("src/app/app/page.tsx");
     expect(dashboard).toContain("setupStateIsReliable");
-    expect(dashboard).toContain("setupRequired");
+    expect(dashboard).toContain("!hasBusinessData || !connectedEmail");
+    expect(dashboard).toContain("FirstRunSetup");
     expect(dashboard).toContain("Préparer {organizationName}");
     expect(dashboard).toContain("Ajouter vos données");
     expect(dashboard).toContain("Connecter la messagerie");
+    expect(dashboard).toContain("Elles ne sont pas remplacées par zéro");
     expect(dashboard).not.toContain("Dossiers enregistrés");
   });
 
-  it("separates primary workflow actions from configuration actions", () => {
+  it("separates work actions from setup and configuration actions", () => {
     const dashboard = source("src/app/app/page.tsx");
-    expect(dashboard).toContain('className="button primary small">Voir le suivi');
-    expect(dashboard).toContain('className="secondary-action-link">Régler le délai');
-    expect(dashboard).toContain('className="policy-action-chip"');
+    expect(dashboard).toContain('item.priority === 1 ? "button primary small" : "button ghost small"');
+    expect(dashboard).toContain('className="secondary-action-link"');
+    expect(dashboard).toContain('href="/app/parametres/politiques"');
+    expect(dashboard).toContain('action="Régler le délai"');
+    expect(dashboard).toContain('href="/app/automatisations"');
     expect(dashboard).not.toContain("<span>↘</span>");
   });
 
@@ -64,15 +68,19 @@ describe("dense workspace UI review", () => {
     const quotes = source("src/app/app/devis/page.tsx");
     const opportunity = source("src/app/app/opportunites/[id]/page.tsx");
     const policies = source("src/app/app/parametres/politiques/page.tsx");
+    const connections = source("src/app/app/integrations/page.tsx");
 
     expect(onboarding).not.toContain("core SESIRA");
-    expect(onboarding).not.toContain("saveOnboardingDraft");
     expect(onboarding).not.toContain("succès backend");
+    expect(onboarding).toContain("Service email");
+    expect(onboarding).toContain("Configuration enregistrée dans votre espace SESIRA");
     expect(quotes).not.toContain("Prêt côté Core");
     expect(quotes).not.toContain("Le Core");
     expect(opportunity).not.toContain("vocabulaire C18");
     expect(opportunity).not.toContain("Le Core");
     expect(policies).not.toContain("confirmé par le Core");
     expect(policies).not.toContain("Le Core n’a pas confirmé");
+    expect(connections).not.toContain("backend");
+    expect(connections).not.toContain("provider truth");
   });
 });

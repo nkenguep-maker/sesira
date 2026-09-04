@@ -21,7 +21,15 @@ export default async function OpportunitiesPage() {
   const customerById = new Map(customers.map((customer) => [customer.id, customer.displayName] as const));
   const open = opportunities.filter((opportunity) => !["WON", "LOST", "CANCELLED"].includes(opportunity.commercialState));
   const won = opportunities.filter((opportunity) => opportunity.commercialState === "WON");
-  const pipelineValue = open.reduce((sum, opportunity) => sum + (opportunity.estimatedValue ?? 0), 0);
+  const openCurrencies = [...new Set(open.filter((opportunity) => opportunity.estimatedValue !== null).map((opportunity) => opportunity.currency))];
+  const pipelineValue = openCurrencies.length === 1
+    ? open.reduce((sum, opportunity) => sum + (opportunity.estimatedValue ?? 0), 0)
+    : null;
+  const pipelineLabel = openCurrencies.length > 1
+    ? "Plusieurs devises"
+    : openCurrencies.length === 1
+      ? formatAmount(pipelineValue, openCurrencies[0])
+      : "Non renseignée";
 
   return (
     <>
@@ -35,8 +43,11 @@ export default async function OpportunitiesPage() {
         <div><strong>{opportunities.length}</strong><span>Total</span></div>
         <div><strong>{open.length}</strong><span>Ouvertes</span></div>
         <div><strong>{won.length}</strong><span>Gagnées</span></div>
-        <div><strong>{formatAmount(pipelineValue, open[0]?.currency ?? "EUR")}</strong><span>Valeur ouverte</span></div>
+        <div><strong>{pipelineLabel}</strong><span>Valeur ouverte</span></div>
       </section>
+      {openCurrencies.length > 1 ? (
+        <p className="premium-muted-copy">Les opportunités ouvertes utilisent plusieurs devises. SESIRA ne les additionne pas sans règle de conversion explicite.</p>
+      ) : null}
 
       <section className="premium-results-section">
         <div className="premium-section-heading">

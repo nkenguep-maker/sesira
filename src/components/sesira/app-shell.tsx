@@ -7,6 +7,14 @@ import { SESIRA_APP_NAV_GROUPS, isAppNavActive } from "@/lib/navigation";
 
 import { SesiraLogo } from "./logo";
 
+const TECH_ROLES = new Set(["TECH", "TECHNICIAN"]);
+const TECH_ITEMS = [
+  { href: "/app", label: "Ma journée" },
+  { href: "/app/terrain", label: "Terrain" },
+  { href: "/app/rapports", label: "Rapports" },
+  { href: "/app/documents", label: "Documents" },
+] as const;
+
 export function AppShell({
   children,
   workspaceName,
@@ -17,18 +25,19 @@ export function AppShell({
   role: string;
 }) {
   const pathname = usePathname();
+  const technician = TECH_ROLES.has(role);
 
   return (
-    <div className="app-frame">
+    <div className={technician ? "app-frame technician-frame" : "app-frame"}>
       <aside className="app-sidebar">
         <div className="sidebar-top">
           <SesiraLogo />
           <Link href="/app" className={pathname === "/app" ? "sidebar-home active" : "sidebar-home"}>
-            Aujourd’hui
+            {technician ? "Ma journée" : "Aujourd’hui"}
           </Link>
         </div>
 
-        <GroupedNavigation pathname={pathname} />
+        {technician ? <TechnicianNavigation pathname={pathname} /> : <GroupedNavigation pathname={pathname} />}
 
         <div className="sidebar-foot">
           <div className="account-row" aria-label="Espace de travail">
@@ -47,14 +56,35 @@ export function AppShell({
           <details className="mobile-nav-menu">
             <summary>Menu</summary>
             <div className="mobile-nav-panel">
-              <Link href="/app" className={pathname === "/app" ? "active" : ""}>Aujourd’hui</Link>
-              <GroupedNavigation pathname={pathname} mobile />
+              {technician ? <TechnicianNavigation pathname={pathname} mobile /> : (
+                <>
+                  <Link href="/app" className={pathname === "/app" ? "active" : ""}>Aujourd’hui</Link>
+                  <GroupedNavigation pathname={pathname} mobile />
+                </>
+              )}
             </div>
           </details>
         </header>
         <main className="app-main">{children}</main>
       </div>
     </div>
+  );
+}
+
+function TechnicianNavigation({ pathname, mobile = false }: { pathname: string; mobile?: boolean }) {
+  return (
+    <nav className={mobile ? "app-nav mobile" : "app-nav"} aria-label={mobile ? "Navigation mobile technicien" : "Navigation technicien"}>
+      <div className="app-nav-group">
+        <span className="app-nav-group-label">Terrain</span>
+        <div>
+          {TECH_ITEMS.map(({ href, label }) => (
+            <Link key={href} href={href} className={isAppNavActive(pathname, href) ? "active" : ""}>
+              <span>{label}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </nav>
   );
 }
 
@@ -88,6 +118,8 @@ function roleLabel(role: string) {
     MANAGER: "Responsable",
     MEMBER: "Membre",
     VIEWER: "Lecture seule",
+    TECH: "Technicien",
+    TECHNICIAN: "Technicien",
   };
   return labels[role] ?? "Membre de l’équipe";
 }

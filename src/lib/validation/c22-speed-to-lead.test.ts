@@ -42,14 +42,16 @@ describe("C22/U22 Speed to Lead integration contracts", () => {
     expect(repository).toContain("Ouverts et arrivés à échéance à ce jour");
   });
 
-  it("mounts configuration and measured summary in the canonical UI", () => {
+  it("mounts organization configuration and uses it in the first-run experience", () => {
     const settings = source("src/app/app/parametres/politiques/page.tsx");
     const dashboard = source("src/app/app/page.tsx");
     expect(settings).toContain("saveSpeedToLeadPolicyAction");
-    expect(settings).toContain("prise en charge interne");
+    expect(settings).toContain("première prise en charge interne");
     expect(settings).toContain("Cette mesure ne signifie pas qu’une réponse a été envoyée au client");
+    expect(settings).toContain("Ce délai appartient à votre organisation");
     expect(dashboard).toContain("getSpeedToLeadSummary");
-    expect(dashboard).toContain("première transition interne hors de");
-    expect(dashboard).toContain("Ce n’est pas présenté comme un temps de réponse envoyé au client");
+    expect(dashboard).toContain("policyConfigured={speedToLead?.configured === true}");
+    expect(dashboard).toContain("Définir votre délai de prise en charge");
+    expect(dashboard).toContain("Choisissez quand une nouvelle demande doit remonter dans Aujourd’hui");
   });
 });

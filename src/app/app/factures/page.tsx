@@ -1,3 +1,4 @@
+import { EInvoicingStatus } from "@/components/sesira/einvoicing-status";
 import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { getCustomerList } from "@/lib/data";
@@ -33,6 +34,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
   const promises = rows.filter((row) => row.collectionState === "PROMISE_TO_PAY" && !["PAID", "CANCELLED"].includes(row.status));
   const disputes = rows.filter((row) => row.collectionState === "DISPUTED" && !["PAID", "CANCELLED"].includes(row.status));
   const paid = rows.filter((row) => row.status === "PAID");
+  const invoiceLabels = Object.fromEntries(rows.map((row) => [row.id, row.externalRef ?? `Facture ${row.id.slice(0, 8)}`] as const));
 
   return (
     <>
@@ -55,6 +57,8 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
         <StatusPill tone="warning">Décision financière humaine</StatusPill>
         <p>Enregistrer une promesse ou un litige ne change ni le montant, ni le statut comptable, ni la décision de recouvrement. SESIRA ne choisit jamais une remise, une procédure juridique ou un abandon de créance.</p>
       </section>
+
+      <EInvoicingStatus organizationId={viewer.organization.id} invoiceLabels={invoiceLabels} />
 
       {rows.length ? (
         <section className="workspace-list" aria-label="Factures suivies">
