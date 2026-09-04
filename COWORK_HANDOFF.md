@@ -7,7 +7,7 @@ Read this file first on any new Claude Code session; resume from
 ## Current status
 
 - **Branch**: `claude/core-workflows`
-- **HEAD**: `70ed814` (regulatory operating reference added after C32)
+- **HEAD**: run `git log -1 --oneline` at session start; do not trust a hard-coded hash in this handoff.
 - **Last product milestone**: `2d497be` (C32 honest attribution)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
