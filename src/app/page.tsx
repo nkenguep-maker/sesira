@@ -1,46 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { TodayPreview } from "@/components/marketing/today-preview";
 import { SesiraLogo } from "@/components/sesira/logo";
+
+import "./today-panels.css";
 
 export const metadata: Metadata = {
   title: "SESIRA | Suivi des devis, chantiers et factures CVC",
   description:
     "SESIRA montre chaque matin les devis à relancer, les interventions à planifier et les factures à reprendre.",
 };
-
-const TODAY_ITEMS = [
-  {
-    kind: "DEVIS",
-    title: "18 450 € · Sophie Lefèvre",
-    detail: "Envoyé il y a 6 jours. Aucune relance faite.",
-    action: "Relancer",
-  },
-  {
-    kind: "CHANTIER",
-    title: "Dupont SARL",
-    detail: "Le client a signé. Aucune date au planning.",
-    action: "Planifier",
-  },
-  {
-    kind: "RAPPORT TERRAIN",
-    title: "Intervention #1842",
-    detail: "Le technicien a terminé. Rapport à valider.",
-    action: "Valider",
-  },
-  {
-    kind: "FACTURE",
-    title: "12 400 €",
-    detail: "Paiement annoncé vendredi. Rien reçu depuis.",
-    action: "Suivre",
-  },
-  {
-    kind: "ENTRETIEN",
-    title: "Martin & Fils",
-    detail: "Renouvellement dans 26 jours.",
-    action: "Préparer",
-  },
-] as const;
 
 const TRACKED = [
   {
@@ -195,38 +165,5 @@ export default function HomePage() {
         <span>© 2026 SESIRA</span>
       </footer>
     </main>
-  );
-}
-
-function TodayPreview({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className={compact ? "cvc-today-preview compact" : "cvc-today-preview"} aria-label="Exemple de SESIRA Aujourd'hui">
-      <div className="cvc-product-chrome">
-        <div><i /><i /><i /></div>
-        <span>SESIRA · AUJOURD&apos;HUI</span>
-        <b>EXEMPLE · DONNÉES FICTIVES</b>
-      </div>
-      <div className="cvc-product-body">
-        <div className="cvc-product-heading">
-          <div>
-            <span>VENDREDI 4 SEPTEMBRE</span>
-            <h3>5 choses à traiter</h3>
-          </div>
-          <div className="cvc-product-count"><strong>5</strong><span>à voir</span></div>
-        </div>
-        <div className="cvc-today-list">
-          {TODAY_ITEMS.map((item) => (
-            <article key={`${item.kind}-${item.title}`}>
-              <div className="cvc-today-copy">
-                <span>{item.kind}</span>
-                <strong>{item.title}</strong>
-                <p>{item.detail}</p>
-              </div>
-              <b>{item.action}</b>
-            </article>
-          ))}
-        </div>
-      </div>
-    </div>
   );
 }
