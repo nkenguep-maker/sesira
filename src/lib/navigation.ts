@@ -16,16 +16,25 @@ export const SESIRA_APP_NAV_GROUPS = [
       { href: "/app/devis", label: "Devis" },
       { href: "/app/opportunites", label: "Opportunités" },
       { href: "/app/suivi", label: "Suivi" },
+      { href: "/app/appels", label: "Appels" },
     ],
   },
   {
     label: "Opérations",
     items: [
       { href: "/app/interventions", label: "Interventions" },
+      { href: "/app/terrain", label: "Terrain" },
       { href: "/app/rapports", label: "Rapports terrain" },
       { href: "/app/documents", label: "Documents" },
       { href: "/app/factures", label: "Factures" },
       { href: "/app/maintenance", label: "Maintenance" },
+    ],
+  },
+  {
+    label: "Obligations CVC",
+    items: [
+      { href: "/app/obligations/equipements", label: "Équipements & fluides" },
+      { href: "/app/obligations/documents", label: "Documents à préparer" },
     ],
   },
   {
@@ -49,6 +58,7 @@ export const SESIRA_APP_NAV_GROUPS = [
     label: "Pilotage",
     items: [
       { href: "/app/resultats", label: "Résultats" },
+      { href: "/app/etat-sesira", label: "État SESIRA" },
       { href: "/app/equipe", label: "Équipe" },
       { href: "/app/parametres", label: "Paramètres" },
     ],
