@@ -1,5 +1,8 @@
 import { PremiumImportExperience } from "@/components/imports/premium-import-experience";
 
-export default function ImportsPage() {
-  return <PremiumImportExperience view="home" />;
+type SearchParams = Promise<{ import?: string; ok?: string; errors?: string }>;
+
+export default async function ImportsPage({ searchParams }: { searchParams: SearchParams }) {
+  const status = await searchParams;
+  return <PremiumImportExperience view="home" status={status} />;
 }
