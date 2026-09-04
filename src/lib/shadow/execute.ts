@@ -299,7 +299,7 @@ async function emitAttentionIfNeeded(
     sourceKind = "shadow_integration_issue";
     title = `Coordonnées client manquantes — ${args.quote.reference ?? args.quote.title}`;
     explanation =
-      "Le devis est éligible à une relance mais nous n'avons pas d'email valide pour le client. Aucune proposition n'a été formulée.";
+      "Une relance est prévue, mais nous n'avons pas d'email valide pour le client. Aucune proposition n'a été formulée.";
     suggestedAction = "Compléter la fiche client (email vérifié) puis rejouer la relance.";
   }
 
