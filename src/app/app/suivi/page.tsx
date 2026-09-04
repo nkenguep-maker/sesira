@@ -24,7 +24,7 @@ export default async function SuiviPage({ searchParams }: { searchParams: Search
 
   return (
     <>
-      <PageHeader eyebrow="SUIVI" title="Suivi" description="Ce qui demande réellement une action humaine, une validation ou une vérification dans votre organisation." />
+      <PageHeader eyebrow="RELANCES" title="Relances" description="Relances, validations et situations qui demandent votre décision." />
       <ApprovalNotice status={params.approval} />
 
       <section className="premium-connection-summary">
@@ -41,7 +41,7 @@ export default async function SuiviPage({ searchParams }: { searchParams: Search
             {automation.actionableCount > 0 ? `${automation.actionableCount} prête${automation.actionableCount > 1 ? "s" : ""} à agir` : automation.observationOnlyCount > 0 ? "Observation" : "Non configuré"}
           </StatusPill>
         </div>
-        <p className="panel-copy">SESIRA n’affiche ici que les éléments réellement enregistrés. Une donnée absente n’est pas transformée en tâche fictive.</p>
+        <p className="panel-copy">Les relances et validations affichées ici correspondent aux éléments enregistrés pour votre organisation.</p>
       </section>
 
       <section className="premium-results-section">
