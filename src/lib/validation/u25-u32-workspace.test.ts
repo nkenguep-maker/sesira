@@ -8,13 +8,17 @@ function source(path: string) {
 }
 
 describe("U25-U32 operations and growth workspace", () => {
-  it("keeps the dense navigation grouped instead of flattening new modules", () => {
+  it("keeps business modules available without exposing the implementation catalog in the daily rail", () => {
     const nav = source("src/lib/navigation.ts");
-    expect(nav).toContain('label: "Opérations"');
+    const shell = source("src/components/sesira/app-shell.tsx");
+    expect(nav).toContain('label: "Interventions"');
     expect(nav).toContain('label: "Croissance"');
-    expect(nav).toContain('/app/interventions');
     expect(nav).toContain('/app/croissance/attribution');
-    expect(nav).not.toMatch(/\{ href: "\/app\/interventions", label: "\d/);
+    expect(nav).toContain('label: "Relances"');
+    expect(nav).not.toContain('label: "Opérations"');
+    expect(nav).not.toContain('label: "Commercial"');
+    expect(shell).toContain("growthEnabled");
+    expect(shell).not.toContain("app-nav-group-label");
   });
 
   it("does not expose a fake field-report send control and requires provider delivery evidence", () => {

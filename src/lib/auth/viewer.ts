@@ -11,6 +11,7 @@ export type ViewerContext = {
     name: string;
     sectorKey: string;
     status: string;
+    featureFlags: Record<string, unknown>;
   };
 };
 
@@ -37,7 +38,7 @@ export const getViewerContext = cache(async (): Promise<ViewerContext | null> =>
 
   const { data: organization, error: organizationError } = await supabase
     .from("organizations")
-    .select("id, name, sector_key, status")
+    .select("id, name, sector_key, status, feature_flags")
     .eq("id", membership.organization_id)
     .single();
 
@@ -54,6 +55,11 @@ export const getViewerContext = cache(async (): Promise<ViewerContext | null> =>
       name: organization.name,
       sectorKey: organization.sector_key,
       status: organization.status,
+      featureFlags: jsonObject(organization.feature_flags),
     },
   };
 });
+
+function jsonObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}

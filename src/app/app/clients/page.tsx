@@ -11,6 +11,7 @@ export default async function ClientsPage() {
   const customers = await getCustomerList(viewer.organization.id);
   const companies = customers.filter((customer) => customer.type === "COMPANY").length;
   const people = customers.length - companies;
+  const showSummary = new Set([customers.length, companies, people]).size > 1;
 
   return (
     <>
@@ -20,11 +21,13 @@ export default async function ClientsPage() {
         description="Vos clients et leurs coordonnées disponibles dans SESIRA."
       />
 
-      <section className="premium-connection-summary">
-        <div><strong>{customers.length}</strong><span>Total</span></div>
-        <div><strong>{companies}</strong><span>Entreprises</span></div>
-        <div><strong>{people}</strong><span>Particuliers</span></div>
-      </section>
+      {showSummary ? (
+        <section className="premium-connection-summary">
+          <div><strong>{customers.length}</strong><span>Total</span></div>
+          <div><strong>{companies}</strong><span>Entreprises</span></div>
+          <div><strong>{people}</strong><span>Particuliers</span></div>
+        </section>
+      ) : null}
 
       {customers.length ? (
         <section className="premium-connection-grid">
@@ -50,7 +53,7 @@ export default async function ClientsPage() {
       ) : (
         <EmptyState
           title="Aucun client"
-          description="Importez vos données ou connectez une source pour faire apparaître ici vos vrais clients."
+          description="Importez vos données ou connectez une source pour faire apparaître ici vos clients."
         />
       )}
     </>

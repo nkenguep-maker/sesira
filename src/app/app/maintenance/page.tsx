@@ -29,24 +29,27 @@ export default async function MaintenancePage() {
   const expiring = rows.filter((row) => row.status === "EXPIRING_SOON").length;
   const expired = rows.filter((row) => row.status === "EXPIRED").length;
   const visitsDue = rows.filter((row) => isDueSoon(row.nextVisitDueAt, 30)).length;
+  const showStats = new Set([active, visitsDue, expiring, expired]).size > 1;
 
   return (
     <>
       <PageHeader
         eyebrow="OPÉRATIONS"
         title="Maintenance"
-        description="Suivez les contrats et les prochaines échéances. Les prix, conditions et résiliations restent décidés par votre équipe."
+        description="Contrats, prochaines visites et échéances de renouvellement."
       />
 
-      <section className="workspace-stat-strip" aria-label="État de la maintenance">
-        <div><strong>{active}</strong><span>Actifs</span></div>
-        <div><strong>{visitsDue}</strong><span>Visites sous 30 j</span></div>
-        <div><strong>{expiring}</strong><span>À renouveler</span></div>
-        <div><strong>{expired}</strong><span>Expirés</span></div>
-      </section>
+      {showStats ? (
+        <section className="workspace-stat-strip" aria-label="État de la maintenance">
+          <div><strong>{active}</strong><span>Actifs</span></div>
+          <div><strong>{visitsDue}</strong><span>Visites sous 30 j</span></div>
+          <div><strong>{expiring}</strong><span>À renouveler</span></div>
+          <div><strong>{expired}</strong><span>Expirés</span></div>
+        </section>
+      ) : null}
 
       <section className="workspace-boundary-note">
-        <StatusPill>Suivi uniquement</StatusPill>
+        <StatusPill>Décision humaine</StatusPill>
         <p>SESIRA fait remonter les échéances. Il ne renouvelle pas un contrat, ne change pas son prix et ne résilie rien depuis cette vue.</p>
       </section>
 
@@ -73,7 +76,7 @@ export default async function MaintenancePage() {
             </article>
           ))}
         </section>
-      ) : <EmptyState title="Aucun contrat de maintenance" description="Les contrats actifs et leurs échéances apparaîtront ici lorsqu’ils seront enregistrés ou synchronisés." />}
+      ) : <EmptyState title="Aucun contrat de maintenance" description="Les contrats et leurs échéances apparaîtront ici lorsqu’ils seront enregistrés ou synchronisés." />}
     </>
   );
 }

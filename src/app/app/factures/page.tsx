@@ -23,8 +23,8 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
   if (result.status === "ERROR") {
     return (
       <>
-        <PageHeader eyebrow="OPÉRATIONS" title="Factures" description="Suivi des échéances, promesses de paiement et litiges, sans remplacer la comptabilité." />
-        <section className="app-state-message"><strong>Suivi des factures indisponible</strong><p>La donnée comptable de suivi n’est pas lisible actuellement. Aucun montant ni état de remplacement n’est affiché.</p></section>
+        <PageHeader eyebrow="OPÉRATIONS" title="Factures" description="Suivi des échéances, promesses de paiement et litiges." />
+        <section className="app-state-message"><strong>Suivi des factures indisponible</strong><p>La donnée comptable de suivi n’est pas lisible actuellement.</p></section>
       </>
     );
   }
@@ -34,6 +34,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
   const promises = rows.filter((row) => row.collectionState === "PROMISE_TO_PAY" && !["PAID", "CANCELLED"].includes(row.status));
   const disputes = rows.filter((row) => row.collectionState === "DISPUTED" && !["PAID", "CANCELLED"].includes(row.status));
   const paid = rows.filter((row) => row.status === "PAID");
+  const showStats = new Set([overdue.length, promises.length, disputes.length, paid.length]).size > 1;
   const invoiceLabels = Object.fromEntries(rows.map((row) => [row.id, row.externalRef ?? `Facture ${row.id.slice(0, 8)}`] as const));
 
   return (
@@ -41,17 +42,19 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
       <PageHeader
         eyebrow="OPÉRATIONS"
         title="Factures"
-        description="SESIRA surveille les échéances et conserve les exceptions de recouvrement. Le système comptable reste la source autoritaire du montant et du paiement."
+        description="Échéances, promesses de paiement et litiges. Votre comptabilité reste la référence pour les montants et les paiements."
       />
 
       <ResultNotice result={params.result} />
 
-      <section className="workspace-stat-strip" aria-label="État des factures">
-        <div><strong>{overdue.length}</strong><span>En retard</span></div>
-        <div><strong>{promises.length}</strong><span>Promesses</span></div>
-        <div><strong>{disputes.length}</strong><span>Litiges ouverts</span></div>
-        <div><strong>{paid.length}</strong><span>Payées</span></div>
-      </section>
+      {showStats ? (
+        <section className="workspace-stat-strip" aria-label="État des factures">
+          <div><strong>{overdue.length}</strong><span>En retard</span></div>
+          <div><strong>{promises.length}</strong><span>Promesses</span></div>
+          <div><strong>{disputes.length}</strong><span>Litiges ouverts</span></div>
+          <div><strong>{paid.length}</strong><span>Payées</span></div>
+        </section>
+      ) : null}
 
       <section className="workspace-boundary-note">
         <StatusPill tone="warning">Décision financière humaine</StatusPill>

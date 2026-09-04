@@ -19,6 +19,7 @@ export default async function DevisPage() {
   const active = quotes.filter((quote) => ACTIVE_STATUSES.has(quote.status)).length;
   const needsHuman = quotes.filter((quote) => quote.status === "NEEDS_HUMAN").length;
   const won = quotes.filter((quote) => quote.status === "WON").length;
+  const showSummary = new Set([quotes.length, active, needsHuman, won]).size > 1;
 
   return (
     <>
@@ -28,12 +29,14 @@ export default async function DevisPage() {
         description="État des devis, préparation et prochaine échéance connue."
       />
 
-      <section className="premium-connection-summary">
-        <div><strong>{quotes.length}</strong><span>Total</span></div>
-        <div><strong>{active}</strong><span>En suivi</span></div>
-        <div><strong>{needsHuman}</strong><span>À décider</span></div>
-        <div><strong>{won}</strong><span>Gagnés</span></div>
-      </section>
+      {showSummary ? (
+        <section className="premium-connection-summary">
+          <div><strong>{quotes.length}</strong><span>Total</span></div>
+          <div><strong>{active}</strong><span>En suivi</span></div>
+          <div><strong>{needsHuman}</strong><span>À décider</span></div>
+          <div><strong>{won}</strong><span>Gagnés</span></div>
+        </section>
+      ) : null}
 
       {quotes.length ? (
         <section className="premium-connection-grid">
@@ -72,7 +75,7 @@ export default async function DevisPage() {
       ) : (
         <EmptyState
           title="Aucun devis disponible"
-          description="Les devis apparaîtront ici dès qu’ils seront créés, importés ou synchronisés avec une source réelle."
+          description="Les devis apparaîtront ici dès qu’ils seront créés, importés ou synchronisés."
         />
       )}
 

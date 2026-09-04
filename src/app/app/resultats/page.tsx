@@ -34,7 +34,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Sear
   return (
     <>
       <PageHeader
-        eyebrow="07 · RÉSULTATS"
+        eyebrow="RÉSULTATS"
         title="Résultats"
         description="Ce que SESIRA a observé, ce qu’il estime, et ce qu’il ne peut pas attribuer avec certitude."
       />

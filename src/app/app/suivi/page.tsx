@@ -21,18 +21,21 @@ export default async function SuiviPage({ searchParams }: { searchParams: Search
     getAutomationReadiness(organizationId),
   ]);
   const totalToReview = attention.length + approvals.length + incidents.length;
+  const showSummary = new Set([totalToReview, attention.length, approvals.length, incidents.length]).size > 1;
 
   return (
     <>
-      <PageHeader eyebrow="SUIVI" title="Suivi" description="Ce qui demande réellement une action humaine, une validation ou une vérification dans votre organisation." />
+      <PageHeader eyebrow="RELANCES" title="Relances" description="Relances, validations et situations qui demandent votre décision." />
       <ApprovalNotice status={params.approval} />
 
-      <section className="premium-connection-summary">
-        <div><strong>{totalToReview}</strong><span>Éléments à regarder</span></div>
-        <div><strong>{attention.length}</strong><span>Attentions ouvertes</span></div>
-        <div><strong>{approvals.length}</strong><span>Validations en attente</span></div>
-        <div><strong>{incidents.length}</strong><span>Problèmes ouverts</span></div>
-      </section>
+      {showSummary ? (
+        <section className="premium-connection-summary">
+          <div><strong>{totalToReview}</strong><span>Éléments à regarder</span></div>
+          <div><strong>{attention.length}</strong><span>Attentions ouvertes</span></div>
+          <div><strong>{approvals.length}</strong><span>Validations en attente</span></div>
+          <div><strong>{incidents.length}</strong><span>Problèmes ouverts</span></div>
+        </section>
+      ) : null}
 
       <section className="panel">
         <div className="panel-head">
@@ -41,7 +44,7 @@ export default async function SuiviPage({ searchParams }: { searchParams: Search
             {automation.actionableCount > 0 ? `${automation.actionableCount} prête${automation.actionableCount > 1 ? "s" : ""} à agir` : automation.observationOnlyCount > 0 ? "Observation" : "Non configuré"}
           </StatusPill>
         </div>
-        <p className="panel-copy">SESIRA n’affiche ici que les éléments réellement enregistrés. Une donnée absente n’est pas transformée en tâche fictive.</p>
+        <p className="panel-copy">Les relances et validations affichées ici correspondent aux éléments enregistrés pour votre organisation.</p>
       </section>
 
       <section className="premium-results-section">
