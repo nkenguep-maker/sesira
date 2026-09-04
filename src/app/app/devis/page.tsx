@@ -23,15 +23,15 @@ export default async function DevisPage() {
   return (
     <>
       <PageHeader
-        eyebrow="03 · REVENU"
+        eyebrow="REVENU"
         title="Devis"
-        description="Les devis réels de votre organisation, leur état actuel, leur préparation et la prochaine échéance connue."
+        description="État des devis, préparation et prochaine échéance connue."
       />
 
       <section className="premium-connection-summary">
-        <div><strong>{quotes.length}</strong><span>Devis enregistrés</span></div>
+        <div><strong>{quotes.length}</strong><span>Total</span></div>
         <div><strong>{active}</strong><span>En suivi</span></div>
-        <div><strong>{needsHuman}</strong><span>Décision humaine</span></div>
+        <div><strong>{needsHuman}</strong><span>À décider</span></div>
         <div><strong>{won}</strong><span>Gagnés</span></div>
       </section>
 
@@ -60,7 +60,7 @@ export default async function DevisPage() {
                 {quote.status === "DRAFT" ? (
                   <div className="premium-inline-notice">
                     <StatusPill tone={readiness?.sendEligible ? "good" : "warning"}>
-                      {readiness?.sendEligible ? "Prêt côté Core" : "Action humaine"}
+                      {readiness?.sendEligible ? "Prêt à poursuivre" : "Action humaine"}
                     </StatusPill>
                     <p>{draftReadinessCopy(readiness)}</p>
                   </div>
@@ -77,9 +77,9 @@ export default async function DevisPage() {
       )}
 
       <section className="premium-trust-note">
-        <span className="eyebrow">GARDE FOU DE PRÉPARATION</span>
-        <h2>SESIRA ne décide jamais du prix d’un devis.</h2>
-        <p>Un brouillon doit avoir été analysé et ne plus contenir de champ manquant avant de pouvoir passer à Envoyé. Le Core applique cette règle en base. L’interface ne présente aucun faux bouton d’envoi pour contourner ce contrôle.</p>
+        <span className="eyebrow">RÈGLE DE PRÉPARATION</span>
+        <h2>Le prix reste une décision humaine.</h2>
+        <p>Un brouillon ne peut pas passer à « Envoyé » tant que son analyse de préparation n’est pas enregistrée ou qu’une information requise manque encore. SESIRA applique ce contrôle au moment de l’enregistrement.</p>
       </section>
     </>
   );
@@ -92,12 +92,12 @@ function draftReadinessLabel(readiness: Awaited<ReturnType<typeof getQuoteDraftR
 }
 
 function draftReadinessCopy(readiness: Awaited<ReturnType<typeof getQuoteDraftReadiness>>[number] | undefined) {
-  if (!readiness?.analyzedAt) return "Le Core n’a pas encore reçu d’analyse déterministe de ce brouillon. Il ne peut pas passer à Envoyé.";
+  if (!readiness?.analyzedAt) return "L’analyse de préparation n’a pas encore été enregistrée. Ce brouillon ne peut pas passer à « Envoyé ».";
   if (readiness.gaps.length) {
     const fields = readiness.gaps.slice(0, 4).map((gap) => gapLabel(gap.field)).join(", ");
-    return `Champs à résoudre par un humain : ${fields}${readiness.gaps.length > 4 ? "…" : ""}.`;
+    return `À compléter avant envoi : ${fields}${readiness.gaps.length > 4 ? "…" : ""}.`;
   }
-  return "L’analyse enregistrée ne contient plus de gap. Les autres contrôles d’envoi restent applicables.";
+  return "L’analyse enregistrée ne contient plus d’information manquante. Les autres contrôles d’envoi restent applicables.";
 }
 
 function gapLabel(field: string) {
