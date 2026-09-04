@@ -3,6 +3,7 @@ import "server-only";
 import { getPendingApprovals, getAttentionInbox } from "@/lib/data";
 import { getFieldReportsWorkspace, getMaintenanceWorkspace } from "@/lib/data/c32-workspaces";
 import { getInvoiceCollectionWorkspace } from "@/lib/data/invoice-collection";
+import { getFieldConflicts } from "@/lib/data/field-conflicts";
 import {
   getEInvoicingWorkspace,
   getPlatformWorkspace,
@@ -73,7 +74,7 @@ export async function getManagerToday(
   organizationId: string,
   options: { includePlatform?: boolean } = {},
 ): Promise<TodayWorkspace> {
-  const [approvals, attention, reports, invoices, maintenance, regulatory, einvoicing, technician, platform] = await Promise.all([
+  const [approvals, attention, reports, invoices, maintenance, regulatory, einvoicing, conflicts, platform] = await Promise.all([
     getPendingApprovals(organizationId, { limit: 50 }),
     getAttentionInbox(organizationId, { limit: 100 }),
     getFieldReportsWorkspace(organizationId),
@@ -81,7 +82,7 @@ export async function getManagerToday(
     getMaintenanceWorkspace(organizationId),
     getRegulatoryWorkspace(organizationId),
     getEInvoicingWorkspace(organizationId),
-    getTechnicianWorkspace(organizationId, "00000000-0000-0000-0000-000000000000", todayIsoDate()).catch(() => ({ status: "ERROR" as const, reason: "not_applicable" })),
+    getFieldConflicts(organizationId),
     options.includePlatform ? getPlatformWorkspace(organizationId) : Promise.resolve({ status: "OK" as const, data: [] }),
   ]);
 
@@ -248,10 +249,9 @@ export async function getManagerToday(
     }
   }
 
-  // pending_field_artifact_conflicts is organization-wide; a deliberately invalid
-  // user id lets the read-model still return the conflict inbox if the RPC allows it.
-  if (technician.status === "OK") {
-    for (const conflict of technician.data.conflicts) {
+  if (conflicts.status === "ERROR") unavailable.push("Conflits terrain");
+  else {
+    for (const conflict of conflicts.data) {
       actions.push({
         id: `field-conflict:${conflict.artifactId}`,
         category: "TERRAIN",
@@ -307,10 +307,6 @@ function sortActions(items: TodayAction[]) {
 function firstValidTime(...values: Array<string | null>) {
   const times = values.map((value) => value ? new Date(value).getTime() : Number.NaN).filter((value) => !Number.isNaN(value));
   return times.length ? Math.min(...times) : null;
-}
-
-function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function formatMoney(amount: number, currency: string) {
