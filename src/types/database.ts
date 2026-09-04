@@ -2654,6 +2654,84 @@ export type Database = {
           customer_id: string
         }[]
       }
+      configure_einvoicing_provider: {
+        Args: {
+          target_organization_id: string
+          target_provider_kind: string
+          target_label: string
+          target_supported_formats: string[]
+          target_external_config: Json
+        }
+        Returns: string
+      }
+      prepare_einvoicing_submission: {
+        Args: {
+          target_organization_id: string
+          target_invoice_id: string
+          target_provider_id: string
+          target_format: string
+        }
+        Returns: string
+      }
+      mark_einvoicing_submission_exported: {
+        Args: {
+          target_organization_id: string
+          target_submission_id: string
+          target_exported_by_user_id: string
+        }
+        Returns: boolean
+      }
+      record_einvoicing_provider_event: {
+        Args: {
+          target_organization_id: string
+          target_submission_id: string
+          target_event_kind: string
+          target_external_ref: string | null
+          target_payload: Json
+        }
+        Returns: string
+      }
+      cancel_einvoicing_submission: {
+        Args: {
+          target_organization_id: string
+          target_submission_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      active_einvoicing_provider: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          provider_id: string
+          provider_kind: string
+          label: string
+          status: string
+          supported_formats: string[]
+          activated_at: string | null
+        }[]
+      }
+      einvoicing_submissions_for: {
+        Args: {
+          target_organization_id: string
+          target_status_filter: string | null
+        }
+        Returns: {
+          submission_id: string
+          invoice_id: string
+          provider_id: string
+          provider_kind_snapshot: string
+          format: string
+          status: string
+          payload_gap_count: number
+          exported_at: string | null
+          submitted_at: string | null
+          accepted_at: string | null
+          rejected_at: string | null
+          external_ref: string | null
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string

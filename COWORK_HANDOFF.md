@@ -8,11 +8,11 @@ Read this file first on any new Claude Code session; resume from
 
 - **Branch**: `claude/core-workflows`
 - **HEAD**: run `git log -1 --oneline` at session start; do not trust a hard-coded hash in this handoff.
-- **Last product milestone**: C33.3 regulatory exports (see milestone log for hash — C33 complete via 3-part split)
+- **Last product milestone**: C34 e-invoicing provider abstraction (see milestone log for hash)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
-- **Driver phase**: WAVE 5 (Compliance) — **C33 COMPLETE** (3-part split: C33.1 reference data ✓, C33.2 equipment/calc/attentions ✓, C33.3 CERFA/bilan exports ✓). Next: C34 e-invoicing (READ `REGULATORY.md` §2 BEFORE C34).
-- **NEXT_MILESTONE**: `C34 — E-INVOICING (provider abstraction, no real PA API)`
+- **Driver phase**: WAVE 5 (Compliance) — **C33 COMPLETE** + **C34 COMPLETE** (provider abstraction with TEST + PENDING sentinel, no real PA API). Next: C35 financing indicator (READ `REGULATORY.md` §3 BEFORE C35).
+- **NEXT_MILESTONE**: `C35 — FINANCING INDICATOR (Option A, per REGULATORY.md D-1)`
 
 ## Milestone log
 
@@ -50,6 +50,7 @@ Read this file first on any new Claude Code session; resume from
 | C33.1 | `9ad16dc` | DONE | Regulatory reference data — 3 versioned global tables (gwp_values, leak_check_rules, market_bans) + org-scoped attestations + immutability triggers + 5 write RPCs + 3 read RPCs — applied on Supabase as `20260927000000`. Seed script `supabase/seeds/regulatory_fgas_iii.example.sql` shipped, NOT applied (data-ops job). **WAVE 5 KICKOFF.** |
 | C33.2 | `318a1bf` | DONE | Equipment + regulatory attentions — `equipment` table + `regulatory_attentions` table (INV-02 immutable created_at + seen_at) + patch C33.1 (kg thresholds, hermetic exempt, mobile from-date, attestation scope A1..E) + `compute_equipment_tco2eq`, `compute_next_leak_check_due` (double threshold), `emit_regulatory_leak_check_attention`, `emit_regulatory_attestation_expiry_attention`, `mark_regulatory_attention_seen`, `resolve_regulatory_attention`, 2 read helpers — applied on Supabase as `20260928000000`. |
 | C33.3 | `113dfbb` | DONE | Regulatory exports — `regulatory_exports` table + state machine trigger + `generate_cerfa_intervention_export` (one CERFA per intervention, INV-03 rule snapshot) + `generate_annual_regulatory_bilan` (per-fluid aggregation using GWP active at year-end) + `mark_regulatory_export_exported` (INV-04 traced human validation) + `regulatory_exports_for` + `pending_cerfa_interventions` — applied on Supabase as `20260929000000`. **C33 (F-Gas / CERFA) COMPLETE.** |
+| C34 | `(new)` | DONE | E-invoicing provider abstraction — 3 tables (`einvoicing_providers`, `einvoicing_submissions`, `einvoicing_provider_events`) + state machine trigger + `configure_einvoicing_provider` (TEST or PENDING sentinel) + `prepare_einvoicing_submission` + `mark_einvoicing_submission_exported` (INV-04) + `record_einvoicing_provider_event` (doctrine gate: SUBMITTED/ACCEPTED/REJECTED only via service_role OR TEST provider) + `cancel_einvoicing_submission` + read helpers + TS `EInvoicingProvider` interface (TestEInvoicingProvider + PendingProductionEInvoicingProvider) — applied on Supabase as `20260930000000`. **Zero fake provider success enforced at SQL + TS layers.** |
 
 ## BASELINE_FAILURE
 
