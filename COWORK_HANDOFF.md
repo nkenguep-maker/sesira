@@ -8,11 +8,11 @@ Read this file first on any new Claude Code session; resume from
 
 - **Branch**: `claude/core-workflows`
 - **HEAD**: run `git log -1 --oneline` at session start; do not trust a hard-coded hash in this handoff.
-- **Last product milestone**: C39 security / recovery / scale audit (see milestone log for hash)
+- **Last product milestone**: C40 SESIRA Full Maturity FINAL AUDIT (see milestone log for hash)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
-- **Driver phase**: WAVE 6 (Platform Maturity) — **C38 ✓ C39 ✓**. Next: C40 FINAL AUDIT (no new feature — full-platform sign-off).
-- **NEXT_MILESTONE**: `C40 — SESIRA FULL MATURITY FINAL AUDIT`
+- **Driver phase**: **ALL WAVES COMPLETE — C5→C40 landed.** SESIRA backend contracts signed off. See `docs/full-platform-audit-c40.md` for the audit grid + 2 tracked follow-up gaps (G1 AIProvider seam, G2 data export extension).
+- **NEXT_MILESTONE**: `POST-C40 — driver stops. Optional follow-ups documented in audit doc §"Recommended C40 follow-up PRs".`
 
 ## Milestone log
 
@@ -56,6 +56,7 @@ Read this file first on any new Claude Code session; resume from
 | C37 | `50e9908` | DONE | Voice intake — 2 tables (`voice_policies`, `voice_calls`) + state machine trigger + 11 RPCs (upsert_voice_policy, mark_voice_policy_europe_verified [D-5 gate service_role], record_voice_call_received [refuses if no policy + refuses production provider unless region_europe_verified], mark_voice_call_disclosures_played [art.50 proof in audit_logs with message snapshots], mark_voice_call_opted_out [purges recording+transcript in same statement], record_voice_call_recording, record_voice_call_transcript, record_voice_call_processed [refuses forbidden metadata keys emotion/sentiment/diagnosis/price/scoring], close_voice_call, purge_expired_voice_recordings, purge_expired_voice_transcripts) + 2 read helpers + TS provider abstractions (VoiceProvider + SpeechToTextProvider — separated; Test + PendingProduction impls for each) — applied on Supabase as `20261003000000`. **WAVE 5 COMPLETE.** |
 | C38 | `cbd70fd` | DONE | Control Center / observability / costs (BACKEND contracts) — 3 tables (`platform_components`, `platform_component_events`, `platform_component_backlogs`) + 10 RPCs (configure_platform_component, engage_kill_switch [ACTIVE member + audit], release_kill_switch, is_platform_component_enabled [worker seam], record_platform_component_event [service_role], record_platform_component_backlog [service_role], platform_component_dashboard [aggregates last hour + last backlog, NEVER synthesizes], platform_component_events_for, ai_provider_stats [reads from ai_runs — the source of truth]) — applied on Supabase as `20261004000000`. **« Pas de métrique inventée » enforced: every dashboard number traces to a real event, backlog, or ai_runs row.** **WAVE 6 KICKOFF.** |
 | C39 | `e7c1ea5` | DONE | Security / recovery / scale audit (TESTS + SEED + DOC — no migration) — `supabase/tests/wave5_wave6_offensive.sql` (14 attack tests: tenant isolation, RLS smoke on 24 tables, INV-01/02/03/06 assertions, RPC forgery, provider event dedup, offline artifact idempotency + CONFLICT flag, kill-switch enforcement, financing consent gate, dashboard aggregation truth) + `supabase/seeds/synthetic_volume.example.sql` (parameterised load: 10k customers, 50k quotes, 100k events, 5k interventions/invoices, 20k docs, 1k voice, 2k ai_runs, 3k growth events + rollback helper — refuses to run on org with real audit history) + `docs/security-audit-c39.md` (20-item attack matrix + coverage grid + C40 sign-off criteria). |
+| C40 | `(new)` | DONE | **SESIRA Full Maturity — FINAL AUDIT.** Fix: `documents(id, organization_id)` composite unique (C33.1 known gap) — migration `20261005000000_platform_maturity_fixes.sql`. Doc: `docs/full-platform-audit-c40.md` = 33 domains × 9 criteria grid + 2 tracked follow-up gaps (G1 AIProvider seam not centralized, G2 data-act export extension) + doctrine invariants sign-off checklist + recommended follow-up PRs. **ALL WAVES C5→C40 COMPLETE.** Labels: TECHNICALLY VALIDATED / REAL-WORLD CALIBRATION PENDING. |
 
 ## BASELINE_FAILURE
 
