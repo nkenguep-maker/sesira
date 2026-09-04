@@ -2398,6 +2398,99 @@ export type Database = {
           provenance: Json
         }[]
       }
+      supersede_regulatory_gwp_value: {
+        Args: {
+          target_gwp_id: string
+          target_effective_until: string
+        }
+        Returns: boolean
+      }
+      supersede_regulatory_leak_check_rule: {
+        Args: {
+          target_rule_id: string
+          target_effective_until: string
+        }
+        Returns: boolean
+      }
+      supersede_regulatory_market_ban: {
+        Args: {
+          target_ban_id: string
+          target_effective_until: string
+        }
+        Returns: boolean
+      }
+      record_regulatory_attestation: {
+        Args: {
+          target_organization_id: string
+          target_attestation_kind: string
+          target_scope: string
+          target_holder_user_id: string | null
+          target_reference_number: string
+          target_issued_by: string
+          target_issued_at: string
+          target_valid_from: string
+          target_valid_until: string
+          target_document_id: string | null
+        }
+        Returns: string
+      }
+      revoke_regulatory_attestation: {
+        Args: {
+          target_organization_id: string
+          target_attestation_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      current_gwp_value: {
+        Args: {
+          target_fluid_code: string
+          target_at: string | null
+        }
+        Returns: {
+          gwp_id: string
+          fluid_name: string
+          gwp_100y: number
+          ipcc_assessment: string
+          effective_from: string
+          effective_until: string | null
+          source_ref: string
+        }[]
+      }
+      current_leak_check_rule: {
+        Args: {
+          target_tco2eq: number
+          target_at: string | null
+        }
+        Returns: {
+          rule_id: string
+          rule_code: string
+          min_tco2eq: number
+          max_tco2eq: number | null
+          cadence_days: number
+          requires_leak_detector: boolean
+          detector_reduction_factor: number | null
+          effective_from: string
+          effective_until: string | null
+          source_ref: string
+        }[]
+      }
+      active_regulatory_attestations: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          attestation_id: string
+          attestation_kind: string
+          scope: string
+          holder_user_id: string | null
+          reference_number: string
+          issued_by: string
+          valid_from: string
+          valid_until: string
+          days_until_expiry: number
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string
