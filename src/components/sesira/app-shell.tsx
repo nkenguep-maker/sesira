@@ -28,20 +28,7 @@ export function AppShell({
           </Link>
         </div>
 
-        <nav className="app-nav" aria-label="Navigation principale">
-          {SESIRA_APP_NAV_GROUPS.map((group) => (
-            <div className="app-nav-group" key={group.label}>
-              <span className="app-nav-group-label">{group.label}</span>
-              <div>
-                {group.items.map(({ href, label }) => (
-                  <Link key={href} href={href} className={isAppNavActive(pathname, href) ? "active" : ""}>
-                    <span>{label}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
-        </nav>
+        <GroupedNavigation pathname={pathname} />
 
         <div className="sidebar-foot">
           <div className="account-row" aria-label="Espace de travail">
@@ -57,11 +44,36 @@ export function AppShell({
       <div className="app-main-wrap">
         <header className="mobile-app-bar">
           <SesiraLogo />
-          <Link href="/app" className="button ghost small">Aujourd’hui</Link>
+          <details className="mobile-nav-menu">
+            <summary>Menu</summary>
+            <div className="mobile-nav-panel">
+              <Link href="/app" className={pathname === "/app" ? "active" : ""}>Aujourd’hui</Link>
+              <GroupedNavigation pathname={pathname} mobile />
+            </div>
+          </details>
         </header>
         <main className="app-main">{children}</main>
       </div>
     </div>
+  );
+}
+
+function GroupedNavigation({ pathname, mobile = false }: { pathname: string; mobile?: boolean }) {
+  return (
+    <nav className={mobile ? "app-nav mobile" : "app-nav"} aria-label={mobile ? "Navigation mobile" : "Navigation principale"}>
+      {SESIRA_APP_NAV_GROUPS.map((group) => (
+        <div className="app-nav-group" key={group.label}>
+          <span className="app-nav-group-label">{group.label}</span>
+          <div>
+            {group.items.map(({ href, label }) => (
+              <Link key={href} href={href} className={isAppNavActive(pathname, href) ? "active" : ""}>
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
+    </nav>
   );
 }
 
