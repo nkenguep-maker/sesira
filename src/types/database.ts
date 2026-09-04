@@ -2233,6 +2233,113 @@ export type Database = {
           status: string
         }[]
       }
+      submit_content_for_review: {
+        Args: {
+          target_organization_id: string
+          target_content_id: string
+        }
+        Returns: boolean
+      }
+      approve_content_piece: {
+        Args: {
+          target_organization_id: string
+          target_content_id: string
+          target_approver_user_id: string
+        }
+        Returns: boolean
+      }
+      archive_content_piece: {
+        Args: {
+          target_organization_id: string
+          target_content_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      schedule_publication: {
+        Args: {
+          target_organization_id: string
+          target_content_id: string
+          target_campaign_id: string | null
+          target_channel: string
+          target_scheduled_for: string | null
+        }
+        Returns: string
+      }
+      mark_publication_published: {
+        Args: {
+          target_organization_id: string
+          target_publication_id: string
+          target_published_by_user_id: string
+          target_external_ref: string
+        }
+        Returns: boolean
+      }
+      cancel_publication: {
+        Args: {
+          target_organization_id: string
+          target_publication_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      record_conversation_reply: {
+        Args: {
+          target_organization_id: string
+          target_conversation_id: string
+          target_replied_by_user_id: string
+        }
+        Returns: boolean
+      }
+      close_conversation: {
+        Args: {
+          target_organization_id: string
+          target_conversation_id: string
+          target_reason: string | null
+        }
+        Returns: boolean
+      }
+      pending_content_reviews: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          content_id: string
+          title: string
+          kind: string
+          language: string | null
+          author_user_id: string | null
+          updated_at: string
+        }[]
+      }
+      upcoming_publications: {
+        Args: {
+          target_organization_id: string
+          target_days_ahead: number
+        }
+        Returns: {
+          publication_id: string
+          content_piece_id: string
+          channel: string
+          scheduled_for: string | null
+          campaign_id: string | null
+        }[]
+      }
+      open_conversations: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          conversation_id: string
+          lead_id: string | null
+          channel: string
+          external_thread_ref: string | null
+          subject: string | null
+          status: string
+          last_inbound_at: string | null
+          assigned_user_id: string | null
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string
