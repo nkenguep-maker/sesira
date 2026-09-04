@@ -7,11 +7,11 @@ Read this file first on any new Claude Code session; resume from
 ## Current status
 
 - **Branch**: `claude/core-workflows`
-- **HEAD**: `147284e` (C27 documents core)
+- **HEAD**: `(new)` (C28 invoice monitoring)
 - **Remote**: `origin` = `github.com/nkenguep-maker/sesira` — **push-after-each doctrine reactivated 2026-09-02** to leverage GitHub Actions verify (driver §12 relaxed; user directive)
 - **Supabase P1**: `ubfqffhvomaxcwgerwmr`
-- **Driver phase**: WAVE 3 (Operations) — C27 landed and applied on Supabase (renamed to `20260921000000_documents_core.sql` after collision with 3 Codex reconcile migrations claiming 20260918–20)
-- **NEXT_MILESTONE**: `C28 — INVOICE MONITORING`
+- **Driver phase**: WAVE 3 (Operations) — C28 landed and applied on Supabase
+- **NEXT_MILESTONE**: `C29 — MAINTENANCE & RENEWALS`
 
 ## Milestone log
 
@@ -41,6 +41,7 @@ Read this file first on any new Claude Code session; resume from
 | C25 | `1049b53` | DONE | Interventions core |
 | C26 | `12cf306` | DONE | Field reports core (state machine + gaps recorder) |
 | C27 | `147284e` | DONE | Documents core (state machine + classify/validate/reject/archive) — applied on Supabase; migration renamed to `20260921000000` after Codex reconcile collision |
+| C28 | `(new)` | DONE | Invoice monitoring (state machine + issue/payment/overdue/dunning + read RPC) — applied on Supabase as `20260922000000` |
 
 ## BASELINE_FAILURE
 

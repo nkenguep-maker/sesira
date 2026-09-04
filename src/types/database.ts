@@ -2013,6 +2013,60 @@ export type Database = {
         }
         Returns: boolean
       }
+      record_invoice_issued: {
+        Args: {
+          target_organization_id: string
+          target_invoice_id: string
+          target_issued_at: string
+          target_due_at: string | null
+          target_external_ref: string | null
+        }
+        Returns: boolean
+      }
+      record_invoice_payment: {
+        Args: {
+          target_organization_id: string
+          target_invoice_id: string
+          target_amount: number
+          target_paid_at: string
+          target_metadata: Json
+        }
+        Returns: boolean
+      }
+      mark_invoice_overdue: {
+        Args: {
+          target_organization_id: string
+          target_invoice_id: string
+        }
+        Returns: boolean
+      }
+      record_dunning_reminder: {
+        Args: {
+          target_organization_id: string
+          target_invoice_id: string
+          target_stage: number
+          target_sent_by_user_id: string
+        }
+        Returns: boolean
+      }
+      overdue_invoices: {
+        Args: {
+          target_organization_id: string
+          target_min_days_past_due: number
+        }
+        Returns: {
+          invoice_id: string
+          customer_id: string
+          external_ref: string | null
+          amount: number
+          currency: string
+          issued_at: string | null
+          due_at: string | null
+          days_past_due: number
+          reminder_stage: number
+          reminder_last_sent_at: string | null
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string
