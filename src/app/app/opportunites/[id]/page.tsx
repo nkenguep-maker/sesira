@@ -47,14 +47,14 @@ export default async function OpportunityDetailPage({ params }: PageProps) {
   return (
     <>
       <PageHeader
-        eyebrow="04 · OPPORTUNITÉ"
+        eyebrow="COMMERCIAL"
         title={customerName}
-        description="Variantes, révisions, options, signaux observés et décisions autorisées pour ce dossier commercial."
-        actions={<Link href="/app/opportunites" className="button ghost small">Retour aux opportunités</Link>}
+        description="Variantes, options, signaux observés et décisions disponibles pour ce dossier."
+        actions={<Link href="/app/opportunites" className="button ghost small">Retour</Link>}
       />
 
       <section className="premium-connection-summary">
-        <div><strong>{stateLabel(opportunity.commercialState)}</strong><span>État commercial</span></div>
+        <div><strong>{stateLabel(opportunity.commercialState)}</strong><span>État</span></div>
         <div><strong>{formatAmount(opportunity.estimatedValue, opportunity.currency)}</strong><span>Valeur estimée</span></div>
         <div><strong>{opportunity.variants.length}</strong><span>Variantes</span></div>
         <div><strong>{opportunity.options.length}</strong><span>Options</span></div>
@@ -64,13 +64,13 @@ export default async function OpportunityDetailPage({ params }: PageProps) {
 
       <section className="panel">
         <div className="panel-head">
-          <div><span className="eyebrow">DÉCISION</span><h2>Transitions autorisées</h2></div>
+          <div><span className="eyebrow">DÉCISION</span><h2>Changer l’état du dossier</h2></div>
           <StatusPill tone={terminal ? "neutral" : currentState === "ACTIVE" ? "warning" : "good"}>{stateLabel(opportunity.commercialState)}</StatusPill>
         </div>
         {!currentState ? (
-          <p className="panel-copy">L’état actuel n’appartient pas au vocabulaire C18. Aucune transition n’est proposée.</p>
+          <p className="panel-copy">Cet état n’est pas reconnu. Aucune action de changement d’état n’est proposée.</p>
         ) : terminal ? (
-          <p className="panel-copy">Ce dossier est dans un état terminal. Le Core n’autorise plus aucune transition depuis cet état.</p>
+          <p className="panel-copy">Ce dossier est clôturé. Aucune transition supplémentaire n’est disponible.</p>
         ) : allowedTransitions.length ? (
           <div className="premium-focus-actions">
             {allowedTransitions.map((target) => (
@@ -82,23 +82,23 @@ export default async function OpportunityDetailPage({ params }: PageProps) {
             ))}
           </div>
         ) : (
-          <p className="panel-copy">Aucune transition supplémentaire n’est autorisée.</p>
+          <p className="panel-copy">Aucune transition supplémentaire n’est disponible.</p>
         )}
-        <p className="premium-muted-copy">La base reste autoritaire. Une action devenue illégale entre l’affichage et le clic sera refusée côté serveur.</p>
+        <p className="premium-muted-copy">SESIRA revérifie l’état du dossier au moment d’enregistrer l’action. Si le dossier a changé entre temps, l’action est refusée plutôt que forcée.</p>
       </section>
 
       {currentState === "WON" ? (
         <section className="panel">
           <div className="panel-head">
-            <div><span className="eyebrow">PROCHAIN PAS OPÉRATIONNEL</span><h2>{operational?.nextStepAt ? "Un prochain pas est enregistré." : "Cette vente doit être reprise opérationnellement."}</h2></div>
-            <StatusPill tone={operational?.nextStepAt ? "good" : valuePolicy.enabled ? "warning" : "neutral"}>{operational?.nextStepAt ? "Planifiée" : valuePolicy.enabled ? "Sous politique" : "Non planifiée"}</StatusPill>
+            <div><span className="eyebrow">PROCHAIN PAS</span><h2>{operational?.nextStepAt ? "Un prochain pas est prévu" : "Cette vente n’a pas encore de suite planifiée"}</h2></div>
+            <StatusPill tone={operational?.nextStepAt ? "good" : valuePolicy.enabled ? "warning" : "neutral"}>{operational?.nextStepAt ? "Planifiée" : valuePolicy.enabled ? "À surveiller" : "Non planifiée"}</StatusPill>
           </div>
           {operational?.nextStepAt ? (
             <>
               <div className="premium-data-list">
                 <div><span>Date</span><strong>{formatDate(operational.nextStepAt)}</strong></div>
                 <div><span>Type</span><strong>{operational.nextStepKind ?? "Non précisé"}</strong></div>
-                <div><span>Source</span><strong>{operational.nextStepSource ?? "Inconnue"}</strong></div>
+                <div><span>Origine</span><strong>{sourceLabel(operational.nextStepSource)}</strong></div>
               </div>
               <form action={setOperationalNextStepAction}>
                 <input type="hidden" name="opportunityId" value={opportunity.id} />
@@ -123,13 +123,13 @@ export default async function OpportunityDetailPage({ params }: PageProps) {
             </form>
           )}
           <p className="premium-muted-copy">
-            {valuePolicy.enabled ? `Politique active : Attention après ${valuePolicy.graceHours ?? "délai non disponible"} h sans prochain pas.` : "La politique vendu mais non planifié n’est pas active pour cette organisation."} <Link href="/app/parametres/politiques">Voir la règle</Link>
+            {valuePolicy.enabled ? `Règle active : cette vente remonte après ${valuePolicy.graceHours ?? "un délai non disponible"} h sans prochain pas.` : "La règle « vendu mais non planifié » n’est pas active pour cette organisation."} <Link href="/app/parametres/politiques">Voir la règle</Link>
           </p>
         </section>
       ) : null}
 
       <section className="premium-results-section">
-        <div className="premium-section-heading"><div><span className="eyebrow">VARIANTES</span><h2>Versions commerciales du dossier.</h2></div></div>
+        <div className="premium-section-heading"><div><span className="eyebrow">VARIANTES</span><h2>Versions commerciales</h2></div></div>
         {opportunity.variants.length ? (
           <div className="premium-connection-grid">
             {opportunity.variants.map((variant) => (
@@ -153,7 +153,7 @@ export default async function OpportunityDetailPage({ params }: PageProps) {
       </section>
 
       <section className="premium-results-section">
-        <div className="premium-section-heading"><div><span className="eyebrow">OPTIONS</span><h2>Choix rattachés aux devis.</h2></div></div>
+        <div className="premium-section-heading"><div><span className="eyebrow">OPTIONS</span><h2>Choix rattachés aux devis</h2></div></div>
         {opportunity.options.length ? (
           <div className="premium-connection-grid">
             {opportunity.options.map((option) => (
@@ -187,6 +187,10 @@ function transitionActionLabel(state: string) {
 function optionStatusLabel(status: string) {
   const labels: Record<string, string> = { PROPOSED: "Proposée", INCLUDED: "Incluse", EXCLUDED: "Exclue", REJECTED: "Rejetée" };
   return labels[status] ?? status;
+}
+function sourceLabel(source: string | null) {
+  const labels: Record<string, string> = { MANUAL: "Ajout manuel", INTERVENTION: "Intervention planifiée", SYSTEM: "SESIRA" };
+  return source ? labels[source] ?? "SESIRA" : "Non précisée";
 }
 function formatAmount(amount: number | null, currency: string) {
   if (amount === null) return "Non renseigné";
