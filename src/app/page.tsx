@@ -4,181 +4,257 @@ import Link from "next/link";
 import { SesiraLogo } from "@/components/sesira/logo";
 
 export const metadata: Metadata = {
-  title: "SESIRA | Suivi des devis pour PME CVC",
+  title: "SESIRA | Pilotage opérationnel pour PME CVC",
   description:
-    "SESIRA surveille les devis envoyés, prépare les relances et fait remonter les décisions importantes aux PME du chauffage, de la climatisation et des pompes à chaleur.",
+    "SESIRA surveille les passages entre devis, interventions, rapports, factures et maintenance pour faire remonter ce qui s'est arrêté.",
 };
 
+const TODAY_ITEMS = [
+  {
+    kind: "DEVIS",
+    title: "18 450 € · Sophie Lefèvre",
+    detail: "Aucune réponse depuis 6 jours. Relance préparée.",
+    action: "Relance à valider",
+  },
+  {
+    kind: "INTERVENTION",
+    title: "Dupont SARL",
+    detail: "Vente gagnée. Aucune intervention planifiée.",
+    action: "Planifier",
+  },
+  {
+    kind: "RAPPORT TERRAIN",
+    title: "Intervention #1842",
+    detail: "Rapport complété. Une validation reste nécessaire.",
+    action: "Valider",
+  },
+  {
+    kind: "FACTURE",
+    title: "12 400 €",
+    detail: "Promesse de paiement attendue vendredi.",
+    action: "Suivre",
+  },
+  {
+    kind: "MAINTENANCE",
+    title: "Martin & Fils",
+    detail: "Renouvellement à examiner dans 26 jours.",
+    action: "Examiner",
+  },
+] as const;
+
+const PILLARS = [
+  {
+    number: "01",
+    title: "VENDRE",
+    headline: "Ce qui est parti et qui attend encore une réponse.",
+    detail: "Demandes, devis, variantes, opportunités, relances, objections.",
+    example: "18 450 € · pompe à chaleur air/eau · envoyé il y a six jours · aucune réponse · relance préparée",
+  },
+  {
+    number: "02",
+    title: "EXÉCUTER",
+    headline: "Ce qui est vendu et qui n'est pas encore arrivé au terrain.",
+    detail: "Interventions, planification, rapports terrain, validations, documents.",
+    example: "Dupont SARL · vente gagnée · aucune intervention planifiée",
+  },
+  {
+    number: "03",
+    title: "ENCAISSER",
+    headline: "Ce qui est fait et qui n'est pas encore payé — puis renouvelé.",
+    detail: "Factures, échéances, promesses de paiement, litiges, contrats de maintenance, renouvellements.",
+    example: "12 400 € · promesse de paiement vendredi",
+  },
+] as const;
+
+const AUTOMATION_LEVELS = [
+  ["01", "Observation", "SESIRA regarde et mesure."],
+  ["02", "Shadow", "SESIRA montre ce qu'il aurait préparé."],
+  ["03", "Approbation", "SESIRA prépare. Votre équipe valide."],
+  ["04", "Automatique", "Uniquement pour les règles explicitement autorisées."],
+] as const;
+
 const WORK_SPLIT = [
-  ["Surveiller les devis", "Le prix"],
-  ["Préparer les relances", "Une remise"],
-  ["Repérer une réponse", "Une réclamation"],
-  ["Tenir le suivi à jour", "Un litige"],
+  ["Surveiller les dossiers", "Décider d'un prix"],
+  ["Préparer une relance", "Accorder une remise"],
+  ["Repérer un retard", "Traiter un litige"],
+  ["Faire remonter une exception", "Prendre un engagement contractuel"],
 ] as const;
 
 export default function HomePage() {
   return (
     <main className="cvc-shell">
-      <nav className="cvc-nav">
+      <nav className="cvc-nav" aria-label="Navigation principale">
         <Link href="/" aria-label="SESIRA"><SesiraLogo /></Link>
         <div className="cvc-nav-links">
-          <a href="#probleme">Le problème</a>
-          <a href="#fonctionnement">Comment ça marche</a>
-          <a href="#produit">Le produit</a>
-          <a href="#fondateur">Fondateur</a>
-          <Link className="button ghost small" href="/login">Connexion</Link>
-          <Link className="button primary small" href="/diagnostic">Faire le calcul</Link>
+          <a href="#aujourdhui">Aujourd&apos;hui</a>
+          <a href="#parcours">Le parcours</a>
+          <a href="#controle">Le contrôle</a>
+          <Link className="cvc-nav-login" href="/login">Connexion</Link>
+          <Link className="button primary small" href="/diagnostic">Calculer</Link>
         </div>
       </nav>
 
-      <section className="cvc-hero">
+      <header className="cvc-hero">
         <div className="cvc-hero-copy">
-          <span className="cvc-kicker">SESIRA · CHAUFFAGE · CLIMATISATION · POMPES À CHALEUR</span>
-          <h1>Des devis déjà envoyés <em>dorment dans votre boîte mail.</em></h1>
+          <span className="cvc-kicker">SESIRA · POUR LES ENTREPRISES CVC DE 8 À 50 PERSONNES</span>
+          <h1>Une PME perd rarement un dossier à cause d&apos;un gros problème. <em>Elle le perd entre deux étapes.</em></h1>
           <p className="cvc-hero-lede">
-            SESIRA surveille vos devis. Quand un client ne répond pas, il prépare la relance et vous la montre. Vous décidez. SESIRA envoie seulement quand vous l’autorisez.
+            Un devis parti sans relance. Une vente gagnée jamais planifiée. Un rapport terrain qui attend une validation depuis trois semaines. SESIRA surveille les passages entre vos étapes et fait remonter ce qui s&apos;est arrêté.
           </p>
-          <p className="cvc-hero-note">Vous ne pouvez pas prendre tous les chantiers. Le but est de ne pas perdre les bons.</p>
           <div className="cvc-actions">
-            <Link className="button primary" href="/diagnostic">Voir si SESIRA est rentable chez moi</Link>
-            <a className="cvc-text-link" href="#probleme">Comprendre en 2 minutes</a>
+            <Link className="button primary" href="/diagnostic">Calculer ce qui se perd chez moi</Link>
+            <a className="cvc-text-link" href="#aujourdhui">Voir SESIRA Aujourd&apos;hui</a>
           </div>
-          <small>Gratuit · sans compte · premier résultat en un clic</small>
+          <small>Gratuit · sans compte · 3 minutes</small>
         </div>
 
-        <div className="cvc-quote-demo" aria-label="Exemple de devis surveillé par SESIRA">
-          <div className="cvc-demo-top"><span>SESIRA REGARDE CE DEVIS</span><span>EXEMPLE</span></div>
-          <h2>Sophie Lefèvre</h2>
-          <p>Pompe à chaleur air eau · Rhône</p>
-          <strong>18 450 € HT</strong>
-          <dl>
-            <div><dt>Envoyé</dt><dd>il y a 3 jours</dd></div>
-            <div><dt>Le client a répondu</dt><dd>non</dd></div>
-          </dl>
-          <div className="cvc-demo-alert"><span /> <p><b>Aujourd’hui, SESIRA préparerait la relance.</b><br />Il attend votre feu vert.</p></div>
-          <small>Rien n’est parti</small>
+        <TodayPreview compact />
+      </header>
+
+      <section className="cvc-urgency" aria-labelledby="echeances-title">
+        <div className="cvc-urgency-head">
+          <span>POURQUOI MAINTENANT</span>
+          <h2 id="echeances-title">Deux échéances arrivent. Elles ne dépendent pas de vous.</h2>
+        </div>
+        <div className="cvc-deadline-grid">
+          <article>
+            <span>01</span>
+            <strong>1er septembre 2027</strong>
+            <p>Vos factures devront être émises au format électronique, via une plateforme agréée. La réception est déjà obligatoire depuis le 1er septembre 2026.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <strong>31 janvier · chaque année</strong>
+            <p>Le bilan annuel de vos fluides frigorigènes est attendu par votre organisme agréé.</p>
+          </article>
+        </div>
+        <div className="cvc-urgency-note">
+          <b>Couche réglementaire en préparation pour l&apos;ouverture complète.</b>
+          <p>SESIRA est conçu pour relier ces échéances au suivi opérationnel et préparer les éléments nécessaires. Le dépôt reste sous votre responsabilité.</p>
         </div>
       </section>
 
-      <section id="probleme" className="cvc-section cvc-light">
-        <div className="cvc-section-head">
-          <span>01 · LE PROBLÈME</span>
-          <h2>Ce devis, vous l’avez déjà payé.</h2>
-          <p>La demande, le déplacement, le rendez vous et le chiffrage sont déjà faits quand le devis part. Ensuite, trop souvent, le suivi repose encore sur une boîte mail, un rappel personnel ou la mémoire de quelqu’un.</p>
+      <section id="aujourdhui" className="cvc-section cvc-today-section">
+        <div className="cvc-section-head cvc-section-head-wide">
+          <span>01 · SESIRA AUJOURD&apos;HUI</span>
+          <h2>Commencez la journée par ce qui mérite réellement votre attention.</h2>
+          <p>Pas trente tableaux à parcourir. SESIRA rassemble les exceptions issues du commercial, du terrain, de l&apos;administratif et de la maintenance dans une même vue de travail.</p>
         </div>
-        <div className="cvc-flow" aria-label="Cycle d'un devis">
-          <span>Le client appelle</span><b>→</b><span>Vous vous déplacez</span><b>→</b><span>Vous chiffrez</span><b>→</b><span>Le devis part</span><b>→</b><em>?</em>
+        <TodayPreview />
+      </section>
+
+      <section id="parcours" className="cvc-section cvc-platform-section">
+        <div className="cvc-section-head cvc-section-head-wide">
+          <span>02 · LE PARCOURS</span>
+          <h2>Trois ruptures à surveiller. Pas quinze produits à comprendre.</h2>
+          <p>SESIRA se lit comme votre activité : vendre, exécuter, encaisser. Chaque pilier commence là où une étape devrait naturellement déclencher la suivante.</p>
         </div>
-        <div className="cvc-problem-grid">
-          <div>
-            <h3>Ce point d’interrogation, c’est le travail de SESIRA.</h3>
-            <p>Il regarde ce qui devait arriver ensuite et fait remonter ce qui risque de se perdre.</p>
-          </div>
-          <div className="cvc-example-card">
-            <span>UN MOIS · EXEMPLE</span>
-            <div><strong>47</strong><small>devis suivis</small></div>
-            <div><strong>12</strong><small>sans réponse</small></div>
-            <div><strong>148 k€</strong><small>encore ouverts</small></div>
-            <div><strong>4</strong><small>à regarder aujourd’hui</small></div>
-          </div>
+        <div className="cvc-pillar-grid">
+          {PILLARS.map((pillar) => (
+            <article key={pillar.title}>
+              <div className="cvc-pillar-top"><span>{pillar.number}</span><b>{pillar.title}</b></div>
+              <h3>{pillar.headline}</h3>
+              <p>{pillar.detail}</p>
+              <div className="cvc-pillar-example">
+                <span>EXEMPLE</span>
+                <strong>{pillar.example}</strong>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="cvc-flow-line" aria-label="Parcours client SESIRA">
+          <span>Demande</span><b>→</b><span>Devis</span><b>→</b><span>Intervention</span><b>→</b><span>Rapport</span><b>→</b><span>Facture</span><b>→</b><span>Maintenance</span>
         </div>
       </section>
 
-      <section id="fonctionnement" className="cvc-section cvc-sand">
-        <div className="cvc-section-head">
-          <span>02 · COMMENT ÇA MARCHE</span>
-          <h2>Rien ne part sans que vous l’ayez lu.</h2>
-          <p>Au départ, SESIRA observe et prépare. Vous gardez le contrôle. L’automatisation vient seulement après, quand les règles sont claires et que vous avez confiance dans le comportement du système.</p>
-        </div>
-        <div className="cvc-steps">
-          <article><span>01</span><h3>Il regarde</h3><p>SESIRA repère les devis restés sans réponse. Aucun message n’est envoyé.</p></article>
-          <article><span>02</span><h3>Il vous montre</h3><p>Il prépare la relance et explique pourquoi ce dossier remonte maintenant.</p></article>
-          <article className="featured"><span>03</span><h3>Vous validez</h3><p>Vous lisez, vous corrigez si nécessaire, puis vous décidez.</p></article>
-          <article><span>04</span><h3>Il automatise</h3><p>Uniquement ce que vous avez explicitement autorisé.</p></article>
-        </div>
-      </section>
-
-      <section className="cvc-section cvc-dark">
-        <div className="cvc-section-head">
-          <span>03 · LA FRONTIÈRE</span>
+      <section id="controle" className="cvc-section cvc-control-section">
+        <div className="cvc-section-head cvc-section-head-wide cvc-section-head-dark">
+          <span>03 · LE CONTRÔLE</span>
           <h2>Le répétitif à SESIRA. La décision à vous.</h2>
-          <p>Le but n’est pas de sortir l’équipe du circuit. Le but est de ne lui laisser que ce qui mérite réellement une décision humaine.</p>
+          <p>Le niveau d&apos;automatisation dépend de la confiance et de la politique de l&apos;entreprise, pas du prix de l&apos;abonnement.</p>
         </div>
-        <div className="cvc-split-grid">
-          <div className="cvc-decision-demo">
-            <span>LE CLIENT TROUVE ÇA TROP CHER</span>
+
+        <div className="cvc-automation-grid">
+          {AUTOMATION_LEVELS.map(([number, title, description]) => (
+            <article key={title}>
+              <span>{number}</span>
+              <h3>{title}</h3>
+              <p>{description}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className="cvc-control-grid">
+          <div className="cvc-decision-card">
+            <span>EXCEPTION COMMERCIALE</span>
             <h3>Sophie Lefèvre · 18 450 € HT</h3>
-            <blockquote>Nous sommes toujours intéressés, mais le tarif dépasse un peu notre budget.</blockquote>
-            <p><b>Pourquoi SESIRA vous le montre</b><br />Parler d’argent avec un client, ce n’est pas au logiciel de décider à votre place.</p>
+            <blockquote>« Nous sommes toujours intéressés, mais le tarif dépasse un peu notre budget. »</blockquote>
+            <p>SESIRA fait remonter le dossier. La négociation reste une décision humaine.</p>
           </div>
           <div className="cvc-work-split">
-            <div><b>SESIRA S’EN OCCUPE</b><b>VOUS DÉCIDEZ</b></div>
-            {WORK_SPLIT.map(([sesira, human]) => <div key={sesira}><span>{sesira}</span><strong>{human}</strong></div>)}
+            <div><b>SESIRA PRÉPARE</b><b>VOTRE ÉQUIPE DÉCIDE</b></div>
+            {WORK_SPLIT.map(([sesira, human]) => (
+              <div key={sesira}><span>{sesira}</span><strong>{human}</strong></div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section id="produit" className="cvc-section cvc-light">
-        <div className="cvc-section-head">
-          <span>04 · CE QUE VOUS REGARDEZ</span>
-          <h2>Trois choses demandent votre attention. Pas trente tableaux.</h2>
-          <p>Le produit doit répondre à une question simple le matin : qu’est ce qui mérite vraiment que je m’en occupe aujourd’hui ?</p>
-        </div>
-        <div className="cvc-product-frame">
-          <div className="cvc-product-top"><strong>MARDI · 08:17</strong><span>À regarder aujourd’hui · 3 · EXEMPLE</span></div>
-          <article><div><span>DEVIS</span><strong>18 450 € · Sophie Lefèvre</strong><p>Cliente intéressée, mais prix jugé élevé.</p></div><b>À vous de décider</b></article>
-          <article><div><span>DEVIS</span><strong>9 800 € · Dupont SARL</strong><p>Aucune réponse depuis 6 jours. Relance prête.</p></div><b>Relance à valider</b></article>
-          <article><div><span>DEMANDE CLIENT</span><strong>Martin Dupont · intervention</strong><p>Un nouveau message attend une réponse et reste relié au dossier client.</p></div><b>À traiter</b></article>
+      <section id="commencer" className="cvc-section cvc-start-section">
+        <div className="cvc-start-grid">
+          <div className="cvc-offer-card">
+            <span>04 · COMMENCER</span>
+            <h2>Commencez par un constat, pas par un logiciel.</h2>
+            <p>Pendant 90 jours, SESIRA observe vos demandes, vos devis et vos relances. Il n&apos;envoie rien, ne relance personne et ne modifie aucun dossier à votre place.</p>
+            <p>À la fin, vous recevez un document daté : les devis restés sans suite, les demandes jamais reprises et vos délais réels de prise en charge.</p>
+            <div className="cvc-offer-price"><strong>590 €</strong><span>90 jours · sans engagement</span></div>
+            <small>Déduits de l&apos;installation si vous continuez.</small>
+            <a className="button primary" href="mailto:paul@sesira.fr?subject=Constat%20SESIRA%2090%20jours">Demander mon constat sur 90 jours</a>
+            <Link className="cvc-offer-secondary" href="/diagnostic">Ou calculer ce qui se perd chez moi →</Link>
+          </div>
+
+          <aside className="cvc-founder-card">
+            <span>FONDATEUR</span>
+            <h3>Paul Nkengue</h3>
+            <p>J&apos;ai passé des années en vente B2B à regarder la même chose se produire : ce n&apos;est presque jamais le gros problème qui fait perdre un dossier. C&apos;est le devis qu&apos;on n&apos;a pas relancé, la demande qu&apos;on a lue puis jamais reprise, la vente gagnée qui n&apos;est jamais arrivée au planning.</p>
+            <p>Les informations existaient. Ce qui manquait, c&apos;était un système capable de dire ce qui devait se passer ensuite — et de le signaler quand ça ne se passait pas.</p>
+            <p className="cvc-founder-math">Ma formation de mathématicien tient dans une autre partie du produit : séparer ce qu&apos;on observe de ce qu&apos;on estime, et de ce qu&apos;on ne sait pas.</p>
+          </aside>
         </div>
       </section>
 
-      <section className="cvc-section cvc-sand">
-        <div className="cvc-roi-grid">
-          <div className="cvc-section-head">
-            <span>05 · LE CALCUL</span>
-            <h2>On mesure le seuil. On ne promet pas le résultat.</h2>
-            <p>SESIRA ne prétend pas savoir combien de devis supplémentaires vous signerez. Le calcul montre simplement combien de devis additionnels suffiraient à couvrir son coût avec vos propres chiffres.</p>
-          </div>
-          <div className="cvc-roi-card">
-            <span>EXEMPLE AFFICHÉ</span>
-            <strong>6 devis</strong>
-            <p>Avec 45 devis par mois, 12 000 € de montant moyen et 30 % de marge, six devis supplémentaires sur 540 envoyés dans l’année couvriraient un coût annuel de 19 200 €.</p>
-            <small>Ce n’est pas une prévision de résultat.</small>
-            <Link className="button primary" href="/diagnostic">Faire le calcul avec mon volume</Link>
-          </div>
-        </div>
-      </section>
-
-      <section id="fondateur" className="cvc-section cvc-founder">
-        <div className="cvc-founder-grid">
-          <div>
-            <span className="cvc-kicker">QUI EST DERRIÈRE SESIRA</span>
-            <h2>Paul Nkengue</h2>
-            <p className="cvc-founder-role">Fondateur de SESIRA<br /><b>Mathématicien · Expert en vente B2B</b></p>
-          </div>
-          <div className="cvc-founder-copy">
-            <p>Je travaille depuis plusieurs années au contact direct d’entreprises et d’équipes commerciales. J’ai vu le même problème sous différentes formes : une demande arrive, un devis part, un client répond, puis la prochaine action dépend encore trop souvent de la mémoire de quelqu’un.</p>
-            <p>La vente B2B m’a montré où le suivi se casse. Les mathématiques influencent la façon dont je veux construire SESIRA : mesurer ce qui se passe réellement, rendre les hypothèses visibles et ne jamais confondre une estimation avec un résultat.</p>
-            <p>Je ne prétends pas connaître votre métier technique mieux que vous. En revanche, un devis important resté plusieurs semaines sans réponse et une relance mal gérée, je connais très bien ce risque. SESIRA est construit pour que ce type de dossier ne disparaisse plus du radar.</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="cvc-section cvc-dark cvc-start">
-        <div>
-          <span className="cvc-kicker">POUR QUI</span>
-          <h2>Pour les PME CVC qui ont déjà assez de devis pour que le suivi devienne un système.</h2>
-          <p>SESIRA vise les entreprises qui envoient régulièrement des devis, gèrent plusieurs dossiers en parallèle et veulent savoir ce qui mérite une action sans ajouter un logiciel de plus à surveiller.</p>
-        </div>
-        <div className="cvc-start-card">
-          <h3>Voyez d’abord si le problème est assez gros chez vous.</h3>
-          <Link className="button primary" href="/diagnostic">Faire le calcul</Link>
-          <a className="button ghost" href="mailto:paul@sesira.fr?subject=SESIRA%20pour%20mon%20entreprise%20CVC">Parler à Paul</a>
-          <small>Sans engagement · sans carte bancaire</small>
-        </div>
-      </section>
-
-      <footer className="cvc-footer"><SesiraLogo /><span>© 2026 SESIRA</span><Link href="/diagnostic">Calcul</Link><Link href="/login">Connexion</Link></footer>
+      <footer className="cvc-footer">
+        <SesiraLogo />
+        <p>Automatisez le normal. Traitez l&apos;exception. Gardez la décision.</p>
+        <div><Link href="/diagnostic">Diagnostic</Link><Link href="/login">Connexion</Link></div>
+        <span>© 2026 SESIRA</span>
+      </footer>
     </main>
+  );
+}
+
+function TodayPreview({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={compact ? "cvc-today-preview compact" : "cvc-today-preview"} aria-label="Exemple de la vue SESIRA Aujourd'hui">
+      <div className="cvc-product-chrome">
+        <div><i /><i /><i /></div>
+        <span>SESIRA · AUJOURD&apos;HUI</span>
+        <b>EXEMPLE · DONNÉES FICTIVES</b>
+      </div>
+      <div className="cvc-product-body">
+        <div className="cvc-product-heading">
+          <div><span>AUJOURD&apos;HUI</span><h3>Vue d&apos;ensemble</h3><p>Ce qui mérite une action dans votre entreprise.</p></div>
+          <div className="cvc-product-count"><strong>5</strong><span>à traiter</span></div>
+        </div>
+        <div className="cvc-today-list">
+          {TODAY_ITEMS.map((item) => (
+            <article key={`${item.kind}-${item.title}`}>
+              <div className="cvc-today-copy"><span>{item.kind}</span><strong>{item.title}</strong><p>{item.detail}</p></div>
+              <b>{item.action}</b>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
