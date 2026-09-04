@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -7,6 +8,41 @@ import { getViewerContext } from "@/lib/auth/viewer";
 import { createClient } from "@/lib/supabase/server";
 
 async function client(): Promise<SupabaseClient> { return (await createClient()) as unknown as SupabaseClient; }
+
+const OFFLINE_KINDS = new Set(["NOTE", "ANOMALY", "MEASUREMENT", "PART_USED"]);
+
+export type OfflineFieldArtifactInput = {
+  interventionId: string;
+  artifactKind: "NOTE" | "ANOMALY" | "MEASUREMENT" | "PART_USED";
+  payload: Record<string, unknown>;
+  capturedAt: string;
+  offlineClientId: string;
+};
+
+export async function syncOfflineFieldArtifactAction(input: OfflineFieldArtifactInput) {
+  const viewer = await getViewerContext();
+  if (!viewer) return { status: "ERROR" as const, reason: "Session expirée" };
+  if (!input.interventionId || !OFFLINE_KINDS.has(input.artifactKind)) return { status: "ERROR" as const, reason: "Saisie invalide" };
+  if (!input.offlineClientId || input.offlineClientId.length > 100) return { status: "ERROR" as const, reason: "Identifiant hors connexion invalide" };
+  const capturedAt = new Date(input.capturedAt);
+  if (Number.isNaN(capturedAt.getTime())) return { status: "ERROR" as const, reason: "Date de capture invalide" };
+
+  const result = await (await client()).rpc("submit_intervention_field_artifact", {
+    target_organization_id: viewer.organization.id,
+    target_intervention_id: input.interventionId,
+    target_artifact_kind: input.artifactKind,
+    target_payload: input.payload,
+    target_captured_at: capturedAt.toISOString(),
+    target_captured_by_user_id: viewer.userId,
+    target_offline_client_id: input.offlineClientId,
+  });
+  if (result.error) return { status: "ERROR" as const, reason: result.error.message };
+  const first = Array.isArray(result.data) ? result.data[0] as Record<string, unknown> | undefined : undefined;
+  revalidatePath("/app/terrain");
+  revalidatePath("/app");
+  if (first?.upload_status === "CONFLICT") return { status: "CONFLICT" as const };
+  return { status: "SYNCED" as const };
+}
 
 export async function arriveAtInterventionAction(formData: FormData) {
   const viewer = await getViewerContext();
