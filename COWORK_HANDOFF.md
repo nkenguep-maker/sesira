@@ -47,7 +47,7 @@ Read this file first on any new Claude Code session; resume from
 | C30 | `2016c0e` | DONE | Growth core — 2 tables (growth_campaigns + leads) + 2 state machines + 6 write RPCs + 2 read RPCs — applied on Supabase as `20260924000000`. **WAVE 4 KICKOFF.** |
 | C31 | `c6a83a4` | DONE | Growth publishing + conversations — 3 tables + 3 state machines + 8 write RPCs + 3 read RPCs — applied on Supabase as `20260925000000`. Content/publication/reply always human-gated (ACTIVE member). |
 | C32 | `2d497be` | DONE | Honest attribution (OBSERVED / ESTIMATED / UNKNOWN) — 1 table + 2 write RPCs + 2 read RPCs — applied on Supabase as `20260926000000`. Reports MUST break down by confidence; UNKNOWN kept visible. **WAVE 4 COMPLETE.** |
-| C33.1 | `(new)` | DONE | Regulatory reference data — 3 versioned global tables (gwp_values, leak_check_rules, market_bans) + org-scoped attestations + immutability triggers + 5 write RPCs + 3 read RPCs — applied on Supabase as `20260927000000`. Seed script `supabase/seeds/regulatory_fgas_iii.example.sql` shipped, NOT applied (data-ops job). **WAVE 5 KICKOFF.** |
+| C33.1 | `9ad16dc` | DONE | Regulatory reference data — 3 versioned global tables (gwp_values, leak_check_rules, market_bans) + org-scoped attestations + immutability triggers + 5 write RPCs + 3 read RPCs — applied on Supabase as `20260927000000`. Seed script `supabase/seeds/regulatory_fgas_iii.example.sql` shipped, NOT applied (data-ops job). **WAVE 5 KICKOFF.** |
 
 ## BASELINE_FAILURE
 
