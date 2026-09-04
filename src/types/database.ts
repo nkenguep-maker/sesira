@@ -2732,6 +2732,101 @@ export type Database = {
           external_ref: string | null
         }[]
       }
+      configure_financing_partner: {
+        Args: {
+          target_organization_id: string
+          target_partner_id: string | null
+          target_name: string
+          target_partner_type: string
+          target_contact_email: string | null
+          target_contact_phone: string | null
+          target_external_ref: string | null
+          target_commission_terms_note: string | null
+        }
+        Returns: string
+      }
+      archive_financing_partner: {
+        Args: {
+          target_organization_id: string
+          target_partner_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      initiate_financing_referral: {
+        Args: {
+          target_organization_id: string
+          target_customer_id: string
+          target_partner_id: string
+          target_opportunity_id: string | null
+          target_quote_id: string | null
+          target_referred_by_user_id: string
+          target_consent_scope: string
+          target_consent_evidence_note: string | null
+          target_client_document_checklist: Json
+        }
+        Returns: string
+      }
+      transition_financing_referral_status: {
+        Args: {
+          target_organization_id: string
+          target_referral_id: string
+          target_new_status: string
+          target_actor_user_id: string
+          target_notes: string | null
+        }
+        Returns: boolean
+      }
+      record_financing_commission: {
+        Args: {
+          target_organization_id: string
+          target_referral_id: string
+          target_amount: number
+          target_currency: string
+          target_actor_user_id: string
+          target_note: string | null
+        }
+        Returns: boolean
+      }
+      active_financing_partners: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          partner_id: string
+          name: string
+          partner_type: string
+          external_ref: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          commission_terms_note: string | null
+          status: string
+          activated_at: string
+        }[]
+      }
+      financing_referrals_for: {
+        Args: {
+          target_organization_id: string
+          target_status_filter: string | null
+          target_customer_id: string | null
+        }
+        Returns: {
+          referral_id: string
+          customer_id: string
+          partner_id: string
+          partner_name: string
+          opportunity_id: string | null
+          quote_id: string | null
+          status: string
+          referred_by_user_id: string
+          referred_at: string
+          status_changed_at: string | null
+          status_notes: string | null
+          commission_amount: number | null
+          commission_currency: string | null
+          checklist_item_count: number
+        }[]
+      }
       record_audit_log: {
         Args: {
           target_organization_id: string
