@@ -33,84 +33,204 @@ export default async function DashboardPage() {
     attentionOpen = null;
   }
 
+  const customerCount = customersResult.error ? null : (customersResult.count ?? 0);
+  const quoteCount = quotesResult.error ? null : (quotesResult.count ?? 0);
   const connectedEmail = (integrationsResult.data ?? []).some((item) => item.type === "EMAIL" && item.status === "CONNECTED");
   const currentAutomation = automationResult.data?.[0];
   const automationLevel = currentAutomation?.level && currentAutomation.level in AUTOMATION_LEVEL_LABELS
     ? AUTOMATION_LEVEL_LABELS[currentAutomation.level as keyof typeof AUTOMATION_LEVEL_LABELS]
     : "Non configuré";
+  const hasBusinessData = (customerCount ?? 0) > 0 || (quoteCount ?? 0) > 0;
+  const workspaceReady = hasBusinessData && connectedEmail;
+
+  if (!workspaceReady) {
+    return (
+      <FirstRunSetup
+        organizationName={viewer.organization.name}
+        hasBusinessData={hasBusinessData}
+        connectedEmail={connectedEmail}
+        policyConfigured={speedToLead?.configured === true}
+        automationConfigured={Boolean(currentAutomation)}
+      />
+    );
+  }
 
   return (
     <>
       <PageHeader
-        eyebrow="AUJOURD'HUI"
-        title="Vue d'ensemble"
-        description={`Une lecture simple de ${viewer.organization.name} et de ce qui mérite votre attention.`}
-        actions={<Link href="/app/onboarding" className="button primary small">Configurer SESIRA</Link>}
+        eyebrow="AUJOURD’HUI"
+        title="Vue d’ensemble"
+        description={`Ce qui mérite une action dans ${viewer.organization.name}.`}
       />
 
-      <section className="metrics-grid premium-metrics">
-        <MetricCard label="Clients" value={formatCount(customersResult.error ? null : customersResult.count)} note="Dossiers enregistrés" />
-        <MetricCard label="Devis" value={formatCount(quotesResult.error ? null : quotesResult.count)} note="Dossiers enregistrés" />
-        <MetricCard label="À traiter" value={formatCount(attentionOpen)} note="Éléments ouverts" />
-        <MetricCard label="Email" value={connectedEmail ? "Connecté" : "—"} note={connectedEmail ? "Messagerie reliée" : "Connexion à configurer"} />
+      <section className="metrics-grid app-metrics-strip" aria-label="Indicateurs principaux">
+        <MetricCard label="Clients" value={formatCount(customerCount)} />
+        <MetricCard label="Devis" value={formatCount(quoteCount)} />
+        <MetricCard label="À traiter" value={formatCount(attentionOpen)} />
+        <MetricCard label="Messagerie" value={connectedEmail ? "Connectée" : "À relier"} />
       </section>
 
-      <section className="premium-results-section">
-        <div className="premium-section-heading">
-          <div><span className="eyebrow">PRISE EN CHARGE DES NOUVELLES DEMANDES</span><h2>Ce qui attend encore une première action.</h2></div>
-          <StatusPill tone={!speedToLead ? "neutral" : speedToLead.overdueCount > 0 ? "warning" : speedToLead.enabled ? "good" : "neutral"}>
-            {!speedToLead ? "Donnée indisponible" : speedToLead.enabled ? `Cible ${formatDuration(speedToLead.targetMinutes)}` : "Politique inactive"}
-          </StatusPill>
+      <section className="app-primary-block">
+        <div className="app-section-heading">
+          <div>
+            <span className="eyebrow">PRISE EN CHARGE</span>
+            <h2>Nouvelles demandes en attente</h2>
+            <p>Repérez rapidement ce qui n’a pas encore reçu de première prise en charge interne.</p>
+          </div>
+          {speedToLead?.enabled ? (
+            <StatusPill tone={speedToLead.overdueCount > 0 ? "warning" : "good"}>Cible {formatDuration(speedToLead.targetMinutes)}</StatusPill>
+          ) : (
+            <Link href="/app/parametres/politiques" className="policy-action-chip">
+              Activer la politique
+            </Link>
+          )}
         </div>
+
         {!speedToLead ? (
-          <p className="premium-muted-copy">SESIRA ne peut pas lire cette mesure pour le moment. Aucune valeur de remplacement n’est affichée.</p>
+          <div className="app-state-message">
+            <strong>Mesure indisponible</strong>
+            <p>SESIRA ne peut pas lire cette mesure pour le moment. Aucune valeur de remplacement n’est affichée.</p>
+          </div>
         ) : (
           <>
-            <div className="premium-connection-summary">
-              <div><strong>{formatCount(speedToLead.pendingCount)}</strong><span>Nouvelles demandes en attente</span></div>
-              <div><strong>{speedToLead.enabled ? formatCount(speedToLead.overdueCount) : "—"}</strong><span>Au delà du délai choisi</span></div>
-              <div><strong>{speedToLead.averageHandlingMinutes === null ? "—" : formatDuration(speedToLead.averageHandlingMinutes)}</strong><span>Prise en charge moyenne observée · 30 jours</span></div>
+            <div className="app-operational-stats">
+              <div><strong>{formatCount(speedToLead.pendingCount)}</strong><span>En attente</span></div>
+              <div><strong>{speedToLead.enabled ? formatCount(speedToLead.overdueCount) : "—"}</strong><span>Hors délai</span></div>
+              <div><strong>{speedToLead.averageHandlingMinutes === null ? "—" : formatDuration(speedToLead.averageHandlingMinutes)}</strong><span>Moyenne observée · 30 j</span></div>
             </div>
-            <div className="premium-focus-actions">
-              <Link href="/app/suivi" className="text-link">Voir ce qui est à traiter <span>↘</span></Link>
-              <Link href="/app/parametres/politiques" className="text-link">Régler le délai <span>↘</span></Link>
+
+            <div className="app-primary-actions">
+              <Link href="/app/suivi" className="button primary small">Voir le suivi</Link>
+              <Link href="/app/parametres/politiques" className="secondary-action-link">Régler le délai</Link>
             </div>
-            <p className="premium-muted-copy">Mesure : première transition interne hors de Nouvelle. Échantillon observé sur 30 jours : {speedToLead.handledSampleCount}. SESIRA ne présente pas cette mesure comme un temps de réponse envoyé au client.</p>
+
+            <p className="app-method-note">Mesure basée sur la première transition interne hors de « Nouvelle ». Échantillon observé sur 30 jours : {speedToLead.handledSampleCount}. Ce n’est pas présenté comme un temps de réponse envoyé au client.</p>
           </>
         )}
       </section>
 
-      <section className="premium-dashboard-grid">
-        <article className="premium-focus-card">
-          <div className="premium-card-topline">
-            <span className="eyebrow">PRIORITÉ OPÉRATIONNELLE</span>
+      <section className="app-dashboard-grid">
+        <article className="app-work-card">
+          <div className="app-card-heading">
+            <div><span className="eyebrow">ATTENTION</span><h2>Décisions à reprendre</h2></div>
             <StatusPill tone={attentionOpen && attentionOpen > 0 ? "warning" : "neutral"}>
-              {attentionOpen === null ? "Donnée indisponible" : attentionOpen > 0 ? `${attentionOpen} à traiter` : "Rien d'ouvert"}
+              {attentionOpen === null ? "Indisponible" : attentionOpen > 0 ? `${attentionOpen} ouvertes` : "À jour"}
             </StatusPill>
           </div>
-          <div className="premium-focus-copy">
-            <strong>{attentionOpen === null ? "SESIRA attend une lecture exploitable." : attentionOpen > 0 ? "Des éléments demandent votre attention." : "Aucun arbitrage urgent n'est visible."}</strong>
-            <p>{attentionOpen === null ? "Une donnée indisponible reste indisponible. Elle n'est jamais remplacée par zéro." : attentionOpen > 0 ? "Ouvrez le suivi pour voir les dossiers concernés et leur contexte avant d'agir." : "SESIRA continuera à observer les dossiers et fera remonter ce qui nécessite réellement une action."}</p>
-          </div>
-          <div className="premium-focus-actions">
-            <Link href="/app/suivi" className="text-link">Voir le suivi <span>↘</span></Link>
-            <Link href="/app/resultats" className="text-link">Voir les résultats <span>↘</span></Link>
-          </div>
+          <p>{attentionOpen === null
+            ? "La lecture des éléments à traiter est indisponible. SESIRA ne remplace pas cette donnée par zéro."
+            : attentionOpen > 0
+              ? "Ouvrez le suivi pour retrouver les dossiers concernés, leur contexte et la décision attendue."
+              : "Aucun arbitrage ouvert n’est visible actuellement."}</p>
+          <Link href="/app/suivi" className="secondary-action-link">Ouvrir le suivi</Link>
         </article>
 
-        <article className="premium-system-card">
-          <span className="eyebrow">SYSTÈME</span>
-          <h2>État de votre espace</h2>
-          <div className="premium-data-list">
-            <div><span>Organisation</span><strong>{viewer.organization.status}</strong></div>
-            <div><span>Mode SESIRA</span><strong>{automationLevel}</strong></div>
-            <div><span>Email</span><strong>{connectedEmail ? "Connecté" : "À configurer"}</strong></div>
-            <div><span>Connexions connues</span><strong>{integrationsResult.error ? "Indisponible" : String(integrationsResult.data?.length ?? 0)}</strong></div>
-          </div>
-          <Link href="/app/integrations" className="button ghost small full">Gérer les connexions</Link>
+        <article className="app-work-card compact-system-card">
+          <div className="app-card-heading"><div><span className="eyebrow">ESPACE</span><h2>État du système</h2></div></div>
+          <dl className="app-definition-list">
+            <div><dt>Organisation</dt><dd>{organizationStatusLabel(viewer.organization.status)}</dd></div>
+            <div><dt>Mode SESIRA</dt><dd>{automationLevel}</dd></div>
+            <div><dt>Messagerie</dt><dd>{connectedEmail ? "Connectée" : "À relier"}</dd></div>
+            <div><dt>Connexions</dt><dd>{integrationsResult.error ? "Indisponible" : String(integrationsResult.data?.length ?? 0)}</dd></div>
+          </dl>
+          <Link href="/app/integrations" className="secondary-action-link">Gérer les connexions</Link>
         </article>
       </section>
     </>
+  );
+}
+
+function FirstRunSetup({
+  organizationName,
+  hasBusinessData,
+  connectedEmail,
+  policyConfigured,
+  automationConfigured,
+}: {
+  organizationName: string;
+  hasBusinessData: boolean;
+  connectedEmail: boolean;
+  policyConfigured: boolean;
+  automationConfigured: boolean;
+}) {
+  const requiredComplete = Number(hasBusinessData) + Number(connectedEmail);
+  const nextHref = !hasBusinessData ? "/app/imports" : "/app/integrations";
+  const nextLabel = !hasBusinessData ? "Ajouter les premières données" : "Connecter la messagerie";
+
+  return (
+    <section className="setup-home">
+      <header className="setup-home-header">
+        <span className="eyebrow">MISE EN ROUTE · {requiredComplete}/2 ESSENTIELS</span>
+        <h1>Préparer {organizationName}</h1>
+        <p>Avant d’afficher un tableau de bord vide, SESIRA vous guide vers les deux éléments nécessaires pour commencer à travailler : vos données et votre messagerie.</p>
+        <Link href={nextHref} className="button primary">{nextLabel}</Link>
+      </header>
+
+      <div className="setup-checklist" aria-label="Étapes de mise en route">
+        <SetupItem
+          done={hasBusinessData}
+          title="Ajouter vos données"
+          description="Importez ou créez vos premiers clients et devis."
+          href="/app/imports"
+          action="Ouvrir les imports"
+          required
+        />
+        <SetupItem
+          done={connectedEmail}
+          title="Connecter la messagerie"
+          description="Reliez la boîte professionnelle que SESIRA doit observer."
+          href="/app/integrations"
+          action="Gérer les connexions"
+          required
+        />
+        <SetupItem
+          done={policyConfigured}
+          title="Définir votre délai de prise en charge"
+          description="Choisissez quand une nouvelle demande doit remonter dans le suivi."
+          href="/app/parametres/politiques"
+          action="Régler la politique"
+        />
+        <SetupItem
+          done={automationConfigured}
+          title="Choisir le niveau d’automatisation"
+          description="Commencez en observation et augmentez le niveau de confiance lorsque vous le décidez."
+          href="/app/automatisations"
+          action="Voir les automatisations"
+        />
+      </div>
+
+      <p className="setup-home-note">Les deux premières étapes conditionnent l’affichage du tableau de bord. Les réglages suivants peuvent être complétés progressivement.</p>
+    </section>
+  );
+}
+
+function SetupItem({
+  done,
+  title,
+  description,
+  href,
+  action,
+  required = false,
+}: {
+  done: boolean;
+  title: string;
+  description: string;
+  href: string;
+  action: string;
+  required?: boolean;
+}) {
+  return (
+    <article className={done ? "setup-item done" : "setup-item"}>
+      <div className="setup-item-status" aria-hidden="true">{done ? "✓" : ""}</div>
+      <div className="setup-item-copy">
+        <div className="setup-item-title-row">
+          <h2>{title}</h2>
+          {required ? <span>Essentiel</span> : <span>Ensuite</span>}
+        </div>
+        <p>{description}</p>
+      </div>
+      <Link href={href} className="secondary-action-link">{done ? "Vérifier" : action}</Link>
+    </article>
   );
 }
 
@@ -123,4 +243,13 @@ function formatDuration(minutes: number | null | undefined) {
   if (minutes < 60) return `${Math.round(minutes)} min`;
   const hours = minutes / 60;
   return hours < 24 ? `${Math.round(hours * 10) / 10} h` : `${Math.round((hours / 24) * 10) / 10} j`;
+}
+
+function organizationStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    ACTIVE: "Active",
+    INACTIVE: "Inactive",
+    SUSPENDED: "Suspendue",
+  };
+  return labels[status] ?? "État non renseigné";
 }
