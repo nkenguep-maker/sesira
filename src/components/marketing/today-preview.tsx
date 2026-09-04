@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 
 const TODAY_ITEMS = [
   {
@@ -36,7 +42,21 @@ const TODAY_ITEMS = [
   },
 ] as const;
 
-const PANELS = [
+type PanelLine = {
+  value: string;
+  label?: string;
+  strong?: boolean;
+};
+
+type ExamplePanel = {
+  label: string;
+  title: string;
+  lines: readonly PanelLine[];
+  actions: readonly string[];
+  boundary: string;
+};
+
+const PANELS: readonly ExamplePanel[] = [
   {
     label: "DEVIS",
     title: "Relance préparée",
@@ -96,7 +116,7 @@ const PANELS = [
     actions: ["Envoyer la proposition", "Modifier le montant"],
     boundary: "Le montant vient du contrat en cours. SESIRA ne change jamais un prix.",
   },
-] as const;
+];
 
 type TodayPreviewProps = {
   compact?: boolean;
@@ -112,6 +132,14 @@ export function TodayPreview({ compact = false }: TodayPreviewProps) {
   useEffect(() => {
     setInteractive(true);
   }, []);
+
+  const closePanel = useCallback(() => {
+    const originIndex = activeIndex;
+    setActiveIndex(null);
+    window.requestAnimationFrame(() => {
+      if (originIndex !== null) triggerRefs.current[originIndex]?.focus();
+    });
+  }, [activeIndex]);
 
   useEffect(() => {
     if (activeIndex === null) return;
@@ -152,25 +180,17 @@ export function TodayPreview({ compact = false }: TodayPreviewProps) {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [activeIndex]);
+  }, [activeIndex, closePanel]);
 
   function openPanel(index: number) {
     setActiveIndex(index);
   }
 
-  function closePanel() {
-    const originIndex = activeIndex;
-    setActiveIndex(null);
-    window.requestAnimationFrame(() => {
-      if (originIndex !== null) triggerRefs.current[originIndex]?.focus();
-    });
-  }
-
-  function onHandlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+  function onHandlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     dragStartY.current = event.clientY;
   }
 
-  function onHandlePointerUp(event: React.PointerEvent<HTMLDivElement>) {
+  function onHandlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
     if (dragStartY.current === null) return;
     if (event.clientY - dragStartY.current > 72) closePanel();
     dragStartY.current = null;
@@ -226,9 +246,12 @@ export function TodayPreview({ compact = false }: TodayPreviewProps) {
       </div>
 
       {activePanel ? (
-        <div className="cvc-example-overlay" onMouseDown={(event) => {
-          if (event.currentTarget === event.target) closePanel();
-        }}>
+        <div
+          className="cvc-example-overlay"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) closePanel();
+          }}
+        >
           <div
             ref={dialogRef}
             className="cvc-example-dialog"
