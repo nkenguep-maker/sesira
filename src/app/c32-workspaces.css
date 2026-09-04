@@ -1,0 +1,310 @@
+/* Dense workspace surfaces for U25-U32. Public landing unaffected. */
+.app-frame .workspace-stat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0 0 14px;
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-border);
+}
+
+.app-frame .workspace-stat-strip > div {
+  min-height: 82px;
+  padding: 13px 15px;
+  background: var(--app-surface-strong);
+}
+
+.app-frame .workspace-stat-strip strong {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: -.035em;
+  font-weight: 680;
+}
+
+.app-frame .workspace-stat-strip span {
+  color: var(--app-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.app-frame .workspace-boundary-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: #f4eee7;
+}
+
+.app-frame .workspace-boundary-note p {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.app-frame .workspace-section {
+  margin-top: 22px;
+}
+
+.app-frame .workspace-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 2px 10px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.app-frame .workspace-section-heading h2 {
+  margin: 4px 0 0;
+  font-size: 20px;
+  line-height: 1.18;
+  letter-spacing: -.025em;
+}
+
+.app-frame .workspace-section-heading > span {
+  color: var(--app-muted);
+  font-size: 11px;
+}
+
+.app-frame .workspace-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.app-frame .workspace-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, auto);
+  gap: 18px;
+  padding: 15px 16px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-strong);
+}
+
+.app-frame .compact-list .workspace-row {
+  grid-template-columns: 1fr;
+}
+
+.app-frame .workspace-row-main {
+  min-width: 0;
+}
+
+.app-frame .workspace-row-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.app-frame .workspace-row-heading h2 {
+  margin: 4px 0 0;
+  font-size: 17px;
+  line-height: 1.2;
+  letter-spacing: -.018em;
+}
+
+.app-frame .workspace-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 13px;
+}
+
+.app-frame .workspace-meta.single-line {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.app-frame .workspace-meta span {
+  min-width: 0;
+  color: var(--app-muted);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.app-frame .workspace-meta b {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ink);
+  font-size: 9px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.app-frame .workspace-description,
+.app-frame .workspace-action-note,
+.app-frame .workspace-empty-line {
+  max-width: 70ch;
+  margin: 11px 0 0;
+  color: var(--app-muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.app-frame .workspace-preview,
+.app-frame .workspace-gap-box {
+  margin-top: 12px;
+  padding: 11px 12px;
+  border-radius: 9px;
+  background: var(--app-surface);
+}
+
+.app-frame .workspace-gap-box {
+  border-left: 3px solid var(--app-action);
+  background: rgba(168, 67, 39, .055);
+}
+
+.app-frame .workspace-preview > span,
+.app-frame .workspace-gap-box > strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.app-frame .workspace-preview p,
+.app-frame .workspace-gap-box p {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 11px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.app-frame .workspace-row-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+  min-width: 190px;
+}
+
+.app-frame .workspace-row-actions.two-actions {
+  min-width: 260px;
+}
+
+.app-frame .workspace-row-actions > form:not(.workspace-inline-form) {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.app-frame .workspace-inline-form {
+  display: grid;
+  grid-template-columns: minmax(145px, 1fr) 82px auto;
+  align-items: end;
+  gap: 7px;
+}
+
+.app-frame .workspace-inline-form.compact {
+  grid-template-columns: minmax(160px, 1fr) auto;
+}
+
+.app-frame .workspace-inline-form label {
+  display: grid;
+  gap: 4px;
+}
+
+.app-frame .workspace-inline-form label > span {
+  color: var(--app-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.app-frame .workspace-inline-form input {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid var(--app-border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+}
+
+.app-frame .workspace-inline-form input:focus-visible {
+  outline: 2px solid var(--app-action);
+  outline-offset: 2px;
+}
+
+.app-frame .attribution-zones {
+  display: grid;
+  gap: 14px;
+}
+
+.app-frame .attribution-zone {
+  padding: 15px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-strong);
+}
+
+.app-frame .attribution-zone .workspace-list {
+  margin-top: 8px;
+}
+
+@media (max-width: 1100px) {
+  .app-frame .workspace-row {
+    grid-template-columns: 1fr;
+  }
+
+  .app-frame .workspace-row-actions,
+  .app-frame .workspace-row-actions.two-actions {
+    min-width: 0;
+  }
+
+  .app-frame .workspace-row-actions > form:not(.workspace-inline-form) {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 820px) {
+  .app-frame .workspace-stat-strip,
+  .app-frame .workspace-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-frame .workspace-inline-form,
+  .app-frame .workspace-inline-form.compact {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-frame .workspace-stat-strip,
+  .app-frame .workspace-meta,
+  .app-frame .workspace-meta.single-line {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .app-frame .workspace-boundary-note,
+  .app-frame .workspace-section-heading,
+  .app-frame .workspace-row-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .app-frame .workspace-row {
+    padding: 13px;
+  }
+}
