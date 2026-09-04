@@ -1,0 +1,334 @@
+.cvc-today-interactive-row {
+  display: block !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
+.cvc-today-row-trigger {
+  width: 100%;
+  min-height: 92px;
+  padding: 17px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cvc-today-row-trigger:hover .cvc-today-action-label,
+.cvc-today-row-trigger:focus-visible .cvc-today-action-label {
+  border-color: var(--cvc-orange);
+  color: var(--cvc-orange-dark);
+}
+
+.cvc-today-row-trigger:focus-visible {
+  outline: 2px solid var(--cvc-orange);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+.cvc-today-action-label {
+  color: #444a4c;
+  font-size: 11px;
+  white-space: nowrap;
+  border: 1px solid var(--cvc-line);
+  border-radius: 999px;
+  padding: 8px 10px;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.cvc-example-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 240;
+  padding: 28px;
+  display: grid;
+  place-items: center;
+  background: rgba(9, 11, 12, .72);
+  backdrop-filter: blur(7px);
+  animation: cvc-example-fade 180ms ease both;
+}
+
+.cvc-example-dialog {
+  width: min(680px, 100%);
+  max-height: min(780px, calc(100dvh - 56px));
+  overflow: auto;
+  border: 1px solid rgba(18, 20, 22, .18);
+  border-radius: 18px;
+  background: var(--cvc-white);
+  color: var(--cvc-text);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, .28);
+  animation: cvc-example-pop 180ms ease both;
+}
+
+.cvc-example-drag-handle {
+  display: none;
+}
+
+.cvc-example-header {
+  min-height: 68px;
+  padding: 0 22px 0 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid var(--cvc-line);
+}
+
+.cvc-example-header > div {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+
+.cvc-example-header span {
+  color: var(--cvc-orange);
+  font: 760 10px/1.3 var(--mono);
+  letter-spacing: .12em;
+}
+
+.cvc-example-header small {
+  color: #888e90;
+  font: 600 10px/1.3 var(--mono);
+  text-transform: lowercase;
+}
+
+.cvc-example-close {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--cvc-line);
+  border-radius: 50%;
+  background: transparent;
+  color: #4f5557;
+  font: 300 25px/1 sans-serif;
+  cursor: pointer;
+}
+
+.cvc-example-close:hover,
+.cvc-example-close:focus-visible {
+  border-color: #73797b;
+  color: var(--cvc-ink);
+}
+
+.cvc-example-close:focus-visible,
+.cvc-example-cta:focus-visible {
+  outline: 2px solid var(--cvc-orange);
+  outline-offset: 3px;
+}
+
+.cvc-example-content {
+  padding: 30px 30px 26px;
+}
+
+.cvc-example-content h3 {
+  margin: 0 0 24px;
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.02;
+  letter-spacing: -.045em;
+  font-weight: 620;
+}
+
+.cvc-example-lines {
+  padding: 20px 0;
+  display: grid;
+  gap: 11px;
+  border-top: 1px solid var(--cvc-line);
+  border-bottom: 1px solid var(--cvc-line);
+}
+
+.cvc-example-lines p {
+  margin: 0;
+  color: #4f5558;
+  font-size: 14px;
+  line-height: 1.58;
+}
+
+.cvc-example-lines p.strong {
+  color: var(--cvc-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.cvc-example-lines b {
+  color: var(--cvc-ink);
+}
+
+.cvc-example-fake-actions {
+  padding: 22px 0 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cvc-example-fake-actions span {
+  padding: 9px 12px;
+  border: 1px solid rgba(18, 20, 22, .14);
+  border-radius: 7px;
+  background: #f1eee7;
+  color: #777d7f;
+  font-size: 12px;
+  font-weight: 700;
+  user-select: none;
+}
+
+.cvc-example-fake-actions span:first-child {
+  background: #26292b;
+  color: #d8dcdd;
+  border-color: #26292b;
+}
+
+.cvc-example-boundary {
+  margin: 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--cvc-line);
+  color: #34393b;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 650;
+}
+
+.cvc-example-cta {
+  min-height: 66px;
+  padding: 0 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid var(--cvc-line);
+  color: var(--cvc-ink);
+  font-size: 14px;
+  font-weight: 780;
+}
+
+.cvc-example-cta:hover {
+  background: #f3efe7;
+}
+
+.cvc-example-cta span {
+  color: var(--cvc-orange);
+  font-size: 21px;
+}
+
+@keyframes cvc-example-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cvc-example-pop {
+  from { opacity: 0; transform: translateY(9px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 680px) {
+  .cvc-today-row-trigger {
+    min-height: 86px;
+    padding: 14px 2px;
+    gap: 12px;
+  }
+
+  .cvc-today-action-label {
+    font-size: 10px;
+    padding: 7px 8px;
+  }
+
+  .cvc-example-overlay {
+    padding: 0;
+    place-items: end center;
+    background: rgba(9, 11, 12, .67);
+  }
+
+  .cvc-example-dialog {
+    width: 100%;
+    max-height: min(88dvh, 820px);
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 22px 22px 0 0;
+    animation-name: cvc-example-sheet;
+  }
+
+  .cvc-example-drag-handle {
+    height: 26px;
+    display: grid;
+    place-items: center;
+    touch-action: pan-y;
+    cursor: grab;
+  }
+
+  .cvc-example-drag-handle i {
+    width: 44px;
+    height: 4px;
+    border-radius: 999px;
+    background: #c9c5bd;
+  }
+
+  .cvc-example-header {
+    min-height: 55px;
+    padding: 0 18px 0 20px;
+  }
+
+  .cvc-example-close {
+    width: 34px;
+    height: 34px;
+    font-size: 22px;
+  }
+
+  .cvc-example-content {
+    padding: 23px 20px 22px;
+  }
+
+  .cvc-example-content h3 {
+    margin-bottom: 18px;
+    font-size: 29px;
+  }
+
+  .cvc-example-lines {
+    padding: 17px 0;
+    gap: 9px;
+  }
+
+  .cvc-example-lines p,
+  .cvc-example-boundary {
+    font-size: 13px;
+  }
+
+  .cvc-example-lines p.strong {
+    font-size: 14px;
+  }
+
+  .cvc-example-fake-actions {
+    padding: 18px 0 16px;
+  }
+
+  .cvc-example-fake-actions span {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .cvc-example-cta {
+    min-height: 62px;
+    padding: 0 20px;
+    font-size: 13px;
+  }
+}
+
+@keyframes cvc-example-sheet {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cvc-example-overlay,
+  .cvc-example-dialog,
+  .cvc-today-action-label {
+    animation: none;
+    transition: none;
+  }
+}
