@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createClient } from "@/lib/supabase/server";
 
 export type DemoDashboardMetrics = {
@@ -11,7 +13,7 @@ export type DemoDashboardMetrics = {
 const ACTIVE_QUOTE_STATUSES = ["SENT", "FOLLOWING_UP", "REPLIED", "NEEDS_HUMAN"];
 
 export async function getDemoDashboardMetrics(organizationId: string): Promise<DemoDashboardMetrics> {
-  const supabase = await createClient();
+  const supabase = (await createClient()) as unknown as SupabaseClient;
   const [quotes, interventions, invoices] = await Promise.all([
     supabase
       .from("quotes")
