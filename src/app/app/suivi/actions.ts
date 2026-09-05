@@ -18,6 +18,7 @@ export async function approveFollowupAction(formData: FormData) {
   if (!runId) redirect("/app/suivi?approval=invalid");
 
   if (
+    viewer.organization.demoMode ||
     serverEnv.EXTERNAL_ACTIONS_ENABLED !== "true" ||
     process.env.VERCEL_ENV !== "production" ||
     !serverEnv.RESEND_API_KEY ||
