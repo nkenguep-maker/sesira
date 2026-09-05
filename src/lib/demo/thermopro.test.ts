@@ -20,9 +20,9 @@ describe("isolated THERMOPRO demo", () => {
     expect(center).toContain("Suivez un dossier à travers SESIRA");
     expect(center).toContain("story.decisionLabel");
     expect(stories).toContain("Simuler la validation");
-    expect(stories).toContain("Devis sans réponse");
-    expect(stories).toContain("Promesse de paiement");
-    expect(stories).toContain("Rapport terrain");
+    expect(stories).toContain("Un devis dort depuis 7 jours");
+    expect(stories).toContain("Une promesse de paiement est dépassée");
+    expect(stories).toContain("Le technicien termine, le bureau récupère un rapport exploitable");
   });
 
   it("loads demo communications from the isolated tenant", () => {
