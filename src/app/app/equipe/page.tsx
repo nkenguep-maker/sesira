@@ -2,6 +2,7 @@ import { CopyTechnicalId } from "@/components/sesira/copy-technical-id";
 import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { getOrganizationMembers } from "@/lib/data";
+import { getDemoTeamMembers } from "@/lib/demo/team";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,9 @@ export default async function TeamPage() {
   const viewer = await getViewerContext();
   if (!viewer) return null;
 
-  const members = await getOrganizationMembers(viewer.organization.id);
+  const members = viewer.organization.demoMode
+    ? await getDemoTeamMembers(viewer.organization.id)
+    : await getOrganizationMembers(viewer.organization.id);
   const active = members.filter((member) => member.status === "ACTIVE").length;
   const managers = members.filter((member) => ["OWNER", "ADMIN", "MANAGER"].includes(member.role)).length;
   const summaryValues = [members.length, active, managers];
