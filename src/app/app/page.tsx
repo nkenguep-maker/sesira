@@ -4,6 +4,7 @@ import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { getSpeedToLeadSummary } from "@/lib/data";
 import { getManagerToday, getTechnicianToday, type TodayAction } from "@/lib/data/today-c40";
+import { getDemoDashboardMetrics, type DemoDashboardMetrics } from "@/lib/demo/dashboard";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -49,20 +50,35 @@ export default async function DashboardPage() {
     );
   }
 
-  const today = await getManagerToday(organizationId, {
-    includePlatform: ["OWNER", "ADMIN"].includes(viewer.role),
-  });
-  return <TodayInbox organizationName={viewer.organization.name} workspace={today} />;
+  const [today, demoMetrics] = await Promise.all([
+    getManagerToday(organizationId, {
+      includePlatform: ["OWNER", "ADMIN"].includes(viewer.role),
+    }),
+    viewer.organization.demoMode ? getDemoDashboardMetrics(organizationId) : Promise.resolve(null),
+  ]);
+
+  return (
+    <TodayInbox
+      organizationName={viewer.organization.name}
+      workspace={today}
+      demoMode={viewer.organization.demoMode}
+      demoMetrics={demoMetrics}
+    />
+  );
 }
 
 function TodayInbox({
   organizationName,
   workspace,
   technician = false,
+  demoMode = false,
+  demoMetrics = null,
 }: {
   organizationName: string;
   workspace: { actions: TodayAction[]; unavailable: string[] };
   technician?: boolean;
+  demoMode?: boolean;
+  demoMetrics?: DemoDashboardMetrics | null;
 }) {
   const urgent = workspace.actions.filter((item) => item.priority === 1).length;
   const humanDecisions = workspace.actions.filter((item) => ["Valider", "Décider", "Arbitrer"].includes(item.action)).length;
@@ -70,21 +86,41 @@ function TodayInbox({
 
   return (
     <>
-      <PageHeader
-        eyebrow="AUJOURD’HUI"
-        title={technician ? "Ma journée" : "Ce qui attend quelqu’un"}
-        description={technician
-          ? `Vos interventions et les données terrain à vérifier aujourd’hui chez ${organizationName}.`
-          : `SESIRA rassemble ici ce qui est resté en plan chez ${organizationName}. Aucun élément n’est créé pour remplir l’écran.`}
-        actions={technician ? <Link className="button primary small" href="/app/terrain">Ouvrir le terrain</Link> : undefined}
-      />
+      {demoMode && !technician ? (
+        <section className="demo-dashboard-intro">
+          <div>
+            <span className="eyebrow">AUJOURD’HUI · THERMOPRO SERVICES</span>
+            <h1>Bonjour Marc.</h1>
+            <p>Voici ce qui mérite votre attention aujourd’hui. Chaque nom, montant et situation de cet espace est fictif.</p>
+          </div>
+          <span className="demo-dashboard-note">Scénario CVC · démonstration</span>
+        </section>
+      ) : (
+        <PageHeader
+          eyebrow="AUJOURD’HUI"
+          title={technician ? "Ma journée" : "Ce qui attend quelqu’un"}
+          description={technician
+            ? `Vos interventions et les données terrain à vérifier aujourd’hui chez ${organizationName}.`
+            : `SESIRA rassemble ici ce qui est resté en plan chez ${organizationName}. Aucun élément n’est créé pour remplir l’écran.`}
+          actions={technician ? <Link className="button primary small" href="/app/terrain">Ouvrir le terrain</Link> : undefined}
+        />
+      )}
 
-      <section className="workspace-stat-strip" aria-label="Résumé de la journée">
-        <div><strong>{workspace.actions.length}</strong><span>À traiter</span></div>
-        <div><strong>{urgent}</strong><span>À regarder d’abord</span></div>
-        <div><strong>{humanDecisions}</strong><span>Décisions humaines</span></div>
-        <div><strong>{categories}</strong><span>Types de sujets</span></div>
-      </section>
+      {demoMode && demoMetrics && !technician ? (
+        <section className="workspace-stat-strip" aria-label="Résumé de la démonstration">
+          <div><strong>{workspace.actions.length}</strong><span>À traiter aujourd’hui</span></div>
+          <div><strong>{metricValue(demoMetrics.activeQuotes)}</strong><span>Devis en cours</span></div>
+          <div><strong>{metricValue(demoMetrics.todayInterventions)}</strong><span>Interventions aujourd’hui</span></div>
+          <div><strong>{metricValue(demoMetrics.overdueInvoices)}</strong><span>Factures en retard</span></div>
+        </section>
+      ) : (
+        <section className="workspace-stat-strip" aria-label="Résumé de la journée">
+          <div><strong>{workspace.actions.length}</strong><span>À traiter</span></div>
+          <div><strong>{urgent}</strong><span>À regarder d’abord</span></div>
+          <div><strong>{humanDecisions}</strong><span>Décisions humaines</span></div>
+          <div><strong>{categories}</strong><span>Types de sujets</span></div>
+        </section>
+      )}
 
       {workspace.unavailable.length ? (
         <section className="workspace-boundary-note">
@@ -204,6 +240,10 @@ function categoryLabel(category: TodayAction["category"]) {
     SESIRA: "ÉTAT SESIRA",
   };
   return labels[category];
+}
+
+function metricValue(value: number | null) {
+  return value === null ? "—" : String(value);
 }
 
 function currentDate() {
