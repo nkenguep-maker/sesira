@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { DemoShell } from "@/components/sesira/demo-shell";
 import { getDemoContext } from "@/lib/demo/context";
 
+import "./demo.css";
+
 export const metadata: Metadata = {
   title: "SESIRA Démo — THERMOPRO SERVICES",
   robots: { index: false, follow: false },
