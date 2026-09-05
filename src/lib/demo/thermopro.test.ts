@@ -30,8 +30,13 @@ describe("THERMOPRO demo workspace", () => {
 
   it("never sends an external follow-up from a demo workspace", () => {
     const approval = source("src/app/app/suivi/actions.ts");
+    const boundary = source("supabase/migrations/20260905055710_block_demo_outbound_messages.sql");
+
     expect(approval).toContain("viewer.organization.demoMode");
     expect(approval.indexOf("viewer.organization.demoMode")).toBeLessThan(approval.indexOf("dispatchApprovedFollowup"));
+    expect(boundary).toContain("external actions are disabled for demo organizations");
+    expect(boundary).toContain("feature_flags ->> 'demo_mode'");
+    expect(boundary).toContain("config ->> 'demo_data'");
   });
 
   it("derives headline demo metrics from tenant data instead of hard-coded numbers", () => {
