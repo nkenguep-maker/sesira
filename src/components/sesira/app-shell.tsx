@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { switchOrganizationAction } from "@/app/app/organization-actions";
 import {
   GROWTH_TABS,
   INTERVENTION_TABS,
@@ -25,16 +26,29 @@ const TECH_ITEMS: readonly SesiraAppNavItem[] = [
   { href: "/app/documents", label: "Documents" },
 ];
 
+type WorkspaceOption = {
+  id: string;
+  name: string;
+  role: string;
+  demoMode: boolean;
+};
+
 export function AppShell({
   children,
+  workspaceId,
   workspaceName,
   role,
   growthEnabled,
+  demoMode,
+  organizations,
 }: {
   children: React.ReactNode;
+  workspaceId: string;
   workspaceName: string;
   role: string;
   growthEnabled: boolean;
+  demoMode: boolean;
+  organizations: WorkspaceOption[];
 }) {
   const pathname = usePathname();
   const technician = TECH_ROLES.has(role);
@@ -45,6 +59,7 @@ export function AppShell({
       <aside className="app-sidebar">
         <div className="sidebar-top">
           <SesiraLogo />
+          {demoMode ? <span className="demo-mode-badge">MODE DÉMO · DONNÉES FICTIVES</span> : null}
         </div>
 
         <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingBottom: 12 }}>
@@ -66,13 +81,22 @@ export function AppShell({
         </div>
 
         <div className="sidebar-foot" style={{ marginTop: 0 }}>
-          <OrganizationMenu pathname={pathname} workspaceName={workspaceName} />
+          <OrganizationMenu
+            pathname={pathname}
+            workspaceId={workspaceId}
+            workspaceName={workspaceName}
+            organizations={organizations}
+            demoMode={demoMode}
+          />
         </div>
       </aside>
 
       <div className="app-main-wrap">
         <header className="mobile-app-bar">
-          <SesiraLogo />
+          <div className="mobile-brand-stack">
+            <SesiraLogo />
+            {demoMode ? <span className="demo-mode-badge compact">DÉMO · FICTIF</span> : null}
+          </div>
           <details className="mobile-nav-menu">
             <summary>Menu</summary>
             <div className="mobile-nav-panel">
@@ -88,6 +112,9 @@ export function AppShell({
                   </div>
                 </>
               )}
+              {organizations.length > 1 ? (
+                <WorkspaceSwitcher workspaceId={workspaceId} organizations={organizations} mobile />
+              ) : null}
             </div>
           </details>
         </header>
@@ -122,7 +149,19 @@ function NavigationList({
   );
 }
 
-function OrganizationMenu({ pathname, workspaceName }: { pathname: string; workspaceName: string }) {
+function OrganizationMenu({
+  pathname,
+  workspaceId,
+  workspaceName,
+  organizations,
+  demoMode,
+}: {
+  pathname: string;
+  workspaceId: string;
+  workspaceName: string;
+  organizations: WorkspaceOption[];
+  demoMode: boolean;
+}) {
   const open = SESIRA_ORGANIZATION_NAV.some((item) => isAppNavActive(pathname, item));
   return (
     <details open={open}>
@@ -130,9 +169,10 @@ function OrganizationMenu({ pathname, workspaceName }: { pathname: string; works
         <div className="avatar" aria-hidden="true">{workspaceInitial(workspaceName)}</div>
         <div style={{ minWidth: 0 }}>
           <strong style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{workspaceName}</strong>
-          <span>Équipe & réglages</span>
+          <span>{demoMode ? "Mode démonstration" : "Équipe & réglages"}</span>
         </div>
       </summary>
+      {organizations.length > 1 ? <WorkspaceSwitcher workspaceId={workspaceId} organizations={organizations} /> : null}
       <nav className="app-nav" aria-label="Organisation" style={{ paddingTop: 10 }}>
         {SESIRA_ORGANIZATION_NAV.map((item) => (
           <Link key={item.href} href={item.href} className={isAppNavActive(pathname, item) ? "active" : ""}>
@@ -141,6 +181,35 @@ function OrganizationMenu({ pathname, workspaceName }: { pathname: string; works
         ))}
       </nav>
     </details>
+  );
+}
+
+function WorkspaceSwitcher({
+  workspaceId,
+  organizations,
+  mobile = false,
+}: {
+  workspaceId: string;
+  organizations: WorkspaceOption[];
+  mobile?: boolean;
+}) {
+  return (
+    <div className={mobile ? "organization-switcher mobile" : "organization-switcher"}>
+      <span>Changer d’espace</span>
+      {organizations.map((organization) => (
+        <form action={switchOrganizationAction} key={organization.id}>
+          <input type="hidden" name="organizationId" value={organization.id} />
+          <button
+            type="submit"
+            className={organization.id === workspaceId ? "organization-choice active" : "organization-choice"}
+            disabled={organization.id === workspaceId}
+          >
+            <span>{organization.name}</span>
+            {organization.demoMode ? <em>Démo</em> : null}
+          </button>
+        </form>
+      ))}
+    </div>
   );
 }
 
