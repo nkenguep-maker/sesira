@@ -5,66 +5,94 @@ import { usePathname } from "next/navigation";
 
 import { SesiraLogo } from "@/components/sesira/logo";
 
-const DEMO_NAV = [
+const PRIMARY_NAV = [
   ["/demo", "Aujourd’hui"],
   ["/demo/clients", "Clients"],
   ["/demo/devis", "Devis"],
+  ["/demo/relances", "Relances"],
   ["/demo/interventions", "Interventions"],
   ["/demo/factures", "Factures"],
   ["/demo/maintenance", "Maintenance"],
-  ["/demo/obligations", "Obligations CVC"],
   ["/demo/documents", "Documents"],
-  ["/demo/equipe", "Équipe"],
+] as const;
+
+const SECONDARY_NAV = [
+  ["/demo/automatisations", "Automatisations"],
   ["/demo/resultats", "Résultats"],
+  ["/demo/obligations", "Obligations CVC"],
+  ["/demo/equipe", "Équipe"],
+] as const;
+
+const CHAIN = [
+  ["/demo/devis", "Devis"],
+  ["/demo/automatisations", "Automatisations"],
+  ["/demo/relances", "Relances"],
+  ["/demo/interventions", "Interventions"],
+  ["/demo/factures", "Factures"],
+  ["/demo/maintenance", "Maintenance"],
 ] as const;
 
 export function DemoShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
-    <div className="app-frame">
-      <aside className="app-sidebar">
+    <div className="app-frame demo-frame">
+      <aside className="app-sidebar demo-sidebar">
         <div className="sidebar-top">
           <SesiraLogo />
-          <span style={badgeStyle}>MODE DÉMO · DONNÉES FICTIVES</span>
+          <span className="demo-mode-badge">MODE DÉMO · DONNÉES FICTIVES</span>
         </div>
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingBottom: 12 }}>
+        <div className="demo-nav-scroll">
           <nav className="app-nav" aria-label="Navigation de la démonstration">
-            {DEMO_NAV.map(([href, label]) => (
-              <Link key={href} href={href} className={active(pathname, href) ? "active" : ""}>
-                <span>{label}</span>
-              </Link>
-            ))}
+            {PRIMARY_NAV.map(([href, label]) => <DemoNavLink key={href} pathname={pathname} href={href} label={label} />)}
+          </nav>
+          <div className="demo-nav-separator"><span>Pilotage de la démo</span></div>
+          <nav className="app-nav" aria-label="Pilotage de la démonstration">
+            {SECONDARY_NAV.map(([href, label]) => <DemoNavLink key={href} pathname={pathname} href={href} label={label} />)}
           </nav>
         </div>
-        <div className="sidebar-foot" style={{ marginTop: 0 }}>
+        <div className="sidebar-foot demo-sidebar-foot">
           <div className="account-row">
             <div className="avatar" aria-hidden="true">T</div>
-            <div style={{ minWidth: 0 }}>
-              <strong>THERMOPRO SERVICES</strong>
-              <span>Scénario fictif · CVC</span>
-            </div>
+            <div><strong>THERMOPRO SERVICES</strong><span>CVC · 12 collaborateurs</span></div>
           </div>
-          <Link href="/" style={{ display: "inline-block", marginTop: 10, fontSize: 12, color: "var(--ink-soft)" }}>Quitter la démo</Link>
+          <Link href="/" className="demo-quit-link">Quitter la démo</Link>
         </div>
       </aside>
 
       <div className="app-main-wrap">
         <header className="mobile-app-bar">
-          <div style={{ display: "grid", gap: 3 }}><SesiraLogo /><span style={{ ...badgeStyle, marginTop: 0 }}>DÉMO · FICTIF</span></div>
+          <div className="demo-mobile-brand"><SesiraLogo /><span className="demo-mode-badge compact">DÉMO · FICTIF</span></div>
           <details className="mobile-nav-menu">
             <summary>Menu</summary>
             <div className="mobile-nav-panel">
               <nav className="app-nav mobile" aria-label="Navigation mobile de la démonstration">
-                {DEMO_NAV.map(([href, label]) => (
-                  <Link key={href} href={href} className={active(pathname, href) ? "active" : ""}><span>{label}</span></Link>
-                ))}
+                {[...PRIMARY_NAV, ...SECONDARY_NAV].map(([href, label]) => <DemoNavLink key={href} pathname={pathname} href={href} label={label} />)}
               </nav>
             </div>
           </details>
         </header>
+
+        <div className="demo-chain" aria-label="Chaîne métier de la démonstration">
+          <span>Le dossier circule :</span>
+          {CHAIN.map(([href, label], index) => (
+            <span className="demo-chain-item" key={href}>
+              {index ? <i aria-hidden="true">→</i> : null}
+              <Link className={active(pathname, href) ? "active" : ""} href={href}>{label}</Link>
+            </span>
+          ))}
+        </div>
         <main className="app-main">{children}</main>
       </div>
     </div>
+  );
+}
+
+function DemoNavLink({ pathname, href, label }: { pathname: string; href: string; label: string }) {
+  const badge = href === "/demo/relances" ? "5" : href === "/demo/automatisations" ? "6" : null;
+  return (
+    <Link href={href} className={active(pathname, href) ? "active" : ""}>
+      <span>{label}</span>{badge ? <em className="demo-nav-count">{badge}</em> : null}
+    </Link>
   );
 }
 
@@ -72,9 +100,3 @@ function active(pathname: string, href: string) {
   if (href === "/demo") return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
-
-const badgeStyle: React.CSSProperties = {
-  display: "inline-flex", alignItems: "center", width: "fit-content", marginTop: 12,
-  border: "1px solid rgba(168,67,39,.24)", borderRadius: 999, background: "rgba(168,67,39,.08)",
-  color: "#a84327", padding: "5px 8px", fontSize: 9, fontWeight: 800, letterSpacing: ".08em", lineHeight: 1,
-};

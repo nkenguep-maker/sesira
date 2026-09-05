@@ -1,44 +1,40 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 function source(path: string) { return readFileSync(join(process.cwd(), path), "utf8"); }
 
-describe("THERMOPRO isolated demo", () => {
-  it("lives under /demo with its own shell", () => {
+describe("isolated THERMOPRO demo", () => {
+  it("keeps all demo navigation under /demo", () => {
     const shell = source("src/components/sesira/demo-shell.tsx");
-    const layout = source("src/app/demo/layout.tsx");
-    expect(layout).toContain("DemoShell");
-    expect(shell).toContain("MODE DÉMO · DONNÉES FICTIVES");
-    expect(shell).toContain('"/demo/clients"');
+    expect(shell).toContain('href="/"');
     expect(shell).not.toContain('href="/app');
+    expect(shell).toContain("/demo/relances");
+    expect(shell).toContain("/demo/automatisations");
   });
 
-  it("uses a fixed isolated tenant instead of changing the real viewer context", () => {
-    const context = source("src/lib/demo/context.ts");
-    expect(context).toContain('DEMO_ORGANIZATION_ID = "10000000-0000-4000-8000-000000000001"');
-    expect(context).toContain('.eq("status", "ACTIVE")');
-    expect(context).toContain("flags.demo_mode !== true");
+  it("shows concrete cross-tool scenarios instead of a static dashboard", () => {
+    const center = source("src/components/sesira/demo-command-center.tsx");
+    const stories = source("src/lib/demo/stories.ts");
+    expect(center).toContain("Suivez un dossier à travers SESIRA");
+    expect(center).toContain("story.decisionLabel");
+    expect(stories).toContain("Simuler la validation");
+    expect(stories).toContain("Un devis dort depuis 7 jours");
+    expect(stories).toContain("Une promesse de paiement est dépassée");
+    expect(stories).toContain("Le technicien termine, le bureau récupère un rapport exploitable");
   });
 
-  it("derives dashboard metrics from tenant data", () => {
-    const metrics = source("src/lib/demo/dashboard.ts");
-    expect(metrics).toContain('.from("quotes")');
-    expect(metrics).toContain('.from("interventions")');
-    expect(metrics).toContain('.from("invoices")');
+  it("loads demo communications from the isolated tenant", () => {
+    const data = source("src/lib/demo/communications.ts");
+    expect(data).toContain("DEMO_ORGANIZATION_ID");
+    expect(data).toContain("demo_story_v2");
+    expect(data).toContain('.from("messages")');
   });
 
-  it("keeps the demo read only and blocks external outbound intent", () => {
-    const page = source("src/app/demo/page.tsx");
+  it("keeps the durable demo outbound guard", () => {
     const boundary = source("supabase/migrations/20260905055710_block_demo_outbound_messages.sql");
-    expect(page).toContain("Lecture seule");
     expect(boundary).toContain("external actions are disabled for demo organizations");
     expect(boundary).toContain("feature_flags ->> 'demo_mode'");
-  });
-
-  it("uses only a fictional team roster", () => {
-    const team = source("src/lib/demo/team.ts");
-    expect(team).toContain("config.demo_team");
-    expect(team).not.toContain("auth.users");
   });
 });
