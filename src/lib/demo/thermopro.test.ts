@@ -33,7 +33,9 @@ describe("THERMOPRO demo workspace", () => {
     const boundary = source("supabase/migrations/20260905055710_block_demo_outbound_messages.sql");
 
     expect(approval).toContain("viewer.organization.demoMode");
-    expect(approval.indexOf("viewer.organization.demoMode")).toBeLessThan(approval.indexOf("dispatchApprovedFollowup"));
+    expect(approval.indexOf("viewer.organization.demoMode")).toBeLessThan(
+      approval.indexOf("const dispatched = await dispatchApprovedFollowup"),
+    );
     expect(boundary).toContain("external actions are disabled for demo organizations");
     expect(boundary).toContain("feature_flags ->> 'demo_mode'");
     expect(boundary).toContain("config ->> 'demo_data'");
