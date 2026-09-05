@@ -18,7 +18,8 @@ describe("isolated THERMOPRO demo", () => {
     const center = source("src/components/sesira/demo-command-center.tsx");
     const stories = source("src/lib/demo/stories.ts");
     expect(center).toContain("Suivez un dossier à travers SESIRA");
-    expect(center).toContain("Simuler la validation");
+    expect(center).toContain("story.decisionLabel");
+    expect(stories).toContain("Simuler la validation");
     expect(stories).toContain("Devis sans réponse");
     expect(stories).toContain("Promesse de paiement");
     expect(stories).toContain("Rapport terrain");
