@@ -46,4 +46,14 @@ describe("THERMOPRO demo workspace", () => {
     expect(metrics).toContain('.from("invoices")');
     expect(metrics).toContain('.contains("metadata", { demo_today: true })');
   });
+
+  it("uses a fictional team roster instead of exposing the presenter account", () => {
+    const teamPage = source("src/app/app/equipe/page.tsx");
+    const demoTeam = source("src/lib/demo/team.ts");
+
+    expect(teamPage).toContain("viewer.organization.demoMode");
+    expect(teamPage).toContain("getDemoTeamMembers");
+    expect(demoTeam).toContain("config.demo_team");
+    expect(demoTeam).not.toContain("auth.users");
+  });
 });
