@@ -1,0 +1,173 @@
+.demo-command-dashboard {
+  padding-bottom: 44px;
+}
+
+.demo-stitch-truth {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 10px;
+  padding: 11px 13px;
+  border: 1px solid #d7cbb7;
+  border-radius: 6px;
+  background: #f7f1e7;
+  color: #665f54;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.demo-stitch-truth strong {
+  flex: none;
+  color: #8f5c2d;
+  font: 800 9px var(--mono);
+  letter-spacing: .07em;
+}
+
+.demo-stitch-hero {
+  background: linear-gradient(105deg, #fff 0%, #fbfaf7 58%, #eaf4f2 100%);
+}
+
+.demo-stitch-progress {
+  display: grid;
+  grid-template-columns: minmax(220px, .9fr) minmax(180px, 1fr) auto;
+  gap: 22px;
+  align-items: center;
+  margin-top: 10px;
+  padding: 13px 15px;
+  border: 1px solid var(--cmd-line);
+  border-radius: 7px;
+  background: #f2f5ec;
+}
+
+.demo-stitch-progress > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.demo-stitch-progress > div:first-child strong,
+.demo-stitch-progress > strong {
+  font-size: 11px;
+}
+
+.demo-stitch-progress > strong {
+  text-align: right;
+  color: var(--cmd-green);
+}
+
+.demo-stitch-progress-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(45,106,79,.12);
+}
+
+.demo-stitch-progress-track span {
+  display: block;
+  width: 44%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cmd-green);
+}
+
+.demo-stitch-mini-status {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: auto;
+  padding-top: 12px;
+  color: var(--cmd-green);
+  font: 750 9px var(--mono);
+}
+
+.demo-stitch-mini-status.warning {
+  color: var(--cmd-rust);
+}
+
+.demo-stitch-roadmap {
+  padding-bottom: 12px;
+}
+
+.demo-stitch-roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.demo-stitch-roadmap-grid article {
+  min-height: 146px;
+  padding: 14px;
+  border: 1px dashed var(--cmd-line-strong);
+  border-radius: 7px;
+  background: #fbfaf7;
+}
+
+.demo-stitch-roadmap-grid article > span {
+  color: var(--cmd-teal);
+  font: 800 9px var(--mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.demo-stitch-roadmap-grid strong {
+  display: block;
+  margin: 18px 0 7px;
+  font-size: 13px;
+}
+
+.demo-stitch-roadmap-grid p {
+  margin: 0;
+  color: var(--cmd-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.demo-stitch-guided-intro {
+  margin-top: 46px;
+  padding: 30px 0 16px;
+  border-top: 1px solid var(--cmd-line);
+}
+
+.demo-stitch-guided-intro h2 {
+  max-width: 760px;
+  margin: 7px 0 8px;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.08;
+  letter-spacing: -.035em;
+}
+
+.demo-stitch-guided-intro p {
+  max-width: 780px;
+  margin: 0;
+  color: var(--cmd-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.demo-command-dashboard .demo-command-center {
+  margin-top: 12px;
+}
+
+.demo-command-dashboard .demo-real-queue {
+  margin-top: 44px;
+}
+
+@media (max-width: 1120px) {
+  .demo-stitch-roadmap-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .demo-stitch-truth {
+    display: grid;
+  }
+  .demo-stitch-progress {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .demo-stitch-progress > strong {
+    text-align: left;
+  }
+  .demo-stitch-roadmap-grid {
+    grid-template-columns: 1fr;
+  }
+}
