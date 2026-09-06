@@ -120,7 +120,8 @@ export function AppShell({
 }
 
 function StitchDashboardTopbar({ workspaceName, role, pathname }: { workspaceName: string; role: string; pathname: string }) {
-  const workspaceRole = role === "OWNER" ? "Direction" : role === "ADMIN" ? "Administration" : "Équipe";
+  const workspaceRole = role === "OWNER" ? "Dirigeant" : role === "ADMIN" ? "Administration" : "Équipe";
+
   return (
     <header className="stitch-topbar">
       <div className="stitch-topbar-inner">
@@ -133,20 +134,25 @@ function StitchDashboardTopbar({ workspaceName, role, pathname }: { workspaceNam
               <span>Régie Pro HVAC</span>
             </div>
           </div>
+
           <nav className="stitch-topnav" aria-label="Navigation du poste de commande">
-            {STITCH_DASHBOARD_NAV.map((item) => {
+            {STITCH_DASHBOARD_NAV.map((item, index) => {
               const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
               return (
                 <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
-                  {item.label}
+                  <span>{item.label}</span>
+                  {index === 1 ? <span className="stitch-nav-count">•</span> : null}
                 </Link>
               );
             })}
           </nav>
         </div>
+
         <div className="stitch-topbar-right">
-          <Link className="stitch-search-control" href="/app/clients">Recherche</Link>
-          <Link className="stitch-user-lockup" href="/app/organisation">
+          <Link className="stitch-autonomy-pill" href="/app/automatisations"><span className="stitch-live-dot" />Autonomie</Link>
+          <Link className="stitch-search-control" href="/app/clients">⌘K Recherche</Link>
+          <span className="stitch-notification-dot" aria-hidden="true">●</span>
+          <Link className="stitch-user-lockup" href="/app/equipe">
             <span className="stitch-user-avatar" aria-hidden="true">{workspaceInitial(workspaceName)}</span>
             <span><strong>{workspaceName}</strong><small>{workspaceRole}</small></span>
           </Link>
