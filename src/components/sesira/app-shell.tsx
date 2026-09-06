@@ -7,11 +7,6 @@ import {
   GROWTH_TABS,
   INTERVENTION_TABS,
   QUOTE_TABS,
-  SESIRA_GROWTH_NAV,
-  SESIRA_ORGANIZATION_NAV,
-  SESIRA_PRIMARY_NAV,
-  SESIRA_SECONDARY_NAV,
-  isAppNavActive,
   type SesiraAppNavItem,
 } from "@/lib/navigation";
 
@@ -25,13 +20,35 @@ const TECH_ITEMS: readonly SesiraAppNavItem[] = [
   { href: "/app/documents", label: "Documents" },
 ];
 
-const STITCH_DASHBOARD_NAV = [
-  { href: "/app", label: "Tableau de bord" },
-  { href: "/app/suivi", label: "File de décisions" },
-  { href: "/app/devis", label: "Finances & Devis" },
-  { href: "/app/interventions", label: "Interventions Terrain" },
-  { href: "/app/obligations/documents", label: "Obligations & CERFA" },
-  { href: "/app/automatisations", label: "Automatisations" },
+type StitchNavItem = {
+  href: string;
+  label: string;
+  matches: readonly string[];
+};
+
+const STITCH_APP_NAV: readonly StitchNavItem[] = [
+  { href: "/app", label: "Tableau de bord", matches: ["/app"] },
+  { href: "/app/suivi", label: "File de décisions", matches: ["/app/suivi"] },
+  {
+    href: "/app/devis",
+    label: "Finances & Devis",
+    matches: ["/app/devis", "/app/opportunites", "/app/factures"],
+  },
+  {
+    href: "/app/interventions",
+    label: "Interventions Terrain",
+    matches: ["/app/interventions", "/app/terrain", "/app/rapports"],
+  },
+  {
+    href: "/app/obligations/documents",
+    label: "Obligations & CERFA",
+    matches: ["/app/obligations"],
+  },
+  {
+    href: "/app/automatisations",
+    label: "Automatisations",
+    matches: ["/app/automatisations", "/app/automations"],
+  },
 ] as const;
 
 export function AppShell({
@@ -47,45 +64,31 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const technician = TECH_ROLES.has(role);
-  const stitchDashboard = !technician && pathname === "/app";
   const tabs = technician ? null : tabsForPath(pathname, growthEnabled);
 
-  if (stitchDashboard) {
+  // Managers stay in one persistent /app/... shell across every workspace route.
+  // Only the technician workspace keeps its dedicated mobile/field shell.
+  if (!technician) {
     return (
-      <div className="stitch-dashboard-frame">
-        <StitchDashboardTopbar workspaceName={workspaceName} role={role} pathname={pathname} />
-        <main className="stitch-dashboard-main">{children}</main>
+      <div className="stitch-dashboard-frame stitch-app-frame">
+        <StitchAppTopbar workspaceName={workspaceName} role={role} pathname={pathname} />
+        <main className="stitch-dashboard-main stitch-app-main">
+          {tabs ? <StitchSectionTabs pathname={pathname} items={tabs} /> : null}
+          {children}
+        </main>
       </div>
     );
   }
 
   return (
-    <div className={technician ? "app-frame technician-frame" : "app-frame"}>
+    <div className="app-frame technician-frame">
       <aside className="app-sidebar">
         <div className="sidebar-top">
           <SesiraLogo />
         </div>
 
         <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingBottom: 12 }}>
-          {technician ? (
-            <NavigationList pathname={pathname} items={TECH_ITEMS} ariaLabel="Navigation technicien" />
-          ) : (
-            <>
-              <NavigationList pathname={pathname} items={SESIRA_PRIMARY_NAV} ariaLabel="Navigation principale" />
-              {growthEnabled ? (
-                <div style={{ marginTop: 8 }}>
-                  <NavigationList pathname={pathname} items={[SESIRA_GROWTH_NAV]} ariaLabel="Module Croissance" />
-                </div>
-              ) : null}
-              <div style={{ borderTop: "1px solid var(--line)", marginTop: 18, paddingTop: 12, opacity: 0.72 }}>
-                <NavigationList pathname={pathname} items={SESIRA_SECONDARY_NAV} ariaLabel="Réglages et résultats" />
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="sidebar-foot" style={{ marginTop: 0 }}>
-          <OrganizationMenu pathname={pathname} workspaceName={workspaceName} />
+          <NavigationList pathname={pathname} items={TECH_ITEMS} ariaLabel="Navigation technicien" />
         </div>
       </aside>
 
@@ -95,31 +98,17 @@ export function AppShell({
           <details className="mobile-nav-menu">
             <summary>Menu</summary>
             <div className="mobile-nav-panel">
-              {technician ? (
-                <NavigationList pathname={pathname} items={TECH_ITEMS} ariaLabel="Navigation mobile technicien" mobile />
-              ) : (
-                <>
-                  <NavigationList pathname={pathname} items={SESIRA_PRIMARY_NAV} ariaLabel="Navigation mobile" mobile />
-                  {growthEnabled ? <NavigationList pathname={pathname} items={[SESIRA_GROWTH_NAV]} ariaLabel="Croissance" mobile /> : null}
-                  <div style={{ borderTop: "1px solid var(--line)", marginTop: 10, paddingTop: 8 }}>
-                    <NavigationList pathname={pathname} items={SESIRA_SECONDARY_NAV} ariaLabel="Réglages et résultats" mobile />
-                    <NavigationList pathname={pathname} items={SESIRA_ORGANIZATION_NAV} ariaLabel="Organisation" mobile />
-                  </div>
-                </>
-              )}
+              <NavigationList pathname={pathname} items={TECH_ITEMS} ariaLabel="Navigation mobile technicien" mobile />
             </div>
           </details>
         </header>
-        <main className="app-main">
-          {tabs ? <SectionTabs pathname={pathname} items={tabs} /> : null}
-          {children}
-        </main>
+        <main className="app-main">{children}</main>
       </div>
     </div>
   );
 }
 
-function StitchDashboardTopbar({ workspaceName, role, pathname }: { workspaceName: string; role: string; pathname: string }) {
+function StitchAppTopbar({ workspaceName, role, pathname }: { workspaceName: string; role: string; pathname: string }) {
   const workspaceRole = role === "OWNER" ? "Dirigeant" : role === "ADMIN" ? "Administration" : "Équipe";
 
   return (
@@ -127,7 +116,9 @@ function StitchDashboardTopbar({ workspaceName, role, pathname }: { workspaceNam
       <div className="stitch-topbar-inner">
         <div className="stitch-topbar-left">
           <div className="stitch-topbar-brand">
-            <SesiraLogo />
+            <Link href="/app" aria-label="Retour au tableau de bord SESIRA">
+              <SesiraLogo />
+            </Link>
             <span className="stitch-brand-divider" aria-hidden="true" />
             <div className="stitch-workspace-lockup">
               <strong>{workspaceName}</strong>
@@ -135,13 +126,12 @@ function StitchDashboardTopbar({ workspaceName, role, pathname }: { workspaceNam
             </div>
           </div>
 
-          <nav className="stitch-topnav" aria-label="Navigation du poste de commande">
-            {STITCH_DASHBOARD_NAV.map((item, index) => {
-              const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
+          <nav className="stitch-topnav" aria-label="Navigation principale SESIRA">
+            {STITCH_APP_NAV.map((item) => {
+              const active = isStitchNavActive(pathname, item);
               return (
                 <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
-                  <span>{item.label}</span>
-                  {index === 1 ? <span className="stitch-nav-count">•</span> : null}
+                  {item.label}
                 </Link>
               );
             })}
@@ -151,7 +141,6 @@ function StitchDashboardTopbar({ workspaceName, role, pathname }: { workspaceNam
         <div className="stitch-topbar-right">
           <Link className="stitch-autonomy-pill" href="/app/automatisations"><span className="stitch-live-dot" />Autonomie</Link>
           <Link className="stitch-search-control" href="/app/clients">⌘K Recherche</Link>
-          <span className="stitch-notification-dot" aria-hidden="true">●</span>
           <Link className="stitch-user-lockup" href="/app/equipe">
             <span className="stitch-user-avatar" aria-hidden="true">{workspaceInitial(workspaceName)}</span>
             <span><strong>{workspaceName}</strong><small>{workspaceRole}</small></span>
@@ -159,6 +148,21 @@ function StitchDashboardTopbar({ workspaceName, role, pathname }: { workspaceNam
         </div>
       </div>
     </header>
+  );
+}
+
+function StitchSectionTabs({ pathname, items }: { pathname: string; items: readonly SesiraAppNavItem[] }) {
+  return (
+    <nav className="stitch-section-tabs" aria-label="Navigation de section">
+      {items.map((item) => {
+        const active = isSectionTabActive(pathname, item.href);
+        return (
+          <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -176,7 +180,7 @@ function NavigationList({
   return (
     <nav className={mobile ? "app-nav mobile" : "app-nav"} aria-label={ariaLabel}>
       {items.map((item) => (
-        <Link key={item.href} href={item.href} className={isAppNavActive(pathname, item) ? "active" : ""}>
+        <Link key={item.href} href={item.href} className={isLegacyNavActive(pathname, item) ? "active" : ""}>
           <span>{item.label}</span>
         </Link>
       ))}
@@ -184,82 +188,36 @@ function NavigationList({
   );
 }
 
-function OrganizationMenu({ pathname, workspaceName }: { pathname: string; workspaceName: string }) {
-  const open = SESIRA_ORGANIZATION_NAV.some((item) => isAppNavActive(pathname, item));
-  return (
-    <details open={open}>
-      <summary className="account-row" aria-label="Organisation et réglages" style={{ cursor: "pointer", listStyle: "none" }}>
-        <div className="avatar" aria-hidden="true">{workspaceInitial(workspaceName)}</div>
-        <div style={{ minWidth: 0 }}>
-          <strong style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{workspaceName}</strong>
-          <span>Équipe & réglages</span>
-        </div>
-      </summary>
-      <nav className="app-nav" aria-label="Organisation" style={{ paddingTop: 10 }}>
-        {SESIRA_ORGANIZATION_NAV.map((item) => (
-          <Link key={item.href} href={item.href} className={isAppNavActive(pathname, item) ? "active" : ""}>
-            <span>{item.label}</span>
-          </Link>
-        ))}
-      </nav>
-    </details>
-  );
-}
-
-function SectionTabs({ pathname, items }: { pathname: string; items: readonly SesiraAppNavItem[] }) {
-  return (
-    <nav
-      aria-label="Navigation de section"
-      style={{
-        display: "flex",
-        gap: 6,
-        overflowX: "auto",
-        borderBottom: "1px solid var(--line)",
-        marginBottom: 28,
-        paddingBottom: 8,
-      }}
-    >
-      {items.map((item) => {
-        const active = isSectionTabActive(pathname, item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            style={{
-              flex: "none",
-              borderRadius: 999,
-              padding: "9px 13px",
-              fontSize: 13,
-              fontWeight: 700,
-              background: active ? "var(--ink)" : "transparent",
-              color: active ? "white" : "var(--ink-soft)",
-            }}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
-
 function tabsForPath(pathname: string, growthEnabled: boolean): readonly SesiraAppNavItem[] | null {
-  if (["/app/devis", "/app/opportunites", "/app/suivi"].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+  if (["/app/devis", "/app/opportunites", "/app/suivi"].some((prefix) => routeMatches(pathname, prefix))) {
     return QUOTE_TABS;
   }
-  if (["/app/interventions", "/app/rapports"].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+  if (["/app/interventions", "/app/rapports"].some((prefix) => routeMatches(pathname, prefix))) {
     return INTERVENTION_TABS;
   }
-  if (growthEnabled && (pathname === "/app/croissance" || pathname.startsWith("/app/croissance/"))) {
+  if (growthEnabled && routeMatches(pathname, "/app/croissance")) {
     return GROWTH_TABS;
   }
   return null;
 }
 
+function isStitchNavActive(pathname: string, item: StitchNavItem) {
+  return item.matches.some((match) => routeMatches(pathname, match));
+}
+
+function isLegacyNavActive(pathname: string, item: SesiraAppNavItem) {
+  const matches = item.matches ?? [item.href];
+  return matches.some((match) => routeMatches(pathname, match));
+}
+
 function isSectionTabActive(pathname: string, href: string) {
   if (href === "/app/croissance") return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return routeMatches(pathname, href);
+}
+
+function routeMatches(pathname: string, prefix: string) {
+  if (prefix === "/app") return pathname === "/app";
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
 function workspaceInitial(name: string) {
