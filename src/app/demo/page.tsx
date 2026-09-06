@@ -1,130 +1,308 @@
 import Link from "next/link";
 
-import { StatusPill } from "@/components/sesira/ui";
-
 export const dynamic = "force-static";
 
 const DEMO_DECISIONS = [
-  { id: "d1", code: "D", kind: "commercial", type: "DEVIS & CLIENTS", title: "Devis 18 450 € — Sophie Lefèvre", detail: "Réponse attendue depuis 7 jours · relance préparée", action: "Vérifier la relance", href: "/demo/devis", priority: 1 },
-  { id: "d2", code: "F", kind: "facture", type: "FACTURE", title: "Facture 12 400 € — Garage Montreuil", detail: "Promesse de paiement dépassée · reprise humaine attendue", action: "Reprendre le dossier", href: "/demo/factures", priority: 1 },
-  { id: "d3", code: "R", kind: "obligation", type: "OBLIGATION CVC", title: "Contrôle d’étanchéité périodique — 3 équipements", detail: "Échéance dans 6 jours · fiche d’intervention à préparer", action: "Préparer la fiche", href: "/demo/obligations", priority: 1 },
-  { id: "d4", code: "T", kind: "terrain", type: "RAPPORT TERRAIN", title: "Rapport #1842 — Karim D. chez Boulangerie Rivet", detail: "Intervention terminée · observations et pièces jointes à relire", action: "Relire le rapport", href: "/demo/documents", priority: 2 },
-  { id: "d5", code: "C", kind: "commercial", type: "ENTRETIEN", title: "Renouvellement — Martin & Fils · 1 840 € / an", detail: "Échéance le 30 septembre · proposition à préparer", action: "Préparer", href: "/demo/maintenance", priority: 2 },
+  {
+    id: "d1",
+    code: "D",
+    kind: "commercial",
+    title: "Devis 4 820 € — Boulangerie Marchand",
+    tag: "Climatisation VRV",
+    age: "Il y a 3 h",
+    detail: "Réponse reçue avec accord de principe par courriel. Planning prévisionnel prêt.",
+    action: "Valider & Planifier",
+    href: "/demo/devis",
+    priority: 1,
+  },
+  {
+    id: "d2",
+    code: "F",
+    kind: "facture",
+    title: "Facture 12 400 € — Hypermarché Carrefour Market",
+    tag: "Chambre froide négative",
+    age: "Échue depuis 8 jours",
+    detail: "Relance niveau 2 préparée avec accusé de livraison et attestation CERFA jointe.",
+    action: "Vérifier la relance",
+    href: "/demo/factures",
+    priority: 1,
+  },
+  {
+    id: "d3",
+    code: "R",
+    kind: "obligation",
+    title: "Contrôle d’étanchéité périodique — 3 groupes frigorifiques",
+    tag: "Lidl Échirolles",
+    age: "Échéance J-6",
+    detail: "Charge totale > 50 Teq CO₂. Fiche d’intervention à préparer avant déplacement.",
+    action: "Préparer la fiche",
+    href: "/demo/obligations",
+    priority: 1,
+  },
+  {
+    id: "d4",
+    code: "T",
+    kind: "terrain",
+    title: "Rapport #INT-409 — Julien B. chez Pharmacie Centrale",
+    tag: "R449A · 1,8 kg",
+    age: "Il y a 45 min",
+    detail: "Remplacement compresseur renseigné, test pression N₂ effectué, rapport à approuver.",
+    action: "Approuver le rapport",
+    href: "/demo/documents",
+    priority: 2,
+  },
+  {
+    id: "d5",
+    code: "C",
+    kind: "commercial",
+    title: "Renouvellement contrat annuel — Clinique du Mail · 24 800 € / an",
+    tag: "Multi-sites CVC",
+    age: "Échéance J-45",
+    detail: "Proposition calculée à partir du contrat existant. Validation humaine encore requise.",
+    action: "Vérifier la proposition",
+    href: "/demo/maintenance",
+    priority: 2,
+  },
 ] as const;
 
 const DEMO_MONEY = [
-  { label: "Devis en attente", value: "54 650 €", count: "2 dossiers", note: "8 dossiers actifs dans le scénario", attention: false, href: "/demo/devis" },
-  { label: "Vendu non planifié", value: "22 400 €", count: "1 chantier", note: "Créneau et technicien à choisir", attention: false, href: "/demo/interventions" },
-  { label: "Factures échues", value: "12 400 €", count: "1 créance", note: "Promesse de paiement dépassée", attention: true, href: "/demo/factures" },
-  { label: "Contrats < 60 jours", value: "1 840 € / an", count: "1 contrat", note: "Renouvellement à préparer", attention: false, href: "/demo/maintenance" },
+  {
+    label: "Devis en attente",
+    value: "48 650 €",
+    meta: "+12 % sur 30 jours · 8 dossiers",
+    footLabel: "Délai moyen réponse",
+    footValue: "4,2 jours",
+    attention: false,
+    href: "/demo/devis",
+  },
+  {
+    label: "Vendu non planifié",
+    value: "34 200 €",
+    meta: "5 chantiers signés · 9 climatiseurs prêts",
+    footLabel: "Capacité équipe",
+    footValue: "3 techniciens J+2",
+    attention: false,
+    href: "/demo/interventions",
+  },
+  {
+    label: "Factures échues à recouvrer",
+    value: "21 800 €",
+    meta: "4 créances ouvertes · ancienneté < 20 j",
+    footLabel: "Préparées",
+    footValue: "2 relances",
+    attention: true,
+    href: "/demo/factures",
+  },
+  {
+    label: "Contrats < 60 jours",
+    value: "76 500 €",
+    meta: "11 contrats clés · renouvellements à préparer",
+    footLabel: "Renouvellement",
+    footValue: "À vérifier",
+    attention: false,
+    href: "/demo/maintenance",
+  },
 ] as const;
 
 const DEMO_FIELD = [
-  { initials: "JB", name: "Julien B.", van: "Camionnette 04", time: "10:30", status: "En cours", tone: "warning" as const, title: "Chambre froide positive (+2 °C)", site: "Boulangerie Marchand · Grenoble", foot: "Étape 2/3 · tirage au vide" },
-  { initials: "MD", name: "Marc D.", van: "Camionnette 02", time: "11:15", status: "En route", tone: "neutral" as const, title: "Dépannage CTA Air Neuf", site: "Laboratoire Biomédic · Valence", foot: "Tournée terrain · démonstration" },
-  { initials: "TL", name: "Thomas L.", van: "Camionnette 01", time: "09:45", status: "Terminée", tone: "good" as const, title: "Contrôle annuel d’étanchéité", site: "Entrepôt · 6 équipements", foot: "Rapport généré · CERFA à préparer" },
-  { initials: "AV", name: "Antoine V.", van: "Atelier", time: "14:00", status: "Prévue", tone: "neutral" as const, title: "Maintenance PAC hybride", site: "Résidence Les Cèdres · R32", foot: "Matériel et fluide chargés" },
+  {
+    initials: "JB",
+    name: "Julien B.",
+    van: "Camionnette 04",
+    location: "Grenoble Sud",
+    status: "En cours",
+    tone: "good",
+    title: "Chambre froide positive (+2°C)",
+    site: "Boucherie des Halles · R452A",
+    detail: "Étape 2/3 · tirage au vide",
+    foot: "Débuté à 10:30 · sonde Testo connectée",
+  },
+  {
+    initials: "MD",
+    name: "Marc D.",
+    van: "Camionnette 02",
+    location: "Valence",
+    status: "En route",
+    tone: "cyan",
+    title: "Dépannage CTA Air Neuf",
+    site: "Laboratoire Biomédic · défaut débit",
+    detail: "Arrivée estimée dans 14 min",
+    foot: "Tournée planifiée · véhicule 02",
+  },
+  {
+    initials: "TL",
+    name: "Thomas L.",
+    van: "Camionnette 01",
+    location: "Crolles",
+    status: "Terminée",
+    tone: "neutral",
+    title: "Contrôle annuel étanchéité",
+    site: "Entrepôt logistique · 6 groupes",
+    detail: "Rapport généré · CERFA prêt",
+    foot: "Temps passé 2 h 15 · anomalie renseignée",
+  },
+  {
+    initials: "AV",
+    name: "Antoine V.",
+    van: "Atelier",
+    location: "Départ 13:30",
+    status: "Prévue",
+    tone: "neutral",
+    title: "Maintenance PAC Hybride",
+    site: "Résidence Les Cèdres · R32",
+    detail: "Matériel & fluide chargés",
+    foot: "Charge R32 · 4,5 kg · lot B49-2026",
+  },
 ] as const;
 
 export default function DemoTodayPage() {
   return (
-    <div className="command-dashboard demo-command-dashboard">
-      <section className="demo-stitch-truth" aria-label="Périmètre de la démonstration">
-        <strong>DÉMONSTRATION · DONNÉES FICTIVES</strong>
-        <span>Référence visuelle Stitch. Aucune donnée réelle et aucune action externe.</span>
-      </section>
-
-      <section className="command-status-bar" aria-label="État du poste de commande démo">
-        <div><span className="command-status-dot" aria-hidden="true" /><span className="command-kicker">Supervision</span><strong>Validation humaine</strong></div>
-        <div><span className="command-kicker">Scénario</span><strong>THERMOPRO SERVICES</strong></div>
-        <div><span className="command-kicker">Décisions</span><strong>5</strong></div>
-        <span className="command-service-quiet">Lecture seule</span>
-      </section>
-
-      <header className="command-hero">
-        <div>
-          <span className="eyebrow">SUPERVISION OPÉRATIONNELLE · THERMOPRO SERVICES</span>
-          <h1>Bonjour, 5 décisions requièrent votre validation aujourd’hui</h1>
-          <p>La démonstration reprend le poste de commande Stitch avec une file de décisions, le cash-flow, le terrain et le registre CVC dans une seule vue.</p>
+    <div className="command-dashboard stitch-faithful-dashboard demo-command-dashboard">
+      <header className="stitch-hero-card">
+        <div className="stitch-hero-copy">
+          <div className="stitch-hero-kickers">
+            <span className="stitch-live-chip"><span />Supervision temps réel</span>
+            <span>ISÈRE & RHÔNE-ALPES</span>
+          </div>
+          <h1>Bonjour Laurent, <strong>5 décisions</strong> requièrent votre validation aujourd’hui</h1>
+          <p>SESIRA a préparé 3 relances automatiques et synchronisé 8 rapports d’intervention sans conflit télémétrique.</p>
         </div>
-        <div className="command-hero-meta"><span>Scénario direction CVC</span><Link href="/demo/automatisations">Autonomie</Link></div>
+
+        <div className="stitch-hero-actions" aria-label="Modes de démonstration">
+          <div className="stitch-mode-switch">
+            <span className="active">Mode nominal</span>
+            <span>Observation</span>
+            <span>File vidée</span>
+          </div>
+          <div className="stitch-hero-action-row">
+            <Link href="/demo/automatisations">Pause auto</Link>
+            <Link href="/demo/documents">Export</Link>
+          </div>
+        </div>
       </header>
 
-      <section className="command-section command-decisions" aria-labelledby="demo-decision-heading">
-        <div className="command-section-heading">
-          <div><span className="eyebrow">BANDEAU 01</span><h2 id="demo-decision-heading">File de Décisions Immédiates</h2></div>
-          <span className="command-section-count">5 EN ATTENTE · TRI VALEUR × URGENCE</span>
+      <section className="stitch-section stitch-decisions-section" aria-labelledby="demo-decision-heading">
+        <div className="stitch-section-title-row">
+          <div className="stitch-title-with-badge">
+            <h2 id="demo-decision-heading">File de Décisions Immédiates</h2>
+            <span className="stitch-waiting-badge">5 en attente</span>
+          </div>
+          <span className="stitch-sort-label">Triée par valeur × urgence</span>
         </div>
-        <div className="command-decision-list">
+
+        <div className="stitch-decision-stack">
           {DEMO_DECISIONS.map((item) => (
-            <article className={`command-decision-row command-kind-${item.kind}`} key={item.id}>
-              <span className="command-decision-marker" aria-label={item.type}>{item.code}</span>
-              <div className="command-decision-copy">
-                <div><span className="command-decision-type">{item.type}</span><span>{item.priority === 1 ? "Priorité haute" : "À traiter"}</span></div>
-                <h3>{item.title}</h3>
-                <p>{item.detail}</p>
+            <article className={`stitch-decision-row stitch-kind-${item.kind}`} key={item.id}>
+              <span className="stitch-decision-code" aria-label={item.kind}>{item.code}</span>
+              <div className="stitch-decision-body">
+                <div className="stitch-decision-titleline">
+                  <h3>{item.title}</h3>
+                  <span className="stitch-inline-tag">{item.tag}</span>
+                  <span className={item.kind === "facture" ? "stitch-age critical" : "stitch-age"}>{item.age}</span>
+                </div>
+                <p><strong>Statut :</strong> {item.detail}</p>
               </div>
-              <Link className={item.priority === 1 ? "command-action primary" : "command-action"} href={item.href}>{item.action}</Link>
+              <div className="stitch-decision-actions">
+                <Link className={item.priority === 1 ? "primary" : ""} href={item.href}>{item.action}</Link>
+                <Link href={item.href}>Détails</Link>
+              </div>
             </article>
           ))}
         </div>
-        <div className="demo-stitch-progress">
-          <div><span className="eyebrow">PROGRESSION DE LA JOURNÉE</span><strong>4 décisions traitées sur 9</strong></div>
-          <div className="demo-stitch-progress-track"><span /></div>
-          <strong>12 270 € de dossiers débloqués ce matin</strong>
+
+        <div className="stitch-day-progress">
+          <div className="stitch-progress-copy">
+            <span className="stitch-progress-icon">↗</span>
+            <div><small>Progression de la journée</small><strong>4 décisions traitées sur 9 (44%) — <em>12 270 € sécurisés ce matin</em></strong></div>
+          </div>
+          <div className="stitch-progress-track"><span /></div>
         </div>
       </section>
 
-      <section className="command-section" aria-labelledby="demo-money-heading">
-        <div className="command-section-heading">
-          <div><span className="eyebrow">BANDEAU 02</span><h2 id="demo-money-heading">Cockpit Financier & Cash-Flow</h2></div>
-          <span className="command-heading-note">Scénario fictif · EUR uniquement</span>
+      <section className="stitch-section" aria-labelledby="demo-money-heading">
+        <div className="stitch-section-title-row stitch-title-with-subtitle">
+          <div>
+            <h2 id="demo-money-heading">Cockpit Financier & Cash-Flow</h2>
+            <p>Vision consolidée des flux contractuels et des en-cours de facturation HVAC</p>
+          </div>
+          <span className="stitch-data-source">Actualisé démo · ERP / comptabilité</span>
         </div>
-        <div className="command-money-grid">
+
+        <div className="stitch-money-grid">
           {DEMO_MONEY.map((item) => (
-            <Link className={item.attention ? "command-money-card attention" : "command-money-card"} href={item.href} key={item.label}>
-              <div className="command-money-card-head"><span>{item.label}</span><span>{item.count}</span></div>
+            <Link className={item.attention ? "stitch-money-card attention" : "stitch-money-card"} href={item.href} key={item.label}>
+              <div className="stitch-money-head"><span>{item.label}</span><span>◫</span></div>
               <strong>{item.value}</strong>
-              <p>{item.note}</p>
-              <span className="command-card-link">Consulter</span>
+              <p>{item.meta}</p>
+              <div className="stitch-money-foot"><span>{item.footLabel}</span><strong>{item.footValue}</strong></div>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="command-section" aria-labelledby="demo-field-heading">
-        <div className="command-section-heading">
-          <div><span className="eyebrow">BANDEAU 03</span><h2 id="demo-field-heading">Aujourd’hui sur le Terrain · 4 Techniciens en Rotation</h2></div>
-          <div className="command-inline-metrics"><span>4 interventions</span><span>1 rapport à relire</span><span>0 conflit offline</span></div>
+      <section className="stitch-section" aria-labelledby="demo-field-heading">
+        <div className="stitch-section-title-row stitch-title-with-subtitle">
+          <div>
+            <h2 id="demo-field-heading">Aujourd’hui sur le Terrain</h2>
+            <p>Suivi opérationnel des interventions, étapes de tirage au vide et remontées terrain</p>
+          </div>
+          <span className="stitch-connection-pill"><span />4 tablettes connectées · 0 conflit de synchronisation</span>
         </div>
-        <div className="command-field-grid">
+
+        <div className="stitch-field-grid">
           {DEMO_FIELD.map((row) => (
-            <Link className="command-field-card" href="/demo/interventions" key={row.name}>
-              <div className="command-field-card-top">
-                <span className="command-tech-avatar">{row.initials}</span>
-                <div><strong>{row.name}</strong><span>{row.van} · {row.time}</span></div>
-                <StatusPill tone={row.tone}>{row.status}</StatusPill>
+            <Link className="stitch-field-card" href="/demo/interventions" key={row.name}>
+              <div className="stitch-field-person">
+                <span className="stitch-field-avatar">{row.initials}</span>
+                <div><strong>{row.name}</strong><span>{row.van} · {row.location}</span></div>
+                <span className={`stitch-field-status ${row.tone}`}>{row.status}</span>
               </div>
-              <h3>{row.title}</h3>
-              <p>{row.site}</p>
-              <div className="command-field-card-foot"><span>{row.foot}</span><span>Dossier</span></div>
+              <div className="stitch-field-job">
+                <strong>{row.title}</strong>
+                <span>{row.site}</span>
+                <b>{row.detail}</b>
+              </div>
+              <div className="stitch-field-foot">{row.foot}</div>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="command-section command-regulatory" aria-labelledby="demo-reg-heading">
-        <div className="command-section-heading">
-          <div><span className="eyebrow">BANDEAU 04</span><h2 id="demo-reg-heading">Registre d’Équipements & Traçabilité CERFA 15497*04</h2></div>
-          <Link className="command-text-link" href="/demo/obligations">Registre</Link>
+      <section className="stitch-regulatory-panel" aria-labelledby="demo-reg-heading">
+        <div className="stitch-reg-header">
+          <div>
+            <h2 id="demo-reg-heading">Conformité F-Gas & Traçabilité CERFA 15497*04</h2>
+            <p>Registre de démonstration · aucune qualification réglementaire réelle</p>
+          </div>
+          <span className="stitch-reg-capacity">Attestation de capacité · exemple de démonstration</span>
         </div>
-        <div className="command-regulatory-grid">
-          <article><span className="eyebrow">BILAN FLUIDES 2026</span><strong>482,4 kg</strong><p>R134a, R404A, R449A, R32 et R410A dans le jeu de données fictif.</p><span className="demo-stitch-mini-status">Bilan annuel à préparer</span></article>
-          <article><span className="eyebrow">DOCUMENTS À COMPLÉTER</span><strong>2</strong><p>Deux fiches disposent encore d’informations manquantes avant préparation documentaire.</p><span className="demo-stitch-mini-status warning">Action humaine attendue</span></article>
-          <article><span className="eyebrow">PARC OUTILLAGE & MÉTROLOGIE</span><strong>6</strong><p>Balances et équipements de mesure suivis avec dates d’étalonnage fictives.</p><span className="demo-stitch-mini-status">Prochaine échéance · 18 oct.</span></article>
+
+        <div className="stitch-reg-grid">
+          <article>
+            <small>Bilan annuel fluides frigorigènes</small>
+            <strong>482,4 kg</strong>
+            <p>R134a, R404A/R449A, R32 et R410A suivis dans le jeu de données fictif.</p>
+            <div><span>J-112 avant le 31 janvier</span><b>À préparer</b></div>
+          </article>
+          <article className="attention">
+            <small>À compléter</small>
+            <strong>2 fiches d’intervention</strong>
+            <p>Informations manquantes sur deux interventions avant génération documentaire.</p>
+            <div><span>Action humaine</span><b>2 fiches</b></div>
+          </article>
+          <article>
+            <small>Parc outillage & balances</small>
+            <strong>6 balances étalonnées</strong>
+            <p>Dates d’étalonnage de démonstration associées aux équipements de mesure.</p>
+            <div><span>Prochaine échéance</span><b>18 oct. 2026</b></div>
+          </article>
         </div>
-        <p className="command-regulatory-boundary">SESIRA prépare, calcule et signale. Cette démonstration ne qualifie pas votre situation réglementaire et n’effectue aucun dépôt externe.</p>
       </section>
+
+      <footer className="stitch-dashboard-footer">
+        <span>© 2026 SESIRA OS — Système d’exploitation génie climatique & froid commercial.</span>
+        <span>Démonstration · aucune action externe</span>
+      </footer>
     </div>
   );
 }
