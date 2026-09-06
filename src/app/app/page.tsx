@@ -128,12 +128,13 @@ export default async function DashboardPage() {
   const overdueInvoices = invoices.status === "OK"
     ? invoices.rows.filter((invoice) => invoice.status === "OVERDUE")
     : [];
-  const renewalHorizon = Date.now() + 60 * DAY_MS;
+  const nowMs = currentTimestamp();
+  const renewalHorizon = nowMs + 60 * DAY_MS;
   const renewals = maintenance.status === "OK"
     ? maintenance.rows.filter((contract) => {
         if (!contract.endDate || contract.amount === null || ["CANCELLED", "EXPIRED"].includes(contract.status)) return false;
         const end = new Date(contract.endDate).getTime();
-        return !Number.isNaN(end) && end >= Date.now() && end <= renewalHorizon;
+        return !Number.isNaN(end) && end >= nowMs && end <= renewalHorizon;
       })
     : [];
 
@@ -453,8 +454,9 @@ function localIsoDateFromTimestamp(value: string, timeZone: string) { const date
 function formatTimeInZone(value: Date, timeZone: string) { return new Intl.DateTimeFormat("fr-FR", { timeZone, hour: "2-digit", minute: "2-digit" }).format(value); }
 function formatLongDate(value: Date, timeZone: string) { return new Intl.DateTimeFormat("fr-FR", { timeZone, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(value); }
 function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "date inconnue" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(date); }
-function relativeObserved(value: string | null | undefined, timeZone: string) { if (!value) return "heure non renseignée"; const date = new Date(value); if (Number.isNaN(date.getTime())) return "heure non renseignée"; const delta = Date.now() - date.getTime(); if (delta >= 0 && delta < 60 * 60_000) return `il y a ${Math.max(1, Math.round(delta / 60_000))} min`; if (delta >= 0 && delta < DAY_MS) return `il y a ${Math.round(delta / 3_600_000)} h`; if (delta >= 0) return `il y a ${Math.round(delta / DAY_MS)} j`; return new Intl.DateTimeFormat("fr-FR", { timeZone, dateStyle: "medium" }).format(date); }
-function relativeDue(value: string) { const time = new Date(value).getTime(); if (Number.isNaN(time)) return "à une date inconnue"; const days = Math.ceil((time - Date.now()) / DAY_MS); if (days < 0) return `dépassée de ${Math.abs(days)} j`; if (days === 0) return "aujourd’hui"; return `dans ${days} j`; }
+function relativeObserved(value: string | null | undefined, timeZone: string) { if (!value) return "heure non renseignée"; const date = new Date(value); if (Number.isNaN(date.getTime())) return "heure non renseignée"; const delta = currentTimestamp() - date.getTime(); if (delta >= 0 && delta < 60 * 60_000) return `il y a ${Math.max(1, Math.round(delta / 60_000))} min`; if (delta >= 0 && delta < DAY_MS) return `il y a ${Math.round(delta / 3_600_000)} h`; if (delta >= 0) return `il y a ${Math.round(delta / DAY_MS)} j`; return new Intl.DateTimeFormat("fr-FR", { timeZone, dateStyle: "medium" }).format(date); }
+function relativeDue(value: string) { const time = new Date(value).getTime(); if (Number.isNaN(time)) return "à une date inconnue"; const days = Math.ceil((time - currentTimestamp()) / DAY_MS); if (days < 0) return `dépassée de ${Math.abs(days)} j`; if (days === 0) return "aujourd’hui"; return `dans ${days} j`; }
 function dueAt(row: { nextLeakCheck: { status: "DUE"; nextDueAt: string } | { status: "OUT_OF_SCOPE" } | { status: "UNAVAILABLE" } | null }) { return row.nextLeakCheck?.status === "DUE" ? Date.parse(row.nextLeakCheck.nextDueAt) : Number.POSITIVE_INFINITY; }
 function initials(value: string) { return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "—"; }
+function currentTimestamp() { return Date.now(); }
 function currentDate() { return new Date().toISOString().slice(0, 10); }
