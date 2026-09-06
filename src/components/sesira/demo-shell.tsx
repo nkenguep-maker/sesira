@@ -43,6 +43,7 @@ export function DemoShell({ children }: { children: React.ReactNode }) {
           <div className="stitch-topbar-right">
             <span className="demo-mode-badge">Données fictives</span>
             <Link className="stitch-search-control" href="/demo/clients">Recherche</Link>
+            <Link className="stitch-search-control" href="/">Quitter la démo</Link>
             <Link className="stitch-user-lockup" href="/demo/equipe">
               <span className="stitch-user-avatar" aria-hidden="true">T</span>
               <span><strong>THERMOPRO SERVICES</strong><small>Démonstration</small></span>
