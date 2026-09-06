@@ -25,6 +25,15 @@ const TECH_ITEMS: readonly SesiraAppNavItem[] = [
   { href: "/app/documents", label: "Documents" },
 ];
 
+const STITCH_DASHBOARD_NAV = [
+  { href: "/app", label: "Tableau de bord" },
+  { href: "/app/suivi", label: "File de décisions" },
+  { href: "/app/devis", label: "Finances & Devis" },
+  { href: "/app/interventions", label: "Interventions Terrain" },
+  { href: "/app/obligations/documents", label: "Obligations & CERFA" },
+  { href: "/app/automatisations", label: "Automatisations" },
+] as const;
+
 export function AppShell({
   children,
   workspaceName,
@@ -38,7 +47,17 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const technician = TECH_ROLES.has(role);
+  const stitchDashboard = !technician && pathname === "/app";
   const tabs = technician ? null : tabsForPath(pathname, growthEnabled);
+
+  if (stitchDashboard) {
+    return (
+      <div className="stitch-dashboard-frame">
+        <StitchDashboardTopbar workspaceName={workspaceName} role={role} pathname={pathname} />
+        <main className="stitch-dashboard-main">{children}</main>
+      </div>
+    );
+  }
 
   return (
     <div className={technician ? "app-frame technician-frame" : "app-frame"}>
@@ -97,6 +116,43 @@ export function AppShell({
         </main>
       </div>
     </div>
+  );
+}
+
+function StitchDashboardTopbar({ workspaceName, role, pathname }: { workspaceName: string; role: string; pathname: string }) {
+  const workspaceRole = role === "OWNER" ? "Direction" : role === "ADMIN" ? "Administration" : "Équipe";
+  return (
+    <header className="stitch-topbar">
+      <div className="stitch-topbar-inner">
+        <div className="stitch-topbar-left">
+          <div className="stitch-topbar-brand">
+            <SesiraLogo />
+            <span className="stitch-brand-divider" aria-hidden="true" />
+            <div className="stitch-workspace-lockup">
+              <strong>{workspaceName}</strong>
+              <span>Régie Pro HVAC</span>
+            </div>
+          </div>
+          <nav className="stitch-topnav" aria-label="Navigation du poste de commande">
+            {STITCH_DASHBOARD_NAV.map((item) => {
+              const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
+              return (
+                <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+        <div className="stitch-topbar-right">
+          <Link className="stitch-search-control" href="/app/clients">Recherche</Link>
+          <Link className="stitch-user-lockup" href="/app/organisation">
+            <span className="stitch-user-avatar" aria-hidden="true">{workspaceInitial(workspaceName)}</span>
+            <span><strong>{workspaceName}</strong><small>{workspaceRole}</small></span>
+          </Link>
+        </div>
+      </div>
+    </header>
   );
 }
 
