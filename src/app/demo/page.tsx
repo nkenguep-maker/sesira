@@ -271,7 +271,7 @@ export default function DemoTodayPage() {
       <section className="stitch-regulatory-panel" aria-labelledby="demo-reg-heading">
         <div className="stitch-reg-header">
           <div>
-            <h2 id="demo-reg-heading">Conformité F-Gas & Traçabilité CERFA 15497*04</h2>
+            <h2 id="demo-reg-heading">Suivi F-Gas & Traçabilité CERFA 15497*04</h2>
             <p>Registre de démonstration · aucune qualification réglementaire réelle</p>
           </div>
           <span className="stitch-reg-capacity">Attestation de capacité · exemple de démonstration</span>
