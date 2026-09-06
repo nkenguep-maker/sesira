@@ -51,6 +51,13 @@ const STITCH_APP_NAV: readonly StitchNavItem[] = [
   },
 ] as const;
 
+const STITCH_ORGANIZATION_NAV = [
+  { href: "/app/equipe", label: "Équipe" },
+  { href: "/app/imports", label: "Imports" },
+  { href: "/app/integrations", label: "Connexions" },
+  { href: "/app/parametres", label: "Paramètres" },
+] as const;
+
 export function AppShell({
   children,
   workspaceName,
@@ -66,8 +73,6 @@ export function AppShell({
   const technician = TECH_ROLES.has(role);
   const tabs = technician ? null : tabsForPath(pathname, growthEnabled);
 
-  // Managers stay in one persistent /app/... shell across every workspace route.
-  // Only the technician workspace keeps its dedicated mobile/field shell.
   if (!technician) {
     return (
       <div className="stitch-dashboard-frame stitch-app-frame">
@@ -109,8 +114,6 @@ export function AppShell({
 }
 
 function StitchAppTopbar({ workspaceName, role, pathname }: { workspaceName: string; role: string; pathname: string }) {
-  const workspaceRole = role === "OWNER" ? "Dirigeant" : role === "ADMIN" ? "Administration" : "Équipe";
-
   return (
     <header className="stitch-topbar">
       <div className="stitch-topbar-inner">
@@ -141,13 +144,34 @@ function StitchAppTopbar({ workspaceName, role, pathname }: { workspaceName: str
         <div className="stitch-topbar-right">
           <Link className="stitch-autonomy-pill" href="/app/automatisations"><span className="stitch-live-dot" />Autonomie</Link>
           <Link className="stitch-search-control" href="/app/clients">⌘K Recherche</Link>
-          <Link className="stitch-user-lockup" href="/app/equipe">
-            <span className="stitch-user-avatar" aria-hidden="true">{workspaceInitial(workspaceName)}</span>
-            <span><strong>{workspaceName}</strong><small>{workspaceRole}</small></span>
-          </Link>
+          <OrganizationMenu workspaceName={workspaceName} role={role} pathname={pathname} />
         </div>
       </div>
     </header>
+  );
+}
+
+function OrganizationMenu({ workspaceName, role, pathname }: { workspaceName: string; role: string; pathname: string }) {
+  const workspaceRole = role === "OWNER" ? "Dirigeant" : role === "ADMIN" ? "Administration" : "Équipe";
+  const open = STITCH_ORGANIZATION_NAV.some((item) => routeMatches(pathname, item.href));
+
+  return (
+    <details className="stitch-org-menu" open={open}>
+      <summary className="stitch-user-lockup" aria-label="Organisation et réglages">
+        <span className="stitch-user-avatar" aria-hidden="true">{workspaceInitial(workspaceName)}</span>
+        <span><strong>{workspaceName}</strong><small>{workspaceRole}</small></span>
+      </summary>
+      <nav className="stitch-org-popover" aria-label="Organisation">
+        {STITCH_ORGANIZATION_NAV.map((item) => {
+          const active = routeMatches(pathname, item.href);
+          return (
+            <Link key={item.href} href={item.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </details>
   );
 }
 
