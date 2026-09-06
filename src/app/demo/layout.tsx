@@ -5,6 +5,7 @@ import { DemoShell } from "@/components/sesira/demo-shell";
 import { getDemoContext } from "@/lib/demo/context";
 
 import "./demo.css";
+import "./stitch-dashboard.css";
 
 export const metadata: Metadata = {
   title: "SESIRA Démo — THERMOPRO SERVICES",

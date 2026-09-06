@@ -9,6 +9,7 @@ import "./app-workspace-dense.css";
 import "./app-surfaces-dense.css";
 import "./app-accessibility-fix.css";
 import "./c32-workspaces.css";
+import "./dashboard-command-center.css";
 
 export const metadata: Metadata = {
   title: "SESIRA — L'OS opérationnel de votre entreprise",
