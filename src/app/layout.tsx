@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+
 import "./globals.css";
 import "./ui-additions.css";
 import "./premium-surfaces.css";
@@ -11,6 +13,18 @@ import "./app-accessibility-fix.css";
 import "./c32-workspaces.css";
 import "./dashboard-command-center.css";
 
+const hanken = Hanken_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-hanken",
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "SESIRA — L'OS opérationnel de votre entreprise",
   description: "SESIRA rassemble vos clients, devis, suivi et opérations dans un espace clair.",
@@ -19,7 +33,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body className={`${hanken.variable} ${jetbrains.variable}`}>{children}</body>
     </html>
   );
 }
