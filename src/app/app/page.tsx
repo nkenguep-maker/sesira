@@ -133,6 +133,7 @@ export default async function DashboardPage() {
       totals: sumByCurrency(commercialQuotes.map((quote) => ({ amount: quote.amount ?? 0, currency: quote.currency }))),
       href: "/app/devis",
       note: "Devis envoyés, relancés ou en attente d’une décision.",
+      footLabel: "Dossiers suivis",
     },
     {
       label: "Vendu non planifié",
@@ -140,6 +141,7 @@ export default async function DashboardPage() {
       totals: sumByCurrency(soldNotScheduledValues),
       href: "/app/interventions",
       note: "Affaires gagnées qui remontent faute de prochain pas opérationnel.",
+      footLabel: "À planifier",
     },
     {
       label: "Factures échues",
@@ -147,6 +149,7 @@ export default async function DashboardPage() {
       totals: sumByCurrency(overdueInvoices.map((invoice) => ({ amount: invoice.amount, currency: invoice.currency }))),
       href: "/app/factures",
       note: "Montants issus des factures actuellement enregistrées en retard.",
+      footLabel: "Créances ouvertes",
       attention: overdueInvoices.length > 0,
     },
     {
@@ -155,6 +158,7 @@ export default async function DashboardPage() {
       totals: sumByCurrency(renewals.flatMap((contract) => contract.amount === null ? [] : [{ amount: contract.amount, currency: contract.currency }])),
       href: "/app/maintenance",
       note: "Contrats dont la date de fin connue tombe dans les 60 prochains jours.",
+      footLabel: "Renouvellements",
     },
   ];
 
@@ -176,27 +180,29 @@ export default async function DashboardPage() {
   const regulatoryGaps = reg?.exports.reduce((total, item) => total + item.gapCount, 0) ?? null;
 
   return (
-    <div className="command-dashboard">
-      <section className="command-status-bar" aria-label="État du poste de commande">
-        <div><span className="command-status-dot" aria-hidden="true" /><span className="command-kicker">Supervision</span><strong>{currentMode}</strong></div>
-        <div><span className="command-kicker">Lecture serveur</span><strong>{formatTimeInZone(now, timezone)}</strong></div>
-        <div><span className="command-kicker">Décisions</span><strong>{decisions.length}</strong></div>
-        {degraded.length ? (
-          <Link className="command-service-warning" href="/app/etat-sesira">{degraded.length} service{degraded.length > 1 ? "s" : ""} à vérifier</Link>
-        ) : <span className="command-service-quiet">Aucune alerte système remontée</span>}
-      </section>
-
-      <header className="command-hero">
-        <div>
-          <span className="eyebrow">SUPERVISION OPÉRATIONNELLE · {viewer.organization.name}</span>
-          <h1>{decisions.length ? `${decisions.length} décision${decisions.length > 1 ? "s" : ""} requièrent votre validation aujourd’hui` : "Aucune décision immédiate ne requiert votre validation"}</h1>
+    <div className="command-dashboard stitch-faithful-dashboard">
+      <header className="stitch-hero-card">
+        <div className="stitch-hero-copy">
+          <div className="stitch-hero-kickers">
+            <span className="stitch-live-chip"><span />{currentMode}</span>
+            <span>POSTE DE COMMANDE CVC · {viewer.organization.name}</span>
+          </div>
+          <h1>
+            {decisions.length ? <>{decisions.length} décision{decisions.length > 1 ? "s" : ""} requièrent votre validation aujourd’hui</> : <>Aucune décision immédiate ne requiert votre validation</>}
+          </h1>
           <p>{observation
-            ? "SESIRA observe les données disponibles et prépare les prochains gestes. Aucune action externe n’est déduite d’un simple signal."
+            ? "SESIRA observe les données disponibles et prépare les prochains gestes. Aucun envoi n’est déduit d’un simple signal."
             : "SESIRA rassemble ici les décisions commerciales, terrain, financières et réglementaires qui demandent un geste explicite."}</p>
         </div>
-        <div className="command-hero-meta">
-          <span>{formatLongDate(now, timezone)}</span>
-          <Link href="/app/automatisations">Autonomie</Link>
+        <div className="stitch-hero-actions">
+          <div className="stitch-mode-switch" aria-label="État du poste de commande">
+            <span className="active">{currentMode}</span>
+            <span>{formatLongDate(now, timezone)}</span>
+          </div>
+          <div className="stitch-hero-action-row">
+            <Link href="/app/automatisations">Autonomie</Link>
+            <Link href="/app/parametres/export">Export</Link>
+          </div>
         </div>
       </header>
 
@@ -217,14 +223,17 @@ export default async function DashboardPage() {
         </section>
       ) : null}
 
-      <section className="command-section command-decisions" aria-labelledby="decision-heading">
-        <div className="command-section-heading">
-          <div><span className="eyebrow">BANDEAU 01</span><h2 id="decision-heading">File de Décisions Immédiates</h2></div>
-          <span className="command-section-count">{decisions.length} EN ATTENTE · TRI VALEUR × URGENCE</span>
+      <section className="stitch-section stitch-decisions-section" aria-labelledby="decision-heading">
+        <div className="stitch-section-title-row">
+          <div className="stitch-title-with-badge">
+            <h2 id="decision-heading">File de Décisions Immédiates</h2>
+            {decisions.length ? <span className="stitch-waiting-badge">{decisions.length} en attente</span> : null}
+          </div>
+          <span className="stitch-sort-label">Triée par valeur × urgence</span>
         </div>
 
         {visibleDecisions.length ? (
-          <div className="command-decision-list">
+          <div className="stitch-decision-stack">
             {visibleDecisions.map((item) => <DecisionRow item={item} key={item.id} timezone={timezone} nowMs={nowMs} />)}
           </div>
         ) : (
@@ -234,67 +243,79 @@ export default async function DashboardPage() {
         {hiddenDecisionCount ? <Link className="command-more-link" href="/app/suivi">Voir {hiddenDecisionCount} autres sujets</Link> : null}
       </section>
 
-      <section className="command-section" aria-labelledby="money-heading">
-        <div className="command-section-heading">
-          <div><span className="eyebrow">BANDEAU 02</span><h2 id="money-heading">Cockpit Financier & Cash-Flow</h2></div>
-          <span className="command-heading-note">Données réelles · devises séparées</span>
+      <section className="stitch-section" aria-labelledby="money-heading">
+        <div className="stitch-section-title-row stitch-title-with-subtitle">
+          <div>
+            <h2 id="money-heading">Cockpit Financier & Cash-Flow</h2>
+            <p>Montants opérationnels issus des devis, chantiers vendus, factures et contrats suivis.</p>
+          </div>
+          <span className="stitch-data-source">Données réelles · devises séparées</span>
         </div>
-        <div className="command-money-grid">{moneyCards.map((card) => <MoneyMetric card={card} key={card.label} />)}</div>
+        <div className="stitch-money-grid">{moneyCards.map((card) => <MoneyMetric card={card} key={card.label} />)}</div>
       </section>
 
-      <section className="command-section" aria-labelledby="field-heading">
-        <div className="command-section-heading">
-          <div><span className="eyebrow">BANDEAU 03</span><h2 id="field-heading">Aujourd’hui sur le Terrain</h2></div>
-          <div className="command-inline-metrics">
-            <span>{fieldRows.length} intervention{fieldRows.length > 1 ? "s" : ""}</span>
-            <span>{reportsToValidate === null ? "—" : reportsToValidate} rapport{reportsToValidate === 1 ? "" : "s"} à valider</span>
-            <span>{conflictCount === null ? "—" : conflictCount} conflit{conflictCount === 1 ? "" : "s"} offline</span>
+      <section className="stitch-section" aria-labelledby="field-heading">
+        <div className="stitch-section-title-row stitch-title-with-subtitle">
+          <div>
+            <h2 id="field-heading">Aujourd’hui sur le Terrain</h2>
+            <p>Interventions planifiées aujourd’hui et remontées qui demandent encore une reprise.</p>
           </div>
+          <span className="stitch-connection-pill"><span />{fieldRows.length} intervention{fieldRows.length > 1 ? "s" : ""} · {reportsToValidate === null ? "—" : reportsToValidate} rapport{reportsToValidate === 1 ? "" : "s"} à valider · {conflictCount === null ? "—" : conflictCount} conflit{conflictCount === 1 ? "" : "s"} offline</span>
         </div>
 
         {fieldRows.length ? (
-          <div className="command-field-grid">
-            {fieldRows.map((row) => (
-              <Link className="command-field-card" href="/app/interventions" key={row.id}>
-                <div className="command-field-card-top">
-                  <span className="command-tech-avatar">{initials(memberByUser.get(row.assignedUserId ?? "") ?? "—")}</span>
-                  <div><strong>{memberByUser.get(row.assignedUserId ?? "") ?? "Non assigné"}</strong><span>{row.scheduledAt ? formatTimeInZone(new Date(row.scheduledAt), timezone) : "Sans horaire"}</span></div>
-                  <StatusPill tone={row.status === "IN_PROGRESS" ? "warning" : row.status === "COMPLETED" ? "good" : "neutral"}>{interventionLabel(row.status)}</StatusPill>
-                </div>
-                <h3>{row.title}</h3>
-                <p>{[row.addressPostalCode, row.addressCity].filter(Boolean).join(" ") || row.addressLine1 || "Adresse non renseignée"}</p>
-                <div className="command-field-card-foot"><span>{row.durationMinutes ? `${row.durationMinutes} min prévues` : "Durée non renseignée"}</span><span>Dossier</span></div>
-              </Link>
-            ))}
+          <div className="stitch-field-grid">
+            {fieldRows.map((row) => {
+              const person = memberByUser.get(row.assignedUserId ?? "") ?? "Non assigné";
+              const location = [row.addressPostalCode, row.addressCity].filter(Boolean).join(" ") || row.addressLine1 || "Adresse non renseignée";
+              return (
+                <Link className="stitch-field-card" href="/app/interventions" key={row.id}>
+                  <div className="stitch-field-person">
+                    <span className="stitch-field-avatar">{initials(person)}</span>
+                    <div><strong>{person}</strong><span>{row.scheduledAt ? formatTimeInZone(new Date(row.scheduledAt), timezone) : "Sans horaire"} · {location}</span></div>
+                    <span className={`stitch-field-status ${fieldStatusTone(row.status)}`}>{interventionLabel(row.status)}</span>
+                  </div>
+                  <div className="stitch-field-job">
+                    <strong>{row.title}</strong>
+                    <span>{location}</span>
+                    <b>{row.durationMinutes ? `${row.durationMinutes} min prévues` : "Durée non renseignée"}</b>
+                  </div>
+                  <div className="stitch-field-foot">Dossier intervention · données enregistrées</div>
+                </Link>
+              );
+            })}
           </div>
         ) : <div className="command-inline-empty">Aucune intervention planifiée aujourd’hui dans les données lisibles.</div>}
       </section>
 
-      <section className="command-section command-regulatory" aria-labelledby="reg-heading">
-        <div className="command-section-heading">
-          <div><span className="eyebrow">BANDEAU 04</span><h2 id="reg-heading">Registre d’Équipements & Traçabilité CERFA 15497*04</h2></div>
-          <Link className="command-text-link" href="/app/obligations/documents">Registre</Link>
+      <section className="stitch-regulatory-panel" aria-labelledby="reg-heading">
+        <div className="stitch-reg-header">
+          <div>
+            <h2 id="reg-heading">Suivi F-Gas & Traçabilité CERFA 15497*04</h2>
+            <p>Échéances et éléments documentaires issus du registre SESIRA.</p>
+          </div>
+          <Link className="stitch-reg-capacity" href="/app/obligations/documents">Ouvrir le registre</Link>
         </div>
 
         {reg ? (
-          <div className="command-regulatory-grid">
+          <div className="stitch-reg-grid">
             <article>
-              <span className="eyebrow">CONTRÔLES D’ÉTANCHÉITÉ</span>
+              <small>Contrôles d’étanchéité à préparer</small>
               <strong>{dueLeakChecks.length}</strong>
-              <p>{nextLeakCheck?.nextLeakCheck?.status === "DUE" ? `Prochaine échéance enregistrée ${relativeDue(nextLeakCheck.nextLeakCheck.nextDueAt, nowMs)} · ${nextLeakCheck.label}.` : "Aucune prochaine échéance calculable dans le registre."}</p>
-              <Link href="/app/obligations/equipements">Équipements</Link>
+              <p>{nextLeakCheck?.nextLeakCheck?.status === "DUE" ? `Prochaine échéance ${relativeDue(nextLeakCheck.nextLeakCheck.nextDueAt, nowMs)} · ${nextLeakCheck.label}.` : "Aucune prochaine échéance calculable dans le registre."}</p>
+              <div><span>Équipements</span><b>{dueLeakChecks.length ? "À préparer" : "Aucune échéance"}</b></div>
             </article>
-            <article>
-              <span className="eyebrow">ATTESTATIONS SUIVIES</span>
-              <strong>{activeAttestations.length}</strong>
-              <p>{nearestAttestation ? `Échéance enregistrée la plus proche : ${formatDate(nearestAttestation.validUntil)} · ${nearestAttestation.referenceNumber}.` : "Aucune attestation active lisible."}</p>
-              <Link href="/app/obligations/documents">Attestations</Link>
-            </article>
-            <article>
-              <span className="eyebrow">DOCUMENTS À COMPLÉTER</span>
+            <article className={regulatoryGaps ? "attention" : ""}>
+              <small>Documents à compléter</small>
               <strong>{regulatoryGaps ?? 0}</strong>
               <p>{regulatoryGaps ? "Informations manquantes détectées dans les exports réglementaires préparés." : "Aucune information manquante enregistrée dans les exports préparés."}</p>
-              <Link href="/app/obligations/documents">Préparation documentaire</Link>
+              <div><span>Préparation documentaire</span><b>{regulatoryGaps ? `${regulatoryGaps} à reprendre` : "Rien à reprendre"}</b></div>
+            </article>
+            <article>
+              <small>Attestations suivies</small>
+              <strong>{activeAttestations.length}</strong>
+              <p>{nearestAttestation ? `Échéance enregistrée la plus proche : ${formatDate(nearestAttestation.validUntil)} · ${nearestAttestation.referenceNumber}.` : "Aucune attestation active lisible."}</p>
+              <div><span>Échéance connue</span><b>{nearestAttestation ? formatDate(nearestAttestation.validUntil) : "—"}</b></div>
             </article>
           </div>
         ) : <div className="command-inline-empty">Le registre réglementaire n’est pas lisible actuellement.</div>}
@@ -302,12 +323,12 @@ export default async function DashboardPage() {
       </section>
 
       {degraded.length ? (
-        <section className="command-section command-system-section" aria-labelledby="system-heading">
-          <div className="command-section-heading">
-            <div><span className="eyebrow">ÉTAT SESIRA</span><h2 id="system-heading">Un composant demande votre regard</h2></div>
+        <section className="command-system-section stitch-section" aria-labelledby="system-heading">
+          <div className="stitch-section-title-row">
+            <div><h2 id="system-heading">État SESIRA · un composant demande votre regard</h2></div>
             <Link className="command-text-link" href="/app/etat-sesira">Diagnostic</Link>
           </div>
-          <div className="command-decision-list">{degraded.slice(0, 3).map((item) => <DecisionRow item={item} key={item.id} timezone={timezone} nowMs={nowMs} />)}</div>
+          <div className="stitch-decision-stack">{degraded.slice(0, 3).map((item) => <DecisionRow item={item} key={item.id} timezone={timezone} nowMs={nowMs} />)}</div>
         </section>
       ) : null}
     </div>
@@ -320,30 +341,37 @@ type MoneyCard = {
   totals: Array<{ currency: string; amount: number }>;
   href: string;
   note: string;
+  footLabel: string;
   attention?: boolean;
 };
 
 function DecisionRow({ item, timezone, nowMs }: { item: TodayAction; timezone: string; nowMs: number }) {
   return (
-    <article className={`command-decision-row command-kind-${item.category.toLowerCase()}`}>
-      <span className="command-decision-marker" aria-label={categoryLabel(item.category)}>{categoryInitial(item.category)}</span>
-      <div className="command-decision-copy">
-        <div><span className="command-decision-type">{categoryLabel(item.category)}</span><span>{relativeObserved(item.observedAt, timezone, nowMs)}</span></div>
-        <h3>{item.title}</h3>
-        <p>{item.detail}</p>
+    <article className={`stitch-decision-row stitch-kind-${decisionKind(item.category)}`}>
+      <span className="stitch-decision-code" aria-label={categoryLabel(item.category)}>{categoryInitial(item.category)}</span>
+      <div className="stitch-decision-body">
+        <div className="stitch-decision-titleline">
+          <h3>{item.title}</h3>
+          <span className="stitch-inline-tag">{categoryLabel(item.category)}</span>
+          <span className={item.category === "FACTURE" ? "stitch-age critical" : "stitch-age"}>{relativeObserved(item.observedAt, timezone, nowMs)}</span>
+        </div>
+        <p><strong>Statut :</strong> {item.detail}</p>
       </div>
-      <Link className={item.priority === 1 ? "command-action primary" : "command-action"} href={item.href}>{item.action}</Link>
+      <div className="stitch-decision-actions">
+        <Link className={item.priority === 1 ? "primary" : ""} href={item.href}>{item.action}</Link>
+        <Link href={item.href}>Dossier</Link>
+      </div>
     </article>
   );
 }
 
 function MoneyMetric({ card }: { card: MoneyCard }) {
   return (
-    <Link className={card.attention ? "command-money-card attention" : "command-money-card"} href={card.href}>
-      <div className="command-money-card-head"><span>{card.label}</span><span>{card.count} dossier{card.count > 1 ? "s" : ""}</span></div>
+    <Link className={card.attention ? "stitch-money-card attention" : "stitch-money-card"} href={card.href}>
+      <div className="stitch-money-head"><span>{card.label}</span><span>{card.count} dossier{card.count > 1 ? "s" : ""}</span></div>
       <strong>{formatCurrencyTotals(card.totals)}</strong>
       <p>{card.note}</p>
-      <span className="command-card-link">Consulter</span>
+      <div className="stitch-money-foot"><span>{card.footLabel}</span><strong>{card.count}</strong></div>
     </Link>
   );
 }
@@ -413,6 +441,8 @@ function categoryLabel(category: TodayAction["category"]) {
   return labels[category];
 }
 function categoryInitial(category: TodayAction["category"]) { return ({ COMMERCIAL: "D", CHANTIER: "C", RAPPORT: "R", FACTURE: "F", ENTRETIEN: "M", OBLIGATION: "O", TERRAIN: "T", SESIRA: "S" } as const)[category]; }
+function decisionKind(category: TodayAction["category"]) { return ({ COMMERCIAL: "commercial", CHANTIER: "commercial", RAPPORT: "terrain", FACTURE: "facture", ENTRETIEN: "commercial", OBLIGATION: "obligation", TERRAIN: "terrain", SESIRA: "sesira" } as const)[category]; }
+function fieldStatusTone(status: string) { if (status === "IN_PROGRESS") return "good"; if (status === "CONFIRMED") return "cyan"; return "neutral"; }
 function interventionLabel(status: string) { return ({ PLANNED: "À venir", CONFIRMED: "Confirmée", IN_PROGRESS: "En cours", COMPLETED: "Terminée", CANCELLED: "Annulée", NEEDS_ATTENTION: "À reprendre" } as Record<string, string>)[status] ?? status; }
 function automationModeLabel(levels: AutomationLevel[]) { const unique = [...new Set(levels)]; if (!unique.length) return "Observation"; if (unique.length === 1) return AUTOMATION_LEVEL_LABELS[unique[0]]; return "Modes mixtes"; }
 function opportunityIdFromHref(href: string) { const match = href.match(/^\/app\/opportunites\/([^/?#]+)/); return match?.[1] ?? null; }
