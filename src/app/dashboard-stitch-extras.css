@@ -112,6 +112,47 @@
   background: #0f5c63;
 }
 
+.stitch-org-menu {
+  position: relative;
+}
+
+.stitch-org-menu > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.stitch-org-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.stitch-org-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 80;
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid #ded8ce;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(30,27,20,.10);
+}
+
+.stitch-org-popover a {
+  display: block;
+  padding: 9px 10px;
+  border-radius: 4px;
+  color: #5e5a53;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.stitch-org-popover a:hover,
+.stitch-org-popover a.active {
+  background: #f4ede1;
+  color: #004349;
+}
+
 /* No directional arrows in the dashboard UI. */
 .stitch-progress-icon::after {
   content: "";
