@@ -115,7 +115,8 @@ export default async function DashboardPage() {
       return opportunity?.estimatedValue === null || !opportunity ? [] : [{ amount: opportunity.estimatedValue, currency: opportunity.currency }];
     });
   const overdueInvoices = invoices.status === "OK" ? invoices.rows.filter((invoice) => invoice.status === "OVERDUE") : [];
-  const nowMs = currentTimestamp();
+  const now = new Date();
+  const nowMs = now.getTime();
   const renewalHorizon = nowMs + 60 * DAY_MS;
   const renewals = maintenance.status === "OK"
     ? maintenance.rows.filter((contract) => {
@@ -157,7 +158,7 @@ export default async function DashboardPage() {
     },
   ];
 
-  const localToday = localIsoDate(timezone);
+  const localToday = localIsoDate(now, timezone);
   const fieldRows = interventions.status === "OK"
     ? interventions.rows.filter((row) => row.scheduledAt && localIsoDateFromTimestamp(row.scheduledAt, timezone) === localToday).slice(0, 4)
     : [];
@@ -178,7 +179,7 @@ export default async function DashboardPage() {
     <div className="command-dashboard">
       <section className="command-status-bar" aria-label="État du poste de commande">
         <div><span className="command-status-dot" aria-hidden="true" /><span className="command-kicker">Supervision</span><strong>{currentMode}</strong></div>
-        <div><span className="command-kicker">Lecture serveur</span><strong>{formatTimeInZone(new Date(), timezone)}</strong></div>
+        <div><span className="command-kicker">Lecture serveur</span><strong>{formatTimeInZone(now, timezone)}</strong></div>
         <div><span className="command-kicker">Décisions</span><strong>{decisions.length}</strong></div>
         {degraded.length ? (
           <Link className="command-service-warning" href="/app/etat-sesira">{degraded.length} service{degraded.length > 1 ? "s" : ""} à vérifier</Link>
@@ -194,27 +195,25 @@ export default async function DashboardPage() {
             : "SESIRA rassemble ici les décisions commerciales, terrain, financières et réglementaires qui demandent un geste explicite."}</p>
         </div>
         <div className="command-hero-meta">
-          <span>{formatLongDate(new Date(), timezone)}</span>
+          <span>{formatLongDate(now, timezone)}</span>
           <Link href="/app/automatisations">Autonomie</Link>
         </div>
       </header>
 
       {setupIncomplete ? (
-        <section className="command-setup-strip" aria-label="Configuration à terminer">
-          <div><span className="eyebrow">CONFIGURATION À TERMINER</span><strong>Le poste de commande reste visible pendant la mise en route.</strong></div>
-          <div className="command-setup-actions">
-            {!hasBusinessData ? <Link href="/app/imports">Ajouter les données</Link> : null}
-            {!connectedEmail ? <Link href="/app/integrations">Connecter la messagerie</Link> : null}
-            {!speedToLead?.configured ? <Link href="/app/parametres/politiques">Régler la prise en charge</Link> : null}
-            {!automationResult.data?.length ? <Link href="/app/automatisations">Choisir l’autonomie</Link> : null}
-          </div>
-        </section>
+        <FirstRunSetup
+          organizationName={viewer.organization.name}
+          hasBusinessData={hasBusinessData}
+          connectedEmail={connectedEmail}
+          policyConfigured={speedToLead?.configured === true}
+          automationConfigured={Boolean(automationResult.data?.length)}
+        />
       ) : null}
 
       {today.unavailable.length ? (
         <section className="command-partial-note">
           <StatusPill tone="warning">Lecture partielle</StatusPill>
-          <p>{today.unavailable.join(" · ")} : ces sources ne sont pas remplacées par zéro.</p>
+          <p>{today.unavailable.join(" · ")}. Elles ne sont pas remplacées par zéro.</p>
         </section>
       ) : null}
 
@@ -226,7 +225,7 @@ export default async function DashboardPage() {
 
         {visibleDecisions.length ? (
           <div className="command-decision-list">
-            {visibleDecisions.map((item) => <DecisionRow item={item} key={item.id} timezone={timezone} />)}
+            {visibleDecisions.map((item) => <DecisionRow item={item} key={item.id} timezone={timezone} nowMs={nowMs} />)}
           </div>
         ) : (
           <div className="command-clear-state"><span aria-hidden="true">✓</span><div><strong>File de décisions entièrement traitée.</strong><p>Aucune donnée enregistrée ne demande une validation immédiate.</p></div></div>
@@ -282,7 +281,7 @@ export default async function DashboardPage() {
             <article>
               <span className="eyebrow">CONTRÔLES D’ÉTANCHÉITÉ</span>
               <strong>{dueLeakChecks.length}</strong>
-              <p>{nextLeakCheck?.nextLeakCheck?.status === "DUE" ? `Prochaine échéance enregistrée ${relativeDue(nextLeakCheck.nextLeakCheck.nextDueAt)} · ${nextLeakCheck.label}.` : "Aucune prochaine échéance calculable dans le registre."}</p>
+              <p>{nextLeakCheck?.nextLeakCheck?.status === "DUE" ? `Prochaine échéance enregistrée ${relativeDue(nextLeakCheck.nextLeakCheck.nextDueAt, nowMs)} · ${nextLeakCheck.label}.` : "Aucune prochaine échéance calculable dans le registre."}</p>
               <Link href="/app/obligations/equipements">Équipements</Link>
             </article>
             <article>
@@ -308,7 +307,7 @@ export default async function DashboardPage() {
             <div><span className="eyebrow">ÉTAT SESIRA</span><h2 id="system-heading">Un composant demande votre regard</h2></div>
             <Link className="command-text-link" href="/app/etat-sesira">Diagnostic</Link>
           </div>
-          <div className="command-decision-list">{degraded.slice(0, 3).map((item) => <DecisionRow item={item} key={item.id} timezone={timezone} />)}</div>
+          <div className="command-decision-list">{degraded.slice(0, 3).map((item) => <DecisionRow item={item} key={item.id} timezone={timezone} nowMs={nowMs} />)}</div>
         </section>
       ) : null}
     </div>
@@ -324,12 +323,12 @@ type MoneyCard = {
   attention?: boolean;
 };
 
-function DecisionRow({ item, timezone }: { item: TodayAction; timezone: string }) {
+function DecisionRow({ item, timezone, nowMs }: { item: TodayAction; timezone: string; nowMs: number }) {
   return (
     <article className={`command-decision-row command-kind-${item.category.toLowerCase()}`}>
       <span className="command-decision-marker" aria-label={categoryLabel(item.category)}>{categoryInitial(item.category)}</span>
       <div className="command-decision-copy">
-        <div><span className="command-decision-type">{categoryLabel(item.category)}</span><span>{relativeObserved(item.observedAt, timezone)}</span></div>
+        <div><span className="command-decision-type">{categoryLabel(item.category)}</span><span>{relativeObserved(item.observedAt, timezone, nowMs)}</span></div>
         <h3>{item.title}</h3>
         <p>{item.detail}</p>
       </div>
@@ -345,6 +344,37 @@ function MoneyMetric({ card }: { card: MoneyCard }) {
       <strong>{formatCurrencyTotals(card.totals)}</strong>
       <p>{card.note}</p>
       <span className="command-card-link">Consulter</span>
+    </Link>
+  );
+}
+
+function FirstRunSetup({ organizationName, hasBusinessData, connectedEmail, policyConfigured, automationConfigured }: {
+  organizationName: string;
+  hasBusinessData: boolean;
+  connectedEmail: boolean;
+  policyConfigured: boolean;
+  automationConfigured: boolean;
+}) {
+  return (
+    <section className="command-setup-strip" aria-label="Configuration à terminer">
+      <div>
+        <span className="eyebrow">CONFIGURATION À TERMINER</span>
+        <strong>Préparer {organizationName}</strong>
+      </div>
+      <div className="command-setup-actions">
+        <SetupItem done={hasBusinessData} title="Ajouter vos données" description="Importez vos premiers clients et dossiers." href="/app/imports" action="Ajouter vos données" />
+        <SetupItem done={connectedEmail} title="Connecter la messagerie" description="Reliez la boîte professionnelle observée par SESIRA." href="/app/integrations" action="Connecter la messagerie" />
+        <SetupItem done={policyConfigured} title="Définir votre délai de prise en charge" description="Choisissez quand une nouvelle demande doit remonter dans Aujourd’hui." href="/app/parametres/politiques" action="Régler le délai" />
+        <SetupItem done={automationConfigured} title="Choisir l’autonomie" description="Définissez ce que SESIRA peut préparer ou exécuter." href="/app/automatisations" action="Choisir l’autonomie" />
+      </div>
+    </section>
+  );
+}
+
+function SetupItem({ done, title, description, href, action }: { done: boolean; title: string; description: string; href: string; action: string }) {
+  return (
+    <Link href={href} className="secondary-action-link" title={`${title} — ${description}`}>
+      {done ? "Vérifier" : action}
     </Link>
   );
 }
@@ -388,14 +418,13 @@ function automationModeLabel(levels: AutomationLevel[]) { const unique = [...new
 function opportunityIdFromHref(href: string) { const match = href.match(/^\/app\/opportunites\/([^/?#]+)/); return match?.[1] ?? null; }
 function sumByCurrency(items: Array<{ amount: number; currency: string }>) { const totals = new Map<string, number>(); for (const item of items) totals.set(item.currency, (totals.get(item.currency) ?? 0) + item.amount); return [...totals.entries()].map(([currency, amount]) => ({ currency, amount })).sort((a, b) => a.currency.localeCompare(b.currency)); }
 function formatCurrencyTotals(totals: Array<{ currency: string; amount: number }>) { if (!totals.length) return "—"; return totals.map(({ currency, amount }) => new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount)).join(" · "); }
-function localIsoDate(timeZone: string) { const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()); const map = Object.fromEntries(parts.map((part) => [part.type, part.value])); return `${map.year}-${map.month}-${map.day}`; }
+function localIsoDate(value: Date, timeZone: string) { const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(value); const map = Object.fromEntries(parts.map((part) => [part.type, part.value])); return `${map.year}-${map.month}-${map.day}`; }
 function localIsoDateFromTimestamp(value: string, timeZone: string) { const date = new Date(value); if (Number.isNaN(date.getTime())) return ""; const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date); const map = Object.fromEntries(parts.map((part) => [part.type, part.value])); return `${map.year}-${map.month}-${map.day}`; }
 function formatTimeInZone(value: Date, timeZone: string) { return new Intl.DateTimeFormat("fr-FR", { timeZone, hour: "2-digit", minute: "2-digit" }).format(value); }
 function formatLongDate(value: Date, timeZone: string) { return new Intl.DateTimeFormat("fr-FR", { timeZone, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(value); }
 function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "date inconnue" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(date); }
-function relativeObserved(value: string | null | undefined, timeZone: string) { if (!value) return "heure non renseignée"; const date = new Date(value); if (Number.isNaN(date.getTime())) return "heure non renseignée"; const delta = currentTimestamp() - date.getTime(); if (delta >= 0 && delta < 60 * 60_000) return `il y a ${Math.max(1, Math.round(delta / 60_000))} min`; if (delta >= 0 && delta < DAY_MS) return `il y a ${Math.round(delta / 3_600_000)} h`; if (delta >= 0) return `il y a ${Math.round(delta / DAY_MS)} j`; return new Intl.DateTimeFormat("fr-FR", { timeZone, dateStyle: "medium" }).format(date); }
-function relativeDue(value: string) { const time = new Date(value).getTime(); if (Number.isNaN(time)) return "à une date inconnue"; const days = Math.ceil((time - currentTimestamp()) / DAY_MS); if (days < 0) return `dépassée de ${Math.abs(days)} j`; if (days === 0) return "aujourd’hui"; return `dans ${days} j`; }
+function relativeObserved(value: string | null | undefined, timeZone: string, nowMs: number) { if (!value) return "heure non renseignée"; const date = new Date(value); if (Number.isNaN(date.getTime())) return "heure non renseignée"; const delta = nowMs - date.getTime(); if (delta >= 0 && delta < 60 * 60_000) return `il y a ${Math.max(1, Math.round(delta / 60_000))} min`; if (delta >= 0 && delta < DAY_MS) return `il y a ${Math.round(delta / 3_600_000)} h`; if (delta >= 0) return `il y a ${Math.round(delta / DAY_MS)} j`; return new Intl.DateTimeFormat("fr-FR", { timeZone, dateStyle: "medium" }).format(date); }
+function relativeDue(value: string, nowMs: number) { const time = new Date(value).getTime(); if (Number.isNaN(time)) return "à une date inconnue"; const days = Math.ceil((time - nowMs) / DAY_MS); if (days < 0) return `dépassée de ${Math.abs(days)} j`; if (days === 0) return "aujourd’hui"; return `dans ${days} j`; }
 function dueAt(row: { nextLeakCheck: { status: "DUE"; nextDueAt: string } | { status: "OUT_OF_SCOPE" } | { status: "UNAVAILABLE" } | null }) { return row.nextLeakCheck?.status === "DUE" ? Date.parse(row.nextLeakCheck.nextDueAt) : Number.POSITIVE_INFINITY; }
 function initials(value: string) { return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "—"; }
-function currentTimestamp() { return Date.now(); }
 function currentDate() { return new Date().toISOString().slice(0, 10); }
