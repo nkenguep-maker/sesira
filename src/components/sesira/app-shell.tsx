@@ -120,6 +120,7 @@ export function AppShell({
 }
 
 function StitchDashboardTopbar({ workspaceName, role, pathname }: { workspaceName: string; role: string; pathname: string }) {
+  const workspaceRole = role === "OWNER" ? "Direction" : role === "ADMIN" ? "Administration" : "Équipe";
   return (
     <header className="stitch-topbar">
       <div className="stitch-topbar-inner">
@@ -147,7 +148,7 @@ function StitchDashboardTopbar({ workspaceName, role, pathname }: { workspaceNam
           <Link className="stitch-search-control" href="/app/clients">Recherche</Link>
           <Link className="stitch-user-lockup" href="/app/organisation">
             <span className="stitch-user-avatar" aria-hidden="true">{workspaceInitial(workspaceName)}</span>
-            <span><strong>{workspaceName}</strong><small>{roleLabel(role)}</small></span>
+            <span><strong>{workspaceName}</strong><small>{workspaceRole}</small></span>
           </Link>
         </div>
       </div>
@@ -257,10 +258,4 @@ function isSectionTabActive(pathname: string, href: string) {
 
 function workspaceInitial(name: string) {
   return name.trim().charAt(0).toUpperCase() || "S";
-}
-
-function roleLabel(role: string) {
-  if (role === "OWNER") return "Direction";
-  if (role === "ADMIN") return "Administration";
-  return "Équipe";
 }
