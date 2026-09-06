@@ -212,7 +212,7 @@ export default function DemoTodayPage() {
 
         <div className="stitch-day-progress">
           <div className="stitch-progress-copy">
-            <span className="stitch-progress-icon">↗</span>
+            <span className="stitch-progress-icon" aria-hidden="true" />
             <div><small>Progression de la journée</small><strong>4 décisions traitées sur 9 (44%) — <em>12 270 € sécurisés ce matin</em></strong></div>
           </div>
           <div className="stitch-progress-track"><span /></div>
