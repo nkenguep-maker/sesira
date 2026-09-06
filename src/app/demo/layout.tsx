@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { DemoShell } from "@/components/sesira/demo-shell";
 
 import "./demo.css";
-import "./stitch-dashboard.css";
 
 export const metadata: Metadata = {
   title: "SESIRA Démo — THERMOPRO SERVICES",
