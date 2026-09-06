@@ -338,7 +338,7 @@ export default async function DashboardPage() {
         ) : (
           <div className="command-inline-empty">Le registre réglementaire n’est pas lisible actuellement.</div>
         )}
-        <p className="command-regulatory-boundary">SESIRA prépare, calcule et signale. Cette vue ne prononce aucun verdict de conformité et n’effectue aucun dépôt à votre place.</p>
+        <p className="command-regulatory-boundary">SESIRA prépare, calcule et signale. Cette vue ne qualifie pas votre situation réglementaire et n’effectue aucun dépôt à votre place.</p>
       </section>
 
       {degraded.length ? (
