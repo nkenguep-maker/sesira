@@ -1,0 +1,555 @@
+/* SESIRA Stitch — legibility + material depth pass.
+   Keeps the supplied Stitch visual language while making the operational UI
+   comfortable on a normal desktop display. No oversized SaaS cards, no glossy UI. */
+
+.stitch-dashboard-frame,
+.command-dashboard {
+  --st-depth-border: #d8d0c4;
+  --st-depth-border-strong: #c9c0b3;
+  --st-depth-shadow: 0 2px 0 rgba(30, 27, 20, .055), 0 8px 20px rgba(30, 27, 20, .045);
+  --st-depth-shadow-hover: 0 2px 0 rgba(30, 27, 20, .07), 0 12px 26px rgba(30, 27, 20, .065);
+}
+
+/* ----- Persistent product chrome ----- */
+.stitch-topbar,
+.stitch-topbar-inner,
+.stitch-topnav,
+.stitch-topnav a {
+  height: 64px;
+}
+
+.stitch-topbar {
+  border-bottom-color: #ded7cc;
+  box-shadow: 0 1px 0 rgba(30, 27, 20, .04);
+}
+
+.stitch-topbar-inner {
+  padding-inline: 26px;
+  gap: 22px;
+}
+
+.stitch-topbar-left {
+  gap: 26px;
+}
+
+.stitch-topbar-brand .brand {
+  font-size: 12.5px;
+}
+
+.stitch-topbar-brand .brand-mark {
+  width: 28px;
+  height: 28px;
+}
+
+.stitch-brand-divider {
+  height: 22px;
+}
+
+.stitch-workspace-lockup {
+  gap: 2px;
+}
+
+.stitch-workspace-lockup strong {
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.stitch-workspace-lockup span {
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.stitch-topnav {
+  gap: 9px;
+}
+
+.stitch-topnav a {
+  padding-inline: 10px;
+  font-size: 13.5px;
+  letter-spacing: -.005em;
+}
+
+.stitch-autonomy-pill {
+  padding: 7px 10px;
+  font-size: 9px;
+}
+
+.stitch-sync-label {
+  font-size: 9px;
+}
+
+.stitch-search-control {
+  padding: 9px 11px;
+  font-size: 10px;
+}
+
+.stitch-user-avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 10px;
+}
+
+.stitch-user-lockup strong {
+  font-size: 12.5px;
+}
+
+.stitch-user-lockup small,
+.stitch-exit-link {
+  font-size: 8.5px;
+}
+
+.stitch-dashboard-main {
+  width: min(1320px, 100%);
+  padding: 36px 28px 34px;
+}
+
+.stitch-app-main {
+  min-height: calc(100vh - 64px);
+}
+
+.stitch-section-tabs {
+  min-height: 48px;
+  margin-top: -8px;
+  margin-bottom: 28px;
+}
+
+.stitch-section-tabs a {
+  min-height: 48px;
+  font-size: 11px;
+}
+
+.stitch-org-popover {
+  border-color: var(--st-depth-border);
+  box-shadow: var(--st-depth-shadow-hover);
+}
+
+.stitch-org-popover a {
+  padding: 10px 11px;
+  font-size: 12px;
+}
+
+/* ----- Hero ----- */
+.stitch-hero-card,
+.command-hero {
+  min-height: 160px;
+  gap: 34px;
+  padding: 28px 28px;
+  border-color: var(--st-depth-border);
+  border-radius: 11px;
+  background:
+    radial-gradient(circle at 79% 34%, rgba(144, 209, 217, .22), transparent 30%),
+    radial-gradient(circle at 63% 76%, rgba(177, 240, 206, .18), transparent 28%),
+    linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
+  box-shadow: var(--st-depth-shadow);
+}
+
+.stitch-hero-kickers,
+.command-hero .eyebrow {
+  font-size: 9.5px;
+}
+
+.stitch-live-chip {
+  padding: 5px 8px;
+}
+
+.stitch-hero-card h1,
+.command-hero h1 {
+  max-width: 820px;
+  margin: 12px 0 10px;
+  font-size: clamp(28px, 2.45vw, 36px);
+  line-height: 1.12;
+}
+
+.stitch-hero-card p,
+.command-hero p {
+  max-width: 820px;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.stitch-mode-switch span {
+  padding: 7px 9px;
+  font-size: 8.5px;
+}
+
+.stitch-hero-action-row a,
+.command-hero-meta a {
+  min-height: 34px;
+  padding: 9px 11px;
+  font-size: 9.5px;
+}
+
+.command-hero-meta > span {
+  font-size: 9.5px;
+}
+
+/* ----- Section hierarchy ----- */
+.stitch-section,
+.command-section {
+  padding-top: 36px;
+}
+
+.stitch-section-title-row,
+.command-section-heading {
+  min-height: 32px;
+  margin-bottom: 14px;
+}
+
+.stitch-section-title-row h2,
+.command-section-heading h2 {
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 650;
+}
+
+.stitch-title-with-subtitle p {
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.stitch-waiting-badge {
+  padding: 5px 7px;
+  font-size: 8.5px;
+}
+
+.stitch-sort-label,
+.command-section-count,
+.command-heading-note,
+.command-inline-metrics,
+.command-text-link,
+.stitch-data-source {
+  font-size: 9.5px;
+  line-height: 1.35;
+}
+
+/* ----- Decision queue ----- */
+.stitch-decision-stack,
+.command-decision-list {
+  gap: 10px;
+}
+
+.stitch-decision-row,
+.command-decision-row {
+  min-height: 84px;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  gap: 15px;
+  padding: 13px 14px;
+  border-color: var(--st-depth-border);
+  border-radius: 9px;
+  background: linear-gradient(180deg, #ffffff 0%, #fffdfa 100%);
+  box-shadow: var(--st-depth-shadow);
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.stitch-decision-row:hover,
+.command-decision-row:hover {
+  border-color: var(--st-depth-border-strong);
+  box-shadow: var(--st-depth-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.stitch-decision-code,
+.command-decision-marker {
+  width: 42px;
+  height: 42px;
+  border-radius: 7px;
+  font-size: 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
+}
+
+.stitch-decision-titleline {
+  gap: 8px;
+}
+
+.stitch-decision-titleline h3,
+.command-decision-copy h3 {
+  font-size: 15.5px;
+  line-height: 1.3;
+  font-weight: 675;
+}
+
+.stitch-inline-tag {
+  padding: 3px 5px;
+  font-size: 9px;
+}
+
+.stitch-age {
+  font-size: 9.5px !important;
+}
+
+.stitch-decision-body p,
+.command-decision-copy p {
+  margin-top: 5px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.stitch-decision-actions {
+  gap: 7px;
+}
+
+.stitch-decision-actions a,
+.command-decision-actions a {
+  min-height: 34px;
+  padding: 9px 11px;
+  font-size: 10px;
+}
+
+.stitch-day-progress {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid #ded7cc;
+  border-radius: 7px;
+  background: #f8f2e7;
+}
+
+.stitch-progress-copy small {
+  font-size: 9px;
+}
+
+.stitch-progress-copy strong {
+  font-size: 12px;
+}
+
+/* ----- Finance cards ----- */
+.stitch-money-grid {
+  gap: 12px;
+}
+
+.stitch-money-card {
+  min-height: 172px;
+  padding: 18px 18px 16px;
+  border-color: var(--st-depth-border) !important;
+  border-radius: 10px !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fffdf8 100%) !important;
+  box-shadow: var(--st-depth-shadow) !important;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.stitch-money-card:hover {
+  border-color: var(--st-depth-border-strong) !important;
+  box-shadow: var(--st-depth-shadow-hover) !important;
+  transform: translateY(-1px);
+}
+
+.stitch-money-head {
+  font-size: 11.5px !important;
+  line-height: 1.3;
+}
+
+.stitch-money-card > strong {
+  margin-top: 14px !important;
+  font-size: 30px !important;
+  line-height: 1 !important;
+  letter-spacing: -.035em;
+}
+
+.stitch-money-card > p {
+  margin-top: 9px !important;
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
+
+.stitch-money-foot {
+  margin-top: 15px !important;
+  padding-top: 10px !important;
+  font-size: 10px !important;
+}
+
+.stitch-money-foot strong {
+  font-size: 11.5px !important;
+}
+
+/* ----- Field cards ----- */
+.stitch-field-grid {
+  gap: 12px;
+}
+
+.stitch-field-card {
+  min-height: 205px;
+  padding: 17px !important;
+  border-color: var(--st-depth-border) !important;
+  border-radius: 10px !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fffdf9 100%) !important;
+  box-shadow: var(--st-depth-shadow) !important;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.stitch-field-card:hover {
+  border-color: var(--st-depth-border-strong) !important;
+  box-shadow: var(--st-depth-shadow-hover) !important;
+  transform: translateY(-1px);
+}
+
+.stitch-field-avatar {
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 10px !important;
+}
+
+.stitch-field-person strong {
+  font-size: 13.5px !important;
+}
+
+.stitch-field-person span:not(.stitch-field-avatar):not(.stitch-field-status) {
+  font-size: 10px !important;
+}
+
+.stitch-field-status {
+  padding: 4px 6px !important;
+  font-size: 9px !important;
+}
+
+.stitch-field-job {
+  margin-top: 17px !important;
+}
+
+.stitch-field-job > strong {
+  font-size: 14px !important;
+  line-height: 1.3 !important;
+}
+
+.stitch-field-job > span,
+.stitch-field-job > b {
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
+
+.stitch-field-foot {
+  margin-top: 15px !important;
+  padding-top: 10px !important;
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+}
+
+.stitch-connection-pill {
+  padding: 6px 8px !important;
+  font-size: 9px !important;
+}
+
+/* ----- Regulatory panel ----- */
+.stitch-regulatory-panel {
+  margin-top: 36px !important;
+  padding: 22px !important;
+  border: 1px solid var(--st-depth-border) !important;
+  border-radius: 11px !important;
+  background: linear-gradient(180deg, #f6f0e5 0%, #f1eadf 100%) !important;
+  box-shadow: var(--st-depth-shadow) !important;
+}
+
+.stitch-reg-header h2 {
+  font-size: 21px !important;
+  line-height: 1.25 !important;
+}
+
+.stitch-reg-header p {
+  margin-top: 5px !important;
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
+
+.stitch-reg-capacity {
+  padding: 6px 8px !important;
+  font-size: 9px !important;
+}
+
+.stitch-reg-grid {
+  gap: 12px !important;
+  margin-top: 16px !important;
+}
+
+.stitch-reg-grid article {
+  min-height: 158px;
+  padding: 17px !important;
+  border: 1px solid #d4ccbf !important;
+  border-radius: 9px !important;
+  background: #fffdf9 !important;
+  box-shadow: 0 2px 0 rgba(30,27,20,.045), 0 6px 14px rgba(30,27,20,.035) !important;
+}
+
+.stitch-reg-grid article small {
+  font-size: 9.5px !important;
+}
+
+.stitch-reg-grid article > strong {
+  margin-top: 10px !important;
+  font-size: 23px !important;
+  line-height: 1.1 !important;
+}
+
+.stitch-reg-grid article > p {
+  margin-top: 8px !important;
+  font-size: 11.5px !important;
+  line-height: 1.45 !important;
+}
+
+.stitch-reg-grid article > div {
+  margin-top: 14px !important;
+  padding-top: 9px !important;
+  font-size: 10px !important;
+}
+
+.stitch-dashboard-footer {
+  margin-top: 30px !important;
+  font-size: 9.5px !important;
+}
+
+/* Setup / partial data messages remain compact but readable. */
+.command-setup-strip {
+  padding: 13px 14px;
+  border-color: var(--st-depth-border);
+  border-radius: 8px;
+  box-shadow: 0 2px 0 rgba(30,27,20,.035);
+}
+
+.command-setup-strip strong {
+  font-size: 13px;
+}
+
+.command-setup-actions a {
+  padding: 8px 10px;
+  font-size: 9.5px;
+}
+
+.command-partial-note p {
+  font-size: 11.5px;
+}
+
+@media (max-width: 1180px) {
+  .stitch-topbar,
+  .stitch-topbar-inner,
+  .stitch-topnav,
+  .stitch-topnav a {
+    height: 60px;
+  }
+
+  .stitch-topnav a {
+    font-size: 12.5px;
+  }
+
+  .stitch-dashboard-main {
+    padding-inline: 22px;
+  }
+}
+
+@media (max-width: 760px) {
+  .stitch-dashboard-main {
+    padding: 24px 16px 28px;
+  }
+
+  .stitch-hero-card,
+  .command-hero {
+    padding: 22px 18px;
+  }
+
+  .stitch-hero-card h1,
+  .command-hero h1 {
+    font-size: 27px;
+  }
+
+  .stitch-decision-row,
+  .command-decision-row {
+    padding: 12px;
+  }
+}
