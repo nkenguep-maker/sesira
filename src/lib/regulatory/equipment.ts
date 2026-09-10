@@ -3,7 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/server";
-import type { Database, Json } from "@/types/database";
+import type { Database } from "@/types/database";
 
 /**
  * C33.2 — equipment + regulatory attentions helpers.

@@ -60,6 +60,7 @@ export default function CustomerVisualPreviewPage() {
           status: "ACTIVE",
         },
       }}
+      currentMode={null}
     >
       <CustomerListScreen customers={demoCustomers} stats={{ total: 84, companies: 31, recent: 12 }} />
     </AppShell>
