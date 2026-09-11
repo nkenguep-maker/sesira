@@ -189,47 +189,16 @@ export default async function DashboardPage() {
       ) : null}
 
       <section className="sesira-metric-grid" aria-label="Résumé du jour">
-        <MetricCard
-          label="À décider"
-          value={String(decisions.length)}
-          meta={decisions.length ? "sujet(s) attendent un geste" : "rien d’urgent"}
-          href="/app/suivi"
-          tone="violet"
-          icon="!"
-        />
-        <MetricCard
-          label="Devis en attente"
-          value={formatCurrencyTotals(quoteTotals)}
-          meta={`${commercialQuotes.length} dossier${commercialQuotes.length === 1 ? "" : "s"}`}
-          href="/app/devis"
-          tone="blue"
-          icon="D"
-        />
-        <MetricCard
-          label="Factures échues"
-          value={formatCurrencyTotals(overdueTotals)}
-          meta={`${overdueInvoices.length} créance${overdueInvoices.length === 1 ? "" : "s"}`}
-          href="/app/factures"
-          tone={overdueInvoices.length ? "rose" : "green"}
-          icon="€"
-        />
-        <MetricCard
-          label="Terrain aujourd’hui"
-          value={String(fieldRows.length)}
-          meta={`${reportsToValidate ?? "—"} rapport${reportsToValidate === 1 ? "" : "s"} à valider`}
-          href="/app/interventions"
-          tone="green"
-          icon="T"
-        />
+        <MetricCard label="À décider" value={String(decisions.length)} meta={decisions.length ? "sujet(s) attendent un geste" : "rien d’urgent"} href="/app/suivi" tone="violet" icon="!" />
+        <MetricCard label="Devis en attente" value={formatCurrencyTotals(quoteTotals)} meta={`${commercialQuotes.length} dossier${commercialQuotes.length === 1 ? "" : "s"}`} href="/app/devis" tone="blue" icon="D" />
+        <MetricCard label="Factures échues" value={formatCurrencyTotals(overdueTotals)} meta={`${overdueInvoices.length} créance${overdueInvoices.length === 1 ? "" : "s"}`} href="/app/factures" tone={overdueInvoices.length ? "rose" : "green"} icon="€" />
+        <MetricCard label="Terrain aujourd’hui" value={String(fieldRows.length)} meta={`${reportsToValidate ?? "—"} rapport${reportsToValidate === 1 ? "" : "s"} à valider`} href="/app/interventions" tone="green" icon="T" />
       </section>
 
       <div className="sesira-home-primary-grid">
         <section className="sesira-panel sesira-priority-panel" aria-labelledby="priorities-title">
           <div className="sesira-panel-heading">
-            <div>
-              <span className="sesira-panel-kicker">Priorités</span>
-              <h2 id="priorities-title">À faire maintenant</h2>
-            </div>
+            <div><span className="sesira-panel-kicker">Priorités</span><h2 id="priorities-title">À faire maintenant</h2></div>
             {decisions.length > 5 ? <Link href="/app/suivi">Voir les {decisions.length}</Link> : null}
           </div>
 
@@ -239,10 +208,7 @@ export default async function DashboardPage() {
                 <article className="sesira-priority-row" key={item.id}>
                   <span className={`sesira-priority-icon tone-${decisionTone(item.category)}`}>{categoryInitial(item.category)}</span>
                   <div className="sesira-priority-copy">
-                    <div className="sesira-priority-meta">
-                      <span>{categoryLabel(item.category)}</span>
-                      <time>{relativeObserved(item.observedAt, timezone, nowMs)}</time>
-                    </div>
+                    <div className="sesira-priority-meta"><span>{categoryLabel(item.category)}</span><time>{relativeObserved(item.observedAt, timezone, nowMs)}</time></div>
                     <h3>{item.title}</h3>
                     <p>{item.detail}</p>
                   </div>
@@ -251,19 +217,13 @@ export default async function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="sesira-positive-empty">
-              <span>✓</span>
-              <div><strong>Tout est traité.</strong><p>Aucune décision immédiate ne demande votre attention.</p></div>
-            </div>
+            <div className="sesira-positive-empty"><span>✓</span><div><strong>Tout est traité.</strong><p>Aucune décision immédiate ne demande votre attention.</p></div></div>
           )}
         </section>
 
         <section className="sesira-panel sesira-field-panel" aria-labelledby="field-title">
           <div className="sesira-panel-heading">
-            <div>
-              <span className="sesira-panel-kicker">Terrain</span>
-              <h2 id="field-title">Aujourd’hui</h2>
-            </div>
+            <div><span className="sesira-panel-kicker">Terrain</span><h2 id="field-title">Aujourd’hui</h2></div>
             <Link href="/app/interventions">Planning</Link>
           </div>
 
@@ -281,30 +241,19 @@ export default async function DashboardPage() {
                 return (
                   <Link className="sesira-field-row" href="/app/interventions" key={row.id}>
                     <time>{row.scheduledAt ? formatTimeInZone(new Date(row.scheduledAt), timezone) : "—"}</time>
-                    <div>
-                      <strong>{row.title}</strong>
-                      <span>{person} · {location}</span>
-                    </div>
+                    <div><strong>{row.title}</strong><span>{person} · {location}</span></div>
                     <span className={`sesira-status tone-${fieldStatusTone(row.status)}`}>{interventionLabel(row.status)}</span>
                   </Link>
                 );
               })}
             </div>
-          ) : (
-            <div className="sesira-compact-empty">Aucune intervention planifiée aujourd’hui.</div>
-          )}
+          ) : <div className="sesira-compact-empty">Aucune intervention planifiée aujourd’hui.</div>}
         </section>
       </div>
 
       <div className="sesira-home-secondary-grid">
         <section className="sesira-panel" aria-labelledby="money-watch-title">
-          <div className="sesira-panel-heading">
-            <div>
-              <span className="sesira-panel-kicker">Argent</span>
-              <h2 id="money-watch-title">À surveiller</h2>
-            </div>
-            <Link href="/app/factures">Finances</Link>
-          </div>
+          <div className="sesira-panel-heading"><div><span className="sesira-panel-kicker">Argent</span><h2 id="money-watch-title">À surveiller</h2></div><Link href="/app/factures">Finances</Link></div>
           <div className="sesira-watch-list">
             <WatchRow label="Vendu non planifié" value={formatCurrencyTotals(soldNotScheduledTotals)} meta={`${soldNotScheduledValues.length} affaire${soldNotScheduledValues.length === 1 ? "" : "s"}`} href="/app/interventions" />
             <WatchRow label="Contrats à renouveler < 60 j" value={formatCurrencyTotals(renewalTotals)} meta={`${renewals.length} contrat${renewals.length === 1 ? "" : "s"}`} href="/app/maintenance" />
@@ -313,33 +262,12 @@ export default async function DashboardPage() {
         </section>
 
         <section className="sesira-panel" aria-labelledby="reg-watch-title">
-          <div className="sesira-panel-heading">
-            <div>
-              <span className="sesira-panel-kicker">Obligations</span>
-              <h2 id="reg-watch-title">À préparer</h2>
-            </div>
-            <Link href="/app/obligations/documents">Registre</Link>
-          </div>
+          <div className="sesira-panel-heading"><div><span className="sesira-panel-kicker">Obligations</span><h2 id="reg-watch-title">À préparer</h2></div><Link href="/app/obligations/documents">Registre</Link></div>
           {reg ? (
             <div className="sesira-watch-list">
-              <WatchRow
-                label="Contrôles d’étanchéité"
-                value={String(dueLeakChecks.length)}
-                meta={nextLeakCheck?.nextLeakCheck?.status === "DUE" ? `${relativeDue(nextLeakCheck.nextLeakCheck.nextDueAt, nowMs)} · ${nextLeakCheck.label}` : "Aucune échéance calculable"}
-                href="/app/obligations/equipements"
-              />
-              <WatchRow
-                label="Documents à compléter"
-                value={String(regulatoryGaps ?? 0)}
-                meta={regulatoryGaps ? "informations manquantes" : "rien à reprendre"}
-                href="/app/obligations/documents"
-              />
-              <WatchRow
-                label="Attestations suivies"
-                value={String(activeAttestations.length)}
-                meta={nearestAttestation ? `prochaine échéance ${formatDate(nearestAttestation.validUntil)}` : "aucune échéance active lisible"}
-                href="/app/obligations/documents"
-              />
+              <WatchRow label="Contrôles d’étanchéité" value={String(dueLeakChecks.length)} meta={nextLeakCheck?.nextLeakCheck?.status === "DUE" ? `${relativeDue(nextLeakCheck.nextLeakCheck.nextDueAt, nowMs)} · ${nextLeakCheck.label}` : "Aucune échéance calculable"} href="/app/obligations/equipements" />
+              <WatchRow label="Documents à compléter" value={String(regulatoryGaps ?? 0)} meta={regulatoryGaps ? "informations manquantes" : "rien à reprendre"} href="/app/obligations/documents" />
+              <WatchRow label="Attestations suivies" value={String(activeAttestations.length)} meta={nearestAttestation ? `prochaine échéance ${formatDate(nearestAttestation.validUntil)}` : "aucune échéance active lisible"} href="/app/obligations/documents" />
             </div>
           ) : <div className="sesira-compact-empty">Le registre n’est pas lisible actuellement.</div>}
           <p className="sesira-reg-boundary">SESIRA prépare et signale les éléments connus. Aucun verdict réglementaire n’est émis ici.</p>
@@ -347,13 +275,7 @@ export default async function DashboardPage() {
       </div>
 
       {degraded.length ? (
-        <section className="sesira-system-alert">
-          <div>
-            <strong>SESIRA demande votre attention.</strong>
-            <span>{degraded[0].title}</span>
-          </div>
-          <Link href="/app/etat-sesira">Voir le diagnostic</Link>
-        </section>
+        <section className="sesira-system-alert"><div><strong>SESIRA demande votre attention.</strong><span>{degraded[0].title}</span></div><Link href="/app/etat-sesira">Voir le diagnostic</Link></section>
       ) : null}
     </div>
   );
@@ -362,28 +284,14 @@ export default async function DashboardPage() {
 type MetricTone = "violet" | "blue" | "green" | "rose";
 
 function MetricCard({ label, value, meta, href, tone, icon }: { label: string; value: string; meta: string; href: string; tone: MetricTone; icon: string }) {
-  return (
-    <Link className={`sesira-metric-card tone-${tone}`} href={href}>
-      <div className="sesira-metric-top"><span className="sesira-metric-icon">{icon}</span><span>{label}</span></div>
-      <strong>{value}</strong>
-      <p>{meta}</p>
-    </Link>
-  );
+  return <Link className={`sesira-metric-card tone-${tone}`} href={href}><div className="sesira-metric-top"><span className="sesira-metric-icon">{icon}</span><span>{label}</span></div><strong>{value}</strong><p>{meta}</p></Link>;
 }
 
 function WatchRow({ label, value, meta, href }: { label: string; value: string; meta: string; href: string }) {
-  return (
-    <Link className="sesira-watch-row" href={href}>
-      <div><strong>{label}</strong><span>{meta}</span></div>
-      <b>{value}</b>
-    </Link>
-  );
+  return <Link className="sesira-watch-row" href={href}><div><strong>{label}</strong><span>{meta}</span></div><b>{value}</b></Link>;
 }
 
-function TechnicianToday({ organizationName, workspace }: {
-  organizationName: string;
-  workspace: { actions: TodayAction[]; unavailable: string[] };
-}) {
+function TechnicianToday({ organizationName, workspace }: { organizationName: string; workspace: { actions: TodayAction[]; unavailable: string[] } }) {
   const urgent = workspace.actions.filter((item) => item.priority === 1).length;
   return (
     <div className="sesira-home technician-home">
@@ -403,112 +311,23 @@ function TechnicianToday({ organizationName, workspace }: {
 }
 
 function categoryLabel(category: TodayAction["category"]) {
-  const labels: Record<TodayAction["category"], string> = {
-    COMMERCIAL: "Devis & clients",
-    CHANTIER: "Chantier",
-    RAPPORT: "Rapport terrain",
-    FACTURE: "Facture",
-    ENTRETIEN: "Entretien",
-    OBLIGATION: "Obligation CVC",
-    TERRAIN: "Terrain",
-    SESIRA: "SESIRA",
-  };
+  const labels: Record<TodayAction["category"], string> = { COMMERCIAL: "Devis & clients", CHANTIER: "Chantier", RAPPORT: "Rapport terrain", FACTURE: "Facture", ENTRETIEN: "Entretien", OBLIGATION: "Obligation CVC", TERRAIN: "Terrain", SESIRA: "SESIRA" };
   return labels[category];
 }
-
-function categoryInitial(category: TodayAction["category"]) {
-  return ({ COMMERCIAL: "D", CHANTIER: "C", RAPPORT: "R", FACTURE: "F", ENTRETIEN: "M", OBLIGATION: "O", TERRAIN: "T", SESIRA: "S" } as const)[category];
-}
-
-function decisionTone(category: TodayAction["category"]) {
-  return ({ COMMERCIAL: "blue", CHANTIER: "violet", RAPPORT: "green", FACTURE: "rose", ENTRETIEN: "violet", OBLIGATION: "amber", TERRAIN: "green", SESIRA: "rose" } as const)[category];
-}
-
-function fieldStatusTone(status: string) {
-  if (status === "IN_PROGRESS") return "green";
-  if (status === "CONFIRMED") return "blue";
-  if (status === "NEEDS_ATTENTION") return "rose";
-  return "neutral";
-}
-
-function interventionLabel(status: string) {
-  return ({ PLANNED: "À venir", CONFIRMED: "Confirmée", IN_PROGRESS: "En cours", COMPLETED: "Terminée", CANCELLED: "Annulée", NEEDS_ATTENTION: "À reprendre" } as Record<string, string>)[status] ?? status;
-}
-
-function automationModeLabel(levels: AutomationLevel[]) {
-  const unique = [...new Set(levels)];
-  if (!unique.length) return "Observation";
-  if (unique.length === 1) return AUTOMATION_LEVEL_LABELS[unique[0]];
-  return "Modes mixtes";
-}
-
-function opportunityIdFromHref(href: string) {
-  const match = href.match(/^\/app\/opportunites\/([^/?#]+)/);
-  return match?.[1] ?? null;
-}
-
-function sumByCurrency(items: Array<{ amount: number; currency: string }>) {
-  const totals = new Map<string, number>();
-  for (const item of items) totals.set(item.currency, (totals.get(item.currency) ?? 0) + item.amount);
-  return [...totals.entries()].map(([currency, amount]) => ({ currency, amount })).sort((a, b) => a.currency.localeCompare(b.currency));
-}
-
-function formatCurrencyTotals(totals: Array<{ currency: string; amount: number }>) {
-  if (!totals.length) return "—";
-  return totals.map(({ currency, amount }) => new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount)).join(" · ");
-}
-
-function localIsoDate(value: Date, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(value);
-  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${map.year}-${map.month}-${map.day}`;
-}
-
-function localIsoDateFromTimestamp(value: string, timeZone: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : localIsoDate(date, timeZone);
-}
-
-function formatTimeInZone(value: Date, timeZone: string) {
-  return new Intl.DateTimeFormat("fr-FR", { timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(value);
-}
-
-function formatLongDate(value: Date, timeZone: string) {
-  return new Intl.DateTimeFormat("fr-FR", { timeZone, weekday: "long", day: "numeric", month: "long" }).format(value);
-}
-
-function formatDate(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", year: "numeric" }).format(parsed);
-}
-
-function currentDate() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function relativeObserved(value: string | null, timeZone: string, nowMs: number) {
-  if (!value) return "Heure inconnue";
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) return "Heure inconnue";
-  const diff = Math.max(0, nowMs - parsed);
-  if (diff < 60 * 60 * 1000) return `Il y a ${Math.max(1, Math.round(diff / 60_000))} min`;
-  if (diff < DAY_MS) return `Il y a ${Math.round(diff / 3_600_000)} h`;
-  return new Intl.DateTimeFormat("fr-FR", { timeZone, day: "2-digit", month: "short" }).format(new Date(parsed));
-}
-
-function relativeDue(value: string | null, nowMs: number) {
-  if (!value) return "Échéance inconnue";
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) return "Échéance inconnue";
-  const days = Math.ceil((parsed - nowMs) / DAY_MS);
-  if (days < 0) return `Échéance dépassée de ${Math.abs(days)} j`;
-  if (days === 0) return "Échéance aujourd’hui";
-  return `Échéance dans ${days} j`;
-}
-
-function dueAt(equipment: { nextLeakCheck: { nextDueAt: string | null } | null }) {
-  const value = equipment.nextLeakCheck?.nextDueAt;
-  const parsed = value ? Date.parse(value) : Number.POSITIVE_INFINITY;
-  return Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed;
-}
+function categoryInitial(category: TodayAction["category"]) { return ({ COMMERCIAL: "D", CHANTIER: "C", RAPPORT: "R", FACTURE: "F", ENTRETIEN: "M", OBLIGATION: "O", TERRAIN: "T", SESIRA: "S" } as const)[category]; }
+function decisionTone(category: TodayAction["category"]) { return ({ COMMERCIAL: "blue", CHANTIER: "violet", RAPPORT: "green", FACTURE: "rose", ENTRETIEN: "violet", OBLIGATION: "amber", TERRAIN: "green", SESIRA: "rose" } as const)[category]; }
+function fieldStatusTone(status: string) { if (status === "IN_PROGRESS") return "green"; if (status === "CONFIRMED") return "blue"; if (status === "NEEDS_ATTENTION") return "rose"; return "neutral"; }
+function interventionLabel(status: string) { return ({ PLANNED: "À venir", CONFIRMED: "Confirmée", IN_PROGRESS: "En cours", COMPLETED: "Terminée", CANCELLED: "Annulée", NEEDS_ATTENTION: "À reprendre" } as Record<string, string>)[status] ?? status; }
+function automationModeLabel(levels: AutomationLevel[]) { const unique = [...new Set(levels)]; if (!unique.length) return "Observation"; if (unique.length === 1) return AUTOMATION_LEVEL_LABELS[unique[0]]; return "Modes mixtes"; }
+function opportunityIdFromHref(href: string) { const match = href.match(/^\/app\/opportunites\/([^/?#]+)/); return match?.[1] ?? null; }
+function sumByCurrency(items: Array<{ amount: number; currency: string }>) { const totals = new Map<string, number>(); for (const item of items) totals.set(item.currency, (totals.get(item.currency) ?? 0) + item.amount); return [...totals.entries()].map(([currency, amount]) => ({ currency, amount })).sort((a, b) => a.currency.localeCompare(b.currency)); }
+function formatCurrencyTotals(totals: Array<{ currency: string; amount: number }>) { if (!totals.length) return "—"; return totals.map(({ currency, amount }) => new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount)).join(" · "); }
+function localIsoDate(value: Date, timeZone: string) { const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(value); const map = Object.fromEntries(parts.map((part) => [part.type, part.value])); return `${map.year}-${map.month}-${map.day}`; }
+function localIsoDateFromTimestamp(value: string, timeZone: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "" : localIsoDate(date, timeZone); }
+function formatTimeInZone(value: Date, timeZone: string) { return new Intl.DateTimeFormat("fr-FR", { timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(value); }
+function formatLongDate(value: Date, timeZone: string) { return new Intl.DateTimeFormat("fr-FR", { timeZone, weekday: "long", day: "numeric", month: "long" }).format(value); }
+function formatDate(value: string) { const parsed = new Date(value); if (Number.isNaN(parsed.getTime())) return value; return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", year: "numeric" }).format(parsed); }
+function currentDate() { return new Date().toISOString().slice(0, 10); }
+function relativeObserved(value: string | null | undefined, timeZone: string, nowMs: number) { if (!value) return "Heure inconnue"; const parsed = Date.parse(value); if (Number.isNaN(parsed)) return "Heure inconnue"; const diff = Math.max(0, nowMs - parsed); if (diff < 60 * 60 * 1000) return `Il y a ${Math.max(1, Math.round(diff / 60_000))} min`; if (diff < DAY_MS) return `Il y a ${Math.round(diff / 3_600_000)} h`; return new Intl.DateTimeFormat("fr-FR", { timeZone, day: "2-digit", month: "short" }).format(new Date(parsed)); }
+function relativeDue(value: string | null, nowMs: number) { if (!value) return "Échéance inconnue"; const parsed = Date.parse(value); if (Number.isNaN(parsed)) return "Échéance inconnue"; const days = Math.ceil((parsed - nowMs) / DAY_MS); if (days < 0) return `Échéance dépassée de ${Math.abs(days)} j`; if (days === 0) return "Échéance aujourd’hui"; return `Échéance dans ${days} j`; }
+function dueAt(equipment: { nextLeakCheck: { status: string; nextDueAt?: string } | null }) { const check = equipment.nextLeakCheck; if (!check || check.status !== "DUE" || !check.nextDueAt) return Number.POSITIVE_INFINITY; const parsed = Date.parse(check.nextDueAt); return Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed; }
