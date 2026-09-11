@@ -20,7 +20,6 @@ export default async function DevisPage() {
   const readinessByQuoteId = new Map(draftReadiness.map((item) => [item.quoteId, item] as const));
   const active = quotes.filter((quote) => ACTIVE_STATUSES.has(quote.status)).length;
   const needsHuman = quotes.filter((quote) => quote.status === "NEEDS_HUMAN").length;
-  const won = quotes.filter((quote) => quote.status === "WON").length;
   const totalValue = sumKnownAmounts(quotes);
 
   return (
@@ -99,7 +98,7 @@ export default async function DevisPage() {
         <section className="premium-trust-note">
           <span className="eyebrow">GARDE-FOU</span>
           <h2>Le prix reste une décision humaine.</h2>
-          <p>SESIRA peut signaler les informations manquantes et structurer le suivi. Le prix, les conditions commerciales et l’envoi final restent sous le contrôle de votre équipe.</p>
+          <p>SESIRA applique ce contrôle au moment de l’enregistrement. Il peut signaler les informations manquantes et structurer le suivi, mais le prix, les conditions commerciales et l’envoi final restent sous le contrôle de votre équipe.</p>
         </section>
       ) : null}
     </>
