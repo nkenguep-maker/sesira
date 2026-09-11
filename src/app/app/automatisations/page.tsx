@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { AUTOMATION_CATALOG, findAutomationDefinition } from "@/lib/automations/catalog";
@@ -39,24 +41,26 @@ export default async function AutomationsPage() {
   const activeKeys = new Set(cards.map((card) => card.key));
   const recentActivity = cards.reduce((total, card) => total + card.recentActivity.length, 0);
   const currentMode = cards[0]?.level ? AUTOMATION_LEVEL_LABELS[cards[0].level] : "Observation";
+  const needsAttention = cards.filter((card) => card.health.tone === "amber").length;
 
   return (
     <>
       <PageHeader
-        eyebrow="06 · AUTOMATISATIONS"
+        eyebrow="PILOTAGE"
         title="Automatisations"
-        description="SESIRA surveille vos processus selon les règles définies avec votre entreprise. Les décisions sensibles restent humaines."
+        description="Voyez ce que SESIRA observe, ce qu’il peut exécuter et ce qui reste sous validation humaine."
+        actions={<Link className="button ghost" href="/app/parametres/politiques">Règles de l’organisation</Link>}
       />
 
-      <section className="premium-automation-summary">
-        <div><strong>{cards.length}</strong><span>Automatisations actives</span></div>
+      <section className="premium-automation-summary" aria-label="Résumé des automatisations">
+        <div><strong>{cards.length}</strong><span>Actives</span></div>
         <div><strong>{currentMode}</strong><span>Mode actuel</span></div>
-        <div><strong>{recentActivity}</strong><span>Activités récentes visibles</span></div>
-        <div><strong>{cards.filter((card) => card.health.tone === "amber").length}</strong><span>À vérifier</span></div>
+        <div><strong>{recentActivity}</strong><span>Activités récentes</span></div>
+        <div><strong>{needsAttention}</strong><span>À vérifier</span></div>
       </section>
 
       {cards.length ? (
-        <section className="premium-automation-list">
+        <section className="premium-automation-list" aria-label="Automatisations actives">
           {cards.map((card) => (
             <article key={card.id} className="premium-automation-card">
               <header>
@@ -78,41 +82,28 @@ export default async function AutomationsPage() {
                   <div><span>Dernier problème</span><strong>{card.lastProblem ?? "Aucun enregistré"}</strong></div>
                 </div>
                 <div className="premium-automation-policy">
-                  <span className="eyebrow">CE QUE SESIRA PEUT FAIRE</span>
-                  <p>{card.allowedAction}</p>
-                  <span className="eyebrow">CE QUI RESTE HUMAIN</span>
-                  <p>{card.humanJudgment}</p>
+                  <span className="eyebrow">SESIRA PEUT</span><p>{card.allowedAction}</p>
+                  <span className="eyebrow">VOTRE ÉQUIPE DÉCIDE</span><p>{card.humanJudgment}</p>
                 </div>
               </div>
 
               <div className="premium-activity-strip">
                 <span className="eyebrow">ACTIVITÉ RÉCENTE</span>
-                {card.activityAvailable ? card.recentActivity.length ? (
-                  <div>{card.recentActivity.map((activity) => <p key={activity.id}><span>{activity.label}</span><time>{activity.date}</time></p>)}</div>
-                ) : <p className="premium-muted-copy">Aucune activité récente.</p> : <p className="premium-muted-copy">L’activité détaillée n’est pas disponible pour cette automatisation.</p>}
+                {card.activityAvailable ? card.recentActivity.length ? <div>{card.recentActivity.map((activity) => <p key={activity.id}><span>{activity.label}</span><time>{activity.date}</time></p>)}</div> : <p className="premium-muted-copy">Aucune activité récente.</p> : <p className="premium-muted-copy">L’activité détaillée n’est pas disponible pour cette automatisation.</p>}
               </div>
             </article>
           ))}
         </section>
       ) : (
-        <section className="premium-empty-editorial">
-          <span className="eyebrow">OBSERVATION</span>
-          <h2>Aucune automatisation active.</h2>
-          <p>SESIRA peut commencer par observer le suivi de vos devis sans déclencher d’action externe.</p>
-        </section>
+        <section className="premium-empty-editorial"><span className="eyebrow">OBSERVATION</span><h2>Aucune automatisation active.</h2><p>SESIRA peut commencer par observer vos processus sans déclencher d’action externe.</p></section>
       )}
 
       <section className="premium-catalog-section">
-        <div className="premium-section-heading"><div><span className="eyebrow">CATALOGUE</span><h2>Les processus prévus dans SESIRA.</h2></div></div>
+        <div className="premium-section-heading"><div><span className="eyebrow">CATALOGUE</span><h2>Processus disponibles</h2></div></div>
         <div className="premium-catalog-grid">
           {AUTOMATION_CATALOG.map((definition) => {
             const active = activeKeys.has(definition.key);
-            return (
-              <article key={definition.key} className={active ? "active" : ""}>
-                <div><span className="eyebrow">{definition.key}</span><h3>{definition.title}</h3><p>{definition.description}</p></div>
-                <StatusPill tone={active ? "good" : "neutral"}>{active ? "Actif" : "À configurer"}</StatusPill>
-              </article>
-            );
+            return <article key={definition.key} className={active ? "active" : ""}><div><span className="eyebrow">{definition.key}</span><h3>{definition.title}</h3><p>{definition.description}</p></div><StatusPill tone={active ? "good" : "neutral"}>{active ? "Actif" : "À configurer"}</StatusPill></article>;
           })}
         </div>
       </section>
