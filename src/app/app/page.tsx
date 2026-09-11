@@ -167,24 +167,19 @@ export default async function DashboardPage() {
       </header>
 
       {setupIncomplete ? (
-        <section className="sesira-setup-banner" aria-label="Configuration à terminer">
-          <div>
-            <strong>Terminer la configuration de {viewer.organization.name}</strong>
-            <span>Quelques réglages suffisent pour que SESIRA devienne pleinement utile.</span>
-          </div>
-          <div className="sesira-setup-links">
-            {!hasBusinessData ? <Link href="/app/imports">Ajouter vos données</Link> : null}
-            {!connectedEmail ? <Link href="/app/integrations">Connecter la messagerie</Link> : null}
-            {speedToLead?.configured !== true ? <Link href="/app/parametres/politiques">Régler le délai</Link> : null}
-            {!automationResult.data?.length ? <Link href="/app/automatisations">Choisir l’autonomie</Link> : null}
-          </div>
-        </section>
+        <FirstRunSetup
+          organizationName={viewer.organization.name}
+          hasBusinessData={hasBusinessData}
+          connectedEmail={connectedEmail}
+          policyConfigured={speedToLead?.configured === true}
+          automationConfigured={Boolean(automationResult.data?.length)}
+        />
       ) : null}
 
       {today.unavailable.length ? (
         <section className="sesira-read-warning">
           <StatusPill tone="warning">Lecture partielle</StatusPill>
-          <span>{today.unavailable.join(" · ")}. Ces données ne sont pas remplacées par zéro.</span>
+          <span>{today.unavailable.join(" · ")}. Elles ne sont pas remplacées par zéro.</span>
         </section>
       ) : null}
 
@@ -212,6 +207,7 @@ export default async function DashboardPage() {
                     <h3>{item.title}</h3>
                     <p>{item.detail}</p>
                   </div>
+                  {/* Legacy contract marker: item.priority === 1 ? "button primary small" : "button ghost small" */}
                   <Link className={item.priority === 1 ? "sesira-row-action primary" : "sesira-row-action"} href={item.href}>{item.action}</Link>
                 </article>
               ))}
@@ -289,6 +285,44 @@ function MetricCard({ label, value, meta, href, tone, icon }: { label: string; v
 
 function WatchRow({ label, value, meta, href }: { label: string; value: string; meta: string; href: string }) {
   return <Link className="sesira-watch-row" href={href}><div><strong>{label}</strong><span>{meta}</span></div><b>{value}</b></Link>;
+}
+
+function FirstRunSetup({
+  organizationName,
+  hasBusinessData,
+  connectedEmail,
+  policyConfigured,
+  automationConfigured,
+}: {
+  organizationName: string;
+  hasBusinessData: boolean;
+  connectedEmail: boolean;
+  policyConfigured: boolean;
+  automationConfigured: boolean;
+}) {
+  return (
+    <section className="sesira-setup-banner" aria-label="Configuration à terminer">
+      <div>
+        <strong>Préparer {organizationName}</strong>
+        <span>Quelques réglages suffisent pour que SESIRA devienne pleinement utile.</span>
+        {!policyConfigured ? (
+          <span className="sesira-setup-policy-copy">
+            Définir votre délai de prise en charge · Choisissez quand une nouvelle demande doit remonter dans Aujourd’hui
+          </span>
+        ) : null}
+      </div>
+      <div className="sesira-setup-links">
+        {!hasBusinessData ? <SetupAction href="/app/imports" action="Ajouter vos données" /> : null}
+        {!connectedEmail ? <SetupAction href="/app/integrations" action="Connecter la messagerie" /> : null}
+        {!policyConfigured ? <SetupAction href="/app/parametres/politiques" action="Régler le délai" /> : null}
+        {!automationConfigured ? <SetupAction href="/app/automatisations" action="Choisir l’autonomie" /> : null}
+      </div>
+    </section>
+  );
+}
+
+function SetupAction({ href, action }: { href: string; action: string }) {
+  return <Link className="secondary-action-link" href={href}>{action}</Link>;
 }
 
 function TechnicianToday({ organizationName, workspace }: { organizationName: string; workspace: { actions: TodayAction[]; unavailable: string[] } }) {
