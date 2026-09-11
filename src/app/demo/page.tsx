@@ -2,307 +2,175 @@ import Link from "next/link";
 
 export const dynamic = "force-static";
 
-const DEMO_DECISIONS = [
+const DECISIONS = [
   {
     id: "d1",
     code: "D",
-    kind: "commercial",
-    title: "Devis 4 820 € — Boulangerie Marchand",
-    tag: "Climatisation VRV",
+    tone: "blue",
+    category: "Devis & clients",
     age: "Il y a 3 h",
-    detail: "Réponse reçue avec accord de principe par courriel. Planning prévisionnel prêt.",
-    action: "Valider & Planifier",
+    title: "Devis 4 820 € — Boulangerie Marchand",
+    detail: "Accord de principe reçu. Le planning prévisionnel est prêt.",
+    action: "Valider & planifier",
     href: "/demo/devis",
-    priority: 1,
+    primary: true,
   },
   {
     id: "d2",
     code: "F",
-    kind: "facture",
-    title: "Facture 12 400 € — Hypermarché Carrefour Market",
-    tag: "Chambre froide négative",
+    tone: "rose",
+    category: "Facture",
     age: "Échue depuis 8 jours",
-    detail: "Relance niveau 2 préparée avec accusé de livraison et attestation CERFA jointe.",
+    title: "Facture 12 400 € — Carrefour Market",
+    detail: "Relance niveau 2 préparée avec les pièces déjà disponibles.",
     action: "Vérifier la relance",
     href: "/demo/factures",
-    priority: 1,
+    primary: true,
   },
   {
     id: "d3",
-    code: "R",
-    kind: "obligation",
-    title: "Contrôle d’étanchéité périodique — 3 groupes frigorifiques",
-    tag: "Lidl Échirolles",
+    code: "O",
+    tone: "amber",
+    category: "Obligation CVC",
     age: "Échéance J-6",
-    detail: "Charge totale > 50 Teq CO₂. Fiche d’intervention à préparer avant déplacement.",
+    title: "Contrôle d’étanchéité — 3 groupes frigorifiques",
+    detail: "La fiche d’intervention doit être préparée avant déplacement.",
     action: "Préparer la fiche",
     href: "/demo/obligations",
-    priority: 1,
+    primary: true,
   },
   {
     id: "d4",
-    code: "T",
-    kind: "terrain",
-    title: "Rapport #INT-409 — Julien B. chez Pharmacie Centrale",
-    tag: "R449A · 1,8 kg",
+    code: "R",
+    tone: "green",
+    category: "Rapport terrain",
     age: "Il y a 45 min",
-    detail: "Remplacement compresseur renseigné, test pression N₂ effectué, rapport à approuver.",
-    action: "Approuver le rapport",
+    title: "Rapport #INT-409 — Pharmacie Centrale",
+    detail: "Le rapport de Julien B. est complet et attend votre approbation.",
+    action: "Approuver",
     href: "/demo/documents",
-    priority: 2,
+    primary: false,
   },
   {
     id: "d5",
-    code: "C",
-    kind: "commercial",
-    title: "Renouvellement contrat annuel — Clinique du Mail · 24 800 € / an",
-    tag: "Multi-sites CVC",
+    code: "M",
+    tone: "violet",
+    category: "Entretien",
     age: "Échéance J-45",
-    detail: "Proposition calculée à partir du contrat existant. Validation humaine encore requise.",
-    action: "Vérifier la proposition",
+    title: "Renouvellement — Clinique du Mail · 24 800 € / an",
+    detail: "La proposition est prête. Une validation humaine reste nécessaire.",
+    action: "Vérifier",
     href: "/demo/maintenance",
-    priority: 2,
+    primary: false,
   },
 ] as const;
 
-const DEMO_MONEY = [
-  {
-    label: "Devis en attente",
-    value: "48 650 €",
-    meta: "+12 % sur 30 jours · 8 dossiers",
-    footLabel: "Délai moyen réponse",
-    footValue: "4,2 jours",
-    attention: false,
-    href: "/demo/devis",
-  },
-  {
-    label: "Vendu non planifié",
-    value: "34 200 €",
-    meta: "5 chantiers signés · 9 climatiseurs prêts",
-    footLabel: "Capacité équipe",
-    footValue: "3 techniciens J+2",
-    attention: false,
-    href: "/demo/interventions",
-  },
-  {
-    label: "Factures échues à recouvrer",
-    value: "21 800 €",
-    meta: "4 créances ouvertes · ancienneté < 20 j",
-    footLabel: "Préparées",
-    footValue: "2 relances",
-    attention: true,
-    href: "/demo/factures",
-  },
-  {
-    label: "Contrats < 60 jours",
-    value: "76 500 €",
-    meta: "11 contrats clés · renouvellements à préparer",
-    footLabel: "Renouvellement",
-    footValue: "À vérifier",
-    attention: false,
-    href: "/demo/maintenance",
-  },
-] as const;
-
-const DEMO_FIELD = [
-  {
-    initials: "JB",
-    name: "Julien B.",
-    van: "Camionnette 04",
-    location: "Grenoble Sud",
-    status: "En cours",
-    tone: "good",
-    title: "Chambre froide positive (+2°C)",
-    site: "Boucherie des Halles · R452A",
-    detail: "Étape 2/3 · tirage au vide",
-    foot: "Débuté à 10:30 · sonde Testo connectée",
-  },
-  {
-    initials: "MD",
-    name: "Marc D.",
-    van: "Camionnette 02",
-    location: "Valence",
-    status: "En route",
-    tone: "cyan",
-    title: "Dépannage CTA Air Neuf",
-    site: "Laboratoire Biomédic · défaut débit",
-    detail: "Arrivée estimée dans 14 min",
-    foot: "Tournée planifiée · véhicule 02",
-  },
-  {
-    initials: "TL",
-    name: "Thomas L.",
-    van: "Camionnette 01",
-    location: "Crolles",
-    status: "Terminée",
-    tone: "neutral",
-    title: "Contrôle annuel étanchéité",
-    site: "Entrepôt logistique · 6 groupes",
-    detail: "Rapport généré · CERFA prêt",
-    foot: "Temps passé 2 h 15 · anomalie renseignée",
-  },
-  {
-    initials: "AV",
-    name: "Antoine V.",
-    van: "Atelier",
-    location: "Départ 13:30",
-    status: "Prévue",
-    tone: "neutral",
-    title: "Maintenance PAC Hybride",
-    site: "Résidence Les Cèdres · R32",
-    detail: "Matériel & fluide chargés",
-    foot: "Charge R32 · 4,5 kg · lot B49-2026",
-  },
+const FIELD = [
+  { time: "10:30", title: "Chambre froide positive", person: "Julien B.", location: "Grenoble Sud", status: "En cours", tone: "green" },
+  { time: "11:40", title: "Dépannage CTA Air Neuf", person: "Marc D.", location: "Valence", status: "Confirmée", tone: "blue" },
+  { time: "13:30", title: "Maintenance PAC Hybride", person: "Antoine V.", location: "Résidence Les Cèdres", status: "À venir", tone: "neutral" },
+  { time: "15:10", title: "Contrôle annuel étanchéité", person: "Thomas L.", location: "Crolles", status: "À venir", tone: "neutral" },
 ] as const;
 
 export default function DemoTodayPage() {
   return (
-    <div className="command-dashboard stitch-faithful-dashboard demo-command-dashboard">
-      <header className="stitch-hero-card">
-        <div className="stitch-hero-copy">
-          <div className="stitch-hero-kickers">
-            <span className="stitch-live-chip"><span />Supervision temps réel</span>
-            <span>ISÈRE & RHÔNE-ALPES</span>
-          </div>
-          <h1>Bonjour Laurent, <strong>5 décisions</strong> requièrent votre validation aujourd’hui</h1>
-          <p>SESIRA a préparé 3 relances automatiques et synchronisé 8 rapports d’intervention sans conflit télémétrique.</p>
+    <div className="sesira-home demo-simple-home">
+      <header className="sesira-home-header">
+        <div>
+          <div className="sesira-home-kicker">Aujourd’hui · jeudi 11 septembre</div>
+          <h1>Voici ce qui compte.</h1>
+          <p>Clim & Froid Dauphiné · Démo · Validation requise</p>
         </div>
-
-        <div className="stitch-hero-actions" aria-label="Modes de démonstration">
-          <div className="stitch-mode-switch">
-            <span className="active">Mode nominal</span>
-            <span>Observation</span>
-            <span>File vidée</span>
-          </div>
-          <div className="stitch-hero-action-row">
-            <Link href="/demo/automatisations">Pause auto</Link>
-            <Link href="/demo/documents">Export</Link>
-          </div>
+        <div className="sesira-home-actions">
+          <Link className="sesira-btn secondary" href="/demo/relances">Voir tout</Link>
+          <Link className="sesira-btn primary" href="/demo/interventions">Planning du jour</Link>
         </div>
       </header>
 
-      <section className="stitch-section stitch-decisions-section" aria-labelledby="demo-decision-heading">
-        <div className="stitch-section-title-row">
-          <div className="stitch-title-with-badge">
-            <h2 id="demo-decision-heading">File de Décisions Immédiates</h2>
-            <span className="stitch-waiting-badge">5 en attente</span>
-          </div>
-          <span className="stitch-sort-label">Triée par valeur × urgence</span>
-        </div>
+      <section className="sesira-metric-grid" aria-label="Résumé de démonstration">
+        <Metric label="À décider" value="5" meta="3 sujets prioritaires" href="/demo/relances" tone="violet" icon="!" />
+        <Metric label="Devis en attente" value="48 650 €" meta="8 dossiers" href="/demo/devis" tone="blue" icon="D" />
+        <Metric label="Factures échues" value="21 800 €" meta="4 créances" href="/demo/factures" tone="rose" icon="€" />
+        <Metric label="Terrain aujourd’hui" value="4" meta="1 rapport à valider" href="/demo/interventions" tone="green" icon="T" />
+      </section>
 
-        <div className="stitch-decision-stack">
-          {DEMO_DECISIONS.map((item) => (
-            <article className={`stitch-decision-row stitch-kind-${item.kind}`} key={item.id}>
-              <span className="stitch-decision-code" aria-label={item.kind}>{item.code}</span>
-              <div className="stitch-decision-body">
-                <div className="stitch-decision-titleline">
+      <div className="sesira-home-primary-grid">
+        <section className="sesira-panel sesira-priority-panel" aria-labelledby="demo-priorities-title">
+          <div className="sesira-panel-heading">
+            <div><span className="sesira-panel-kicker">Priorités</span><h2 id="demo-priorities-title">À faire maintenant</h2></div>
+            <Link href="/demo/relances">Voir les 5</Link>
+          </div>
+          <div className="sesira-priority-list">
+            {DECISIONS.map((item) => (
+              <article className="sesira-priority-row" key={item.id}>
+                <span className={`sesira-priority-icon tone-${item.tone}`}>{item.code}</span>
+                <div className="sesira-priority-copy">
+                  <div className="sesira-priority-meta"><span>{item.category}</span><time>{item.age}</time></div>
                   <h3>{item.title}</h3>
-                  <span className="stitch-inline-tag">{item.tag}</span>
-                  <span className={item.kind === "facture" ? "stitch-age critical" : "stitch-age"}>{item.age}</span>
+                  <p>{item.detail}</p>
                 </div>
-                <p><strong>Statut :</strong> {item.detail}</p>
-              </div>
-              <div className="stitch-decision-actions">
-                <Link className={item.priority === 1 ? "primary" : ""} href={item.href}>{item.action}</Link>
-                <Link href={item.href}>Détails</Link>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        <div className="stitch-day-progress">
-          <div className="stitch-progress-copy">
-            <span className="stitch-progress-icon" aria-hidden="true" />
-            <div><small>Progression de la journée</small><strong>4 décisions traitées sur 9 (44%) — <em>12 270 € sécurisés ce matin</em></strong></div>
+                <Link className={item.primary ? "sesira-row-action primary" : "sesira-row-action"} href={item.href}>{item.action}</Link>
+              </article>
+            ))}
           </div>
-          <div className="stitch-progress-track"><span /></div>
-        </div>
-      </section>
+        </section>
 
-      <section className="stitch-section" aria-labelledby="demo-money-heading">
-        <div className="stitch-section-title-row stitch-title-with-subtitle">
-          <div>
-            <h2 id="demo-money-heading">Cockpit Financier & Cash-Flow</h2>
-            <p>Vision consolidée des flux contractuels et des en-cours de facturation HVAC</p>
+        <section className="sesira-panel sesira-field-panel" aria-labelledby="demo-field-title">
+          <div className="sesira-panel-heading">
+            <div><span className="sesira-panel-kicker">Terrain</span><h2 id="demo-field-title">Aujourd’hui</h2></div>
+            <Link href="/demo/interventions">Planning</Link>
           </div>
-          <span className="stitch-data-source">Actualisé démo · ERP / comptabilité</span>
-        </div>
-
-        <div className="stitch-money-grid">
-          {DEMO_MONEY.map((item) => (
-            <Link className={item.attention ? "stitch-money-card attention" : "stitch-money-card"} href={item.href} key={item.label}>
-              <div className="stitch-money-head"><span>{item.label}</span><span>◫</span></div>
-              <strong>{item.value}</strong>
-              <p>{item.meta}</p>
-              <div className="stitch-money-foot"><span>{item.footLabel}</span><strong>{item.footValue}</strong></div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="stitch-section" aria-labelledby="demo-field-heading">
-        <div className="stitch-section-title-row stitch-title-with-subtitle">
-          <div>
-            <h2 id="demo-field-heading">Aujourd’hui sur le Terrain</h2>
-            <p>Suivi opérationnel des interventions, étapes de tirage au vide et remontées terrain</p>
+          <div className="sesira-field-summary">
+            <span><strong>4</strong> interventions</span>
+            <span><strong>1</strong> rapport</span>
+            <span><strong>0</strong> conflit</span>
           </div>
-          <span className="stitch-connection-pill"><span />4 tablettes connectées · 0 conflit de synchronisation</span>
-        </div>
-
-        <div className="stitch-field-grid">
-          {DEMO_FIELD.map((row) => (
-            <Link className="stitch-field-card" href="/demo/interventions" key={row.name}>
-              <div className="stitch-field-person">
-                <span className="stitch-field-avatar">{row.initials}</span>
-                <div><strong>{row.name}</strong><span>{row.van} · {row.location}</span></div>
-                <span className={`stitch-field-status ${row.tone}`}>{row.status}</span>
-              </div>
-              <div className="stitch-field-job">
-                <strong>{row.title}</strong>
-                <span>{row.site}</span>
-                <b>{row.detail}</b>
-              </div>
-              <div className="stitch-field-foot">{row.foot}</div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="stitch-regulatory-panel" aria-labelledby="demo-reg-heading">
-        <div className="stitch-reg-header">
-          <div>
-            <h2 id="demo-reg-heading">Suivi F-Gas & Traçabilité CERFA 15497*04</h2>
-            <p>Registre de démonstration · aucune qualification réglementaire réelle</p>
+          <div className="sesira-field-list">
+            {FIELD.map((row) => (
+              <Link className="sesira-field-row" href="/demo/interventions" key={`${row.time}-${row.title}`}>
+                <time>{row.time}</time>
+                <div><strong>{row.title}</strong><span>{row.person} · {row.location}</span></div>
+                <span className={`sesira-status tone-${row.tone}`}>{row.status}</span>
+              </Link>
+            ))}
           </div>
-          <span className="stitch-reg-capacity">Attestation de capacité · exemple de démonstration</span>
-        </div>
+        </section>
+      </div>
 
-        <div className="stitch-reg-grid">
-          <article>
-            <small>Bilan annuel fluides frigorigènes</small>
-            <strong>482,4 kg</strong>
-            <p>R134a, R404A/R449A, R32 et R410A suivis dans le jeu de données fictif.</p>
-            <div><span>J-112 avant le 31 janvier</span><b>À préparer</b></div>
-          </article>
-          <article className="attention">
-            <small>À compléter</small>
-            <strong>2 fiches d’intervention</strong>
-            <p>Informations manquantes sur deux interventions avant génération documentaire.</p>
-            <div><span>Action humaine</span><b>2 fiches</b></div>
-          </article>
-          <article>
-            <small>Parc outillage & balances</small>
-            <strong>6 balances étalonnées</strong>
-            <p>Dates d’étalonnage de démonstration associées aux équipements de mesure.</p>
-            <div><span>Prochaine échéance</span><b>18 oct. 2026</b></div>
-          </article>
-        </div>
-      </section>
+      <div className="sesira-home-secondary-grid">
+        <section className="sesira-panel" aria-labelledby="demo-money-title">
+          <div className="sesira-panel-heading">
+            <div><span className="sesira-panel-kicker">Argent</span><h2 id="demo-money-title">À surveiller</h2></div>
+            <Link href="/demo/factures">Finances</Link>
+          </div>
+          <div className="sesira-watch-list">
+            <Watch label="Vendu non planifié" value="34 200 €" meta="5 affaires" href="/demo/interventions" />
+            <Watch label="Contrats à renouveler < 60 j" value="76 500 €" meta="11 contrats" href="/demo/maintenance" />
+            <Watch label="Devis en attente" value="48 650 €" meta="8 dossiers" href="/demo/devis" />
+          </div>
+        </section>
 
-      <footer className="stitch-dashboard-footer">
-        <span>© 2026 SESIRA OS — Système d’exploitation génie climatique & froid commercial.</span>
-        <span>Démonstration · aucune action externe</span>
-      </footer>
+        <section className="sesira-panel" aria-labelledby="demo-reg-title">
+          <div className="sesira-panel-heading">
+            <div><span className="sesira-panel-kicker">Obligations</span><h2 id="demo-reg-title">À préparer</h2></div>
+            <Link href="/demo/obligations">Registre</Link>
+          </div>
+          <div className="sesira-watch-list">
+            <Watch label="Contrôles d’étanchéité" value="3" meta="prochaine échéance dans 6 jours" href="/demo/obligations" />
+            <Watch label="Documents à compléter" value="2" meta="fiches d’intervention" href="/demo/documents" />
+            <Watch label="Attestations suivies" value="2" meta="prochaine échéance 18 oct. 2026" href="/demo/obligations" />
+          </div>
+          <p className="sesira-reg-boundary">Données fictives. SESIRA prépare et signale les éléments connus ; aucun verdict réglementaire réel n’est émis.</p>
+        </section>
+      </div>
     </div>
   );
+}
+
+function Metric({ label, value, meta, href, tone, icon }: { label: string; value: string; meta: string; href: string; tone: "violet" | "blue" | "green" | "rose"; icon: string }) {
+  return <Link className={`sesira-metric-card tone-${tone}`} href={href}><div className="sesira-metric-top"><span className="sesira-metric-icon">{icon}</span><span>{label}</span></div><strong>{value}</strong><p>{meta}</p></Link>;
+}
+
+function Watch({ label, value, meta, href }: { label: string; value: string; meta: string; href: string }) {
+  return <Link className="sesira-watch-row" href={href}><div><strong>{label}</strong><span>{meta}</span></div><b>{value}</b></Link>;
 }

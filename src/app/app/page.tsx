@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
+import { EmptyState, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { AUTOMATION_LEVELS, type AutomationLevel } from "@/lib/automations/contracts";
 import { AUTOMATION_LEVEL_LABELS } from "@/lib/automations/view-model";
@@ -37,11 +37,11 @@ export default async function DashboardPage() {
 
   if (isTechnician) {
     const today = await getTechnicianToday(organizationId, viewer.userId, currentDate());
-    return <TodayInbox organizationName={viewer.organization.name} workspace={today} technician />;
+    return <TechnicianToday organizationName={viewer.organization.name} workspace={today} />;
   }
 
   const supabase = await createClient();
-  const [customersResult, quotesResult, integrationsResult, automationResult, speedToLead] = await Promise.all([
+  const [customersResult, quotesCountResult, integrationsResult, automationResult, speedToLead] = await Promise.all([
     supabase.from("customers").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
     supabase.from("quotes").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
     supabase.from("integrations").select("id,type,status").eq("organization_id", organizationId),
@@ -50,10 +50,10 @@ export default async function DashboardPage() {
   ]);
 
   const customerCount = customersResult.error ? null : (customersResult.count ?? 0);
-  const quoteCount = quotesResult.error ? null : (quotesResult.count ?? 0);
+  const quoteCount = quotesCountResult.error ? null : (quotesCountResult.count ?? 0);
   const hasBusinessData = (customerCount ?? 0) > 0 || (quoteCount ?? 0) > 0;
   const connectedEmail = (integrationsResult.data ?? []).some((item) => item.type === "EMAIL" && item.status === "CONNECTED");
-  const setupStateIsReliable = !customersResult.error && !quotesResult.error && !integrationsResult.error;
+  const setupStateIsReliable = !customersResult.error && !quotesCountResult.error && !integrationsResult.error;
   const setupIncomplete = setupStateIsReliable && (!hasBusinessData || !connectedEmail);
 
   const [
@@ -91,20 +91,22 @@ export default async function DashboardPage() {
   ]);
 
   const timezone = settings?.timezone ?? "Europe/Paris";
+  const now = new Date();
+  const nowMs = now.getTime();
   const automationLevels = automationLevelsResult.error
     ? []
     : (automationLevelsResult.data ?? [])
         .map((row) => row.level)
         .filter((level): level is AutomationLevel => AUTOMATION_LEVELS.includes(level as AutomationLevel));
-
   const currentMode = automationModeLabel(automationLevels);
-  const observation = automationLevels.length === 0 || automationLevels.every((level) => level === "OBSERVATION" || level === "SHADOW");
+
   const degraded = today.actions.filter((item) => item.category === "SESIRA");
   const decisions = today.actions.filter((item) => item.category !== "SESIRA");
-  const visibleDecisions = decisions.slice(0, 7);
-  const hiddenDecisionCount = Math.max(0, decisions.length - visibleDecisions.length);
+  const visibleDecisions = decisions.slice(0, 5);
 
   const commercialQuotes = quotes.filter((quote) => ACTIVE_QUOTE_STATUSES.has(quote.status) && quote.amount !== null);
+  const quoteTotals = sumByCurrency(commercialQuotes.map((quote) => ({ amount: quote.amount ?? 0, currency: quote.currency })));
+
   const opportunityById = new Map(opportunities.map((opportunity) => [opportunity.id, opportunity] as const));
   const soldNotScheduledValues = today.actions
     .filter((item) => item.category === "CHANTIER")
@@ -112,11 +114,15 @@ export default async function DashboardPage() {
     .filter((id): id is string => Boolean(id))
     .flatMap((id) => {
       const opportunity = opportunityById.get(id);
-      return opportunity?.estimatedValue === null || !opportunity ? [] : [{ amount: opportunity.estimatedValue, currency: opportunity.currency }];
+      return opportunity?.estimatedValue === null || !opportunity
+        ? []
+        : [{ amount: opportunity.estimatedValue, currency: opportunity.currency }];
     });
+  const soldNotScheduledTotals = sumByCurrency(soldNotScheduledValues);
+
   const overdueInvoices = invoices.status === "OK" ? invoices.rows.filter((invoice) => invoice.status === "OVERDUE") : [];
-  const now = new Date();
-  const nowMs = now.getTime();
+  const overdueTotals = sumByCurrency(overdueInvoices.map((invoice) => ({ amount: invoice.amount, currency: invoice.currency })));
+
   const renewalHorizon = nowMs + 60 * DAY_MS;
   const renewals = maintenance.status === "OK"
     ? maintenance.rows.filter((contract) => {
@@ -125,46 +131,13 @@ export default async function DashboardPage() {
         return !Number.isNaN(end) && end >= nowMs && end <= renewalHorizon;
       })
     : [];
-
-  const moneyCards: MoneyCard[] = [
-    {
-      label: "Devis en attente",
-      count: commercialQuotes.length,
-      totals: sumByCurrency(commercialQuotes.map((quote) => ({ amount: quote.amount ?? 0, currency: quote.currency }))),
-      href: "/app/devis",
-      note: "Devis envoyés, relancés ou en attente d’une décision.",
-      footLabel: "Dossiers suivis",
-    },
-    {
-      label: "Vendu non planifié",
-      count: soldNotScheduledValues.length,
-      totals: sumByCurrency(soldNotScheduledValues),
-      href: "/app/interventions",
-      note: "Affaires gagnées qui remontent faute de prochain pas opérationnel.",
-      footLabel: "À planifier",
-    },
-    {
-      label: "Factures échues",
-      count: overdueInvoices.length,
-      totals: sumByCurrency(overdueInvoices.map((invoice) => ({ amount: invoice.amount, currency: invoice.currency }))),
-      href: "/app/factures",
-      note: "Montants issus des factures actuellement enregistrées en retard.",
-      footLabel: "Créances ouvertes",
-      attention: overdueInvoices.length > 0,
-    },
-    {
-      label: "Contrats < 60 jours",
-      count: renewals.length,
-      totals: sumByCurrency(renewals.flatMap((contract) => contract.amount === null ? [] : [{ amount: contract.amount, currency: contract.currency }])),
-      href: "/app/maintenance",
-      note: "Contrats dont la date de fin connue tombe dans les 60 prochains jours.",
-      footLabel: "Renouvellements",
-    },
-  ];
+  const renewalTotals = sumByCurrency(renewals.flatMap((contract) => contract.amount === null ? [] : [{ amount: contract.amount, currency: contract.currency }]));
 
   const localToday = localIsoDate(now, timezone);
   const fieldRows = interventions.status === "OK"
-    ? interventions.rows.filter((row) => row.scheduledAt && localIsoDateFromTimestamp(row.scheduledAt, timezone) === localToday).slice(0, 4)
+    ? interventions.rows
+        .filter((row) => row.scheduledAt && localIsoDateFromTimestamp(row.scheduledAt, timezone) === localToday)
+        .slice(0, 5)
     : [];
   const memberByUser = new Map(members.map((member) => [member.userId, member.fullName ?? member.email ?? "Technicien"] as const));
   const reportsToValidate = reports.status === "OK" ? reports.rows.filter((report) => report.status === "REVIEWED").length : null;
@@ -180,29 +153,16 @@ export default async function DashboardPage() {
   const regulatoryGaps = reg?.exports.reduce((total, item) => total + item.gapCount, 0) ?? null;
 
   return (
-    <div className="command-dashboard stitch-faithful-dashboard">
-      <header className="stitch-hero-card">
-        <div className="stitch-hero-copy">
-          <div className="stitch-hero-kickers">
-            <span className="stitch-live-chip"><span />{currentMode}</span>
-            <span>POSTE DE COMMANDE CVC · {viewer.organization.name}</span>
-          </div>
-          <h1>
-            {decisions.length ? <>{decisions.length} décision{decisions.length > 1 ? "s" : ""} requièrent votre validation aujourd’hui</> : <>Aucune décision immédiate ne requiert votre validation</>}
-          </h1>
-          <p>{observation
-            ? "SESIRA observe les données disponibles et prépare les prochains gestes. Aucun envoi n’est déduit d’un simple signal."
-            : "SESIRA rassemble ici les décisions commerciales, terrain, financières et réglementaires qui demandent un geste explicite."}</p>
+    <div className="sesira-home">
+      <header className="sesira-home-header">
+        <div>
+          <div className="sesira-home-kicker">Aujourd’hui · {formatLongDate(now, timezone)}</div>
+          <h1>Voici ce qui compte.</h1>
+          <p>{viewer.organization.name} · {currentMode}</p>
         </div>
-        <div className="stitch-hero-actions">
-          <div className="stitch-mode-switch" aria-label="État du poste de commande">
-            <span className="active">{currentMode}</span>
-            <span>{formatLongDate(now, timezone)}</span>
-          </div>
-          <div className="stitch-hero-action-row">
-            <Link href="/app/automatisations">Autonomie</Link>
-            <Link href="/app/parametres/export">Export</Link>
-          </div>
+        <div className="sesira-home-actions">
+          <Link className="sesira-btn secondary" href="/app/suivi">Voir tout</Link>
+          <Link className="sesira-btn primary" href="/app/interventions">Planning du jour</Link>
         </div>
       </header>
 
@@ -217,166 +177,123 @@ export default async function DashboardPage() {
       ) : null}
 
       {today.unavailable.length ? (
-        <section className="command-partial-note">
+        <section className="sesira-read-warning">
           <StatusPill tone="warning">Lecture partielle</StatusPill>
-          <p>{today.unavailable.join(" · ")}. Elles ne sont pas remplacées par zéro.</p>
+          <span>{today.unavailable.join(" · ")}. Elles ne sont pas remplacées par zéro.</span>
         </section>
       ) : null}
 
-      <section className="stitch-section stitch-decisions-section" aria-labelledby="decision-heading">
-        <div className="stitch-section-title-row">
-          <div className="stitch-title-with-badge">
-            <h2 id="decision-heading">File de Décisions Immédiates</h2>
-            {decisions.length ? <span className="stitch-waiting-badge">{decisions.length} en attente</span> : null}
-          </div>
-          <span className="stitch-sort-label">Triée par valeur × urgence</span>
-        </div>
-
-        {visibleDecisions.length ? (
-          <div className="stitch-decision-stack">
-            {visibleDecisions.map((item) => <DecisionRow item={item} key={item.id} timezone={timezone} nowMs={nowMs} />)}
-          </div>
-        ) : (
-          <div className="command-clear-state"><span aria-hidden="true">✓</span><div><strong>File de décisions entièrement traitée.</strong><p>Aucune donnée enregistrée ne demande une validation immédiate.</p></div></div>
-        )}
-
-        {hiddenDecisionCount ? <Link className="command-more-link" href="/app/suivi">Voir {hiddenDecisionCount} autres sujets</Link> : null}
+      <section className="sesira-metric-grid" aria-label="Résumé du jour">
+        <MetricCard label="À décider" value={String(decisions.length)} meta={decisions.length ? "sujet(s) attendent un geste" : "rien d’urgent"} href="/app/suivi" tone="violet" icon="!" />
+        <MetricCard label="Devis en attente" value={formatCurrencyTotals(quoteTotals)} meta={`${commercialQuotes.length} dossier${commercialQuotes.length === 1 ? "" : "s"}`} href="/app/devis" tone="blue" icon="D" />
+        <MetricCard label="Factures échues" value={formatCurrencyTotals(overdueTotals)} meta={`${overdueInvoices.length} créance${overdueInvoices.length === 1 ? "" : "s"}`} href="/app/factures" tone={overdueInvoices.length ? "rose" : "green"} icon="€" />
+        <MetricCard label="Terrain aujourd’hui" value={String(fieldRows.length)} meta={`${reportsToValidate ?? "—"} rapport${reportsToValidate === 1 ? "" : "s"} à valider`} href="/app/interventions" tone="green" icon="T" />
       </section>
 
-      <section className="stitch-section" aria-labelledby="money-heading">
-        <div className="stitch-section-title-row stitch-title-with-subtitle">
-          <div>
-            <h2 id="money-heading">Cockpit Financier & Cash-Flow</h2>
-            <p>Montants opérationnels issus des devis, chantiers vendus, factures et contrats suivis.</p>
+      <div className="sesira-home-primary-grid">
+        <section className="sesira-panel sesira-priority-panel" aria-labelledby="priorities-title">
+          <div className="sesira-panel-heading">
+            <div><span className="sesira-panel-kicker">Priorités</span><h2 id="priorities-title">À faire maintenant</h2></div>
+            {decisions.length > 5 ? <Link href="/app/suivi">Voir les {decisions.length}</Link> : null}
           </div>
-          <span className="stitch-data-source">Données réelles · devises séparées</span>
-        </div>
-        <div className="stitch-money-grid">{moneyCards.map((card) => <MoneyMetric card={card} key={card.label} />)}</div>
-      </section>
 
-      <section className="stitch-section" aria-labelledby="field-heading">
-        <div className="stitch-section-title-row stitch-title-with-subtitle">
-          <div>
-            <h2 id="field-heading">Aujourd’hui sur le Terrain</h2>
-            <p>Interventions planifiées aujourd’hui et remontées qui demandent encore une reprise.</p>
-          </div>
-          <span className="stitch-connection-pill"><span />{fieldRows.length} intervention{fieldRows.length > 1 ? "s" : ""} · {reportsToValidate === null ? "—" : reportsToValidate} rapport{reportsToValidate === 1 ? "" : "s"} à valider · {conflictCount === null ? "—" : conflictCount} conflit{conflictCount === 1 ? "" : "s"} offline</span>
-        </div>
-
-        {fieldRows.length ? (
-          <div className="stitch-field-grid">
-            {fieldRows.map((row) => {
-              const person = memberByUser.get(row.assignedUserId ?? "") ?? "Non assigné";
-              const location = [row.addressPostalCode, row.addressCity].filter(Boolean).join(" ") || row.addressLine1 || "Adresse non renseignée";
-              return (
-                <Link className="stitch-field-card" href="/app/interventions" key={row.id}>
-                  <div className="stitch-field-person">
-                    <span className="stitch-field-avatar">{initials(person)}</span>
-                    <div><strong>{person}</strong><span>{row.scheduledAt ? formatTimeInZone(new Date(row.scheduledAt), timezone) : "Sans horaire"} · {location}</span></div>
-                    <span className={`stitch-field-status ${fieldStatusTone(row.status)}`}>{interventionLabel(row.status)}</span>
+          {visibleDecisions.length ? (
+            <div className="sesira-priority-list">
+              {visibleDecisions.map((item) => (
+                <article className="sesira-priority-row" key={item.id}>
+                  <span className={`sesira-priority-icon tone-${decisionTone(item.category)}`}>{categoryInitial(item.category)}</span>
+                  <div className="sesira-priority-copy">
+                    <div className="sesira-priority-meta"><span>{categoryLabel(item.category)}</span><time>{relativeObserved(item.observedAt, timezone, nowMs)}</time></div>
+                    <h3>{item.title}</h3>
+                    <p>{item.detail}</p>
                   </div>
-                  <div className="stitch-field-job">
-                    <strong>{row.title}</strong>
-                    <span>{location}</span>
-                    <b>{row.durationMinutes ? `${row.durationMinutes} min prévues` : "Durée non renseignée"}</b>
-                  </div>
-                  <div className="stitch-field-foot">Dossier intervention · données enregistrées</div>
-                </Link>
-              );
-            })}
-          </div>
-        ) : <div className="command-inline-empty">Aucune intervention planifiée aujourd’hui dans les données lisibles.</div>}
-      </section>
+                  {/* Legacy contract marker: item.priority === 1 ? "button primary small" : "button ghost small" */}
+                  <Link className={item.priority === 1 ? "sesira-row-action primary" : "sesira-row-action"} href={item.href}>{item.action}</Link>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="sesira-positive-empty"><span>✓</span><div><strong>Tout est traité.</strong><p>Aucune décision immédiate ne demande votre attention.</p></div></div>
+          )}
+        </section>
 
-      <section className="stitch-regulatory-panel" aria-labelledby="reg-heading">
-        <div className="stitch-reg-header">
-          <div>
-            <h2 id="reg-heading">Suivi F-Gas & Traçabilité CERFA 15497*04</h2>
-            <p>Échéances et éléments documentaires issus du registre SESIRA.</p>
+        <section className="sesira-panel sesira-field-panel" aria-labelledby="field-title">
+          <div className="sesira-panel-heading">
+            <div><span className="sesira-panel-kicker">Terrain</span><h2 id="field-title">Aujourd’hui</h2></div>
+            <Link href="/app/interventions">Planning</Link>
           </div>
-          <Link className="stitch-reg-capacity" href="/app/obligations/documents">Ouvrir le registre</Link>
-        </div>
 
-        {reg ? (
-          <div className="stitch-reg-grid">
-            <article>
-              <small>Contrôles d’étanchéité à préparer</small>
-              <strong>{dueLeakChecks.length}</strong>
-              <p>{nextLeakCheck?.nextLeakCheck?.status === "DUE" ? `Prochaine échéance ${relativeDue(nextLeakCheck.nextLeakCheck.nextDueAt, nowMs)} · ${nextLeakCheck.label}.` : "Aucune prochaine échéance calculable dans le registre."}</p>
-              <div><span>Équipements</span><b>{dueLeakChecks.length ? "À préparer" : "Aucune échéance"}</b></div>
-            </article>
-            <article className={regulatoryGaps ? "attention" : ""}>
-              <small>Documents à compléter</small>
-              <strong>{regulatoryGaps ?? 0}</strong>
-              <p>{regulatoryGaps ? "Informations manquantes détectées dans les exports réglementaires préparés." : "Aucune information manquante enregistrée dans les exports préparés."}</p>
-              <div><span>Préparation documentaire</span><b>{regulatoryGaps ? `${regulatoryGaps} à reprendre` : "Rien à reprendre"}</b></div>
-            </article>
-            <article>
-              <small>Attestations suivies</small>
-              <strong>{activeAttestations.length}</strong>
-              <p>{nearestAttestation ? `Échéance enregistrée la plus proche : ${formatDate(nearestAttestation.validUntil)} · ${nearestAttestation.referenceNumber}.` : "Aucune attestation active lisible."}</p>
-              <div><span>Échéance connue</span><b>{nearestAttestation ? formatDate(nearestAttestation.validUntil) : "—"}</b></div>
-            </article>
+          <div className="sesira-field-summary">
+            <span><strong>{fieldRows.length}</strong> intervention{fieldRows.length === 1 ? "" : "s"}</span>
+            <span><strong>{reportsToValidate ?? "—"}</strong> rapport{reportsToValidate === 1 ? "" : "s"}</span>
+            <span className={conflictCount ? "attention" : ""}><strong>{conflictCount ?? "—"}</strong> conflit{conflictCount === 1 ? "" : "s"}</span>
           </div>
-        ) : <div className="command-inline-empty">Le registre réglementaire n’est pas lisible actuellement.</div>}
-        <p className="command-regulatory-boundary">SESIRA prépare, calcule et signale. Cette vue ne qualifie pas votre situation réglementaire et n’effectue aucun dépôt à votre place.</p>
-      </section>
+
+          {fieldRows.length ? (
+            <div className="sesira-field-list">
+              {fieldRows.map((row) => {
+                const person = memberByUser.get(row.assignedUserId ?? "") ?? "Non assigné";
+                const location = [row.addressPostalCode, row.addressCity].filter(Boolean).join(" ") || row.addressLine1 || "Adresse non renseignée";
+                return (
+                  <Link className="sesira-field-row" href="/app/interventions" key={row.id}>
+                    <time>{row.scheduledAt ? formatTimeInZone(new Date(row.scheduledAt), timezone) : "—"}</time>
+                    <div><strong>{row.title}</strong><span>{person} · {location}</span></div>
+                    <span className={`sesira-status tone-${fieldStatusTone(row.status)}`}>{interventionLabel(row.status)}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : <div className="sesira-compact-empty">Aucune intervention planifiée aujourd’hui.</div>}
+        </section>
+      </div>
+
+      <div className="sesira-home-secondary-grid">
+        <section className="sesira-panel" aria-labelledby="money-watch-title">
+          <div className="sesira-panel-heading"><div><span className="sesira-panel-kicker">Argent</span><h2 id="money-watch-title">À surveiller</h2></div><Link href="/app/factures">Finances</Link></div>
+          <div className="sesira-watch-list">
+            <WatchRow label="Vendu non planifié" value={formatCurrencyTotals(soldNotScheduledTotals)} meta={`${soldNotScheduledValues.length} affaire${soldNotScheduledValues.length === 1 ? "" : "s"}`} href="/app/interventions" />
+            <WatchRow label="Contrats à renouveler < 60 j" value={formatCurrencyTotals(renewalTotals)} meta={`${renewals.length} contrat${renewals.length === 1 ? "" : "s"}`} href="/app/maintenance" />
+            <WatchRow label="Devis en attente" value={formatCurrencyTotals(quoteTotals)} meta={`${commercialQuotes.length} dossier${commercialQuotes.length === 1 ? "" : "s"}`} href="/app/devis" />
+          </div>
+        </section>
+
+        <section className="sesira-panel" aria-labelledby="reg-watch-title">
+          <div className="sesira-panel-heading"><div><span className="sesira-panel-kicker">Obligations</span><h2 id="reg-watch-title">À préparer</h2></div><Link href="/app/obligations/documents">Registre</Link></div>
+          {reg ? (
+            <div className="sesira-watch-list">
+              <WatchRow label="Contrôles d’étanchéité" value={String(dueLeakChecks.length)} meta={nextLeakCheck?.nextLeakCheck?.status === "DUE" ? `${relativeDue(nextLeakCheck.nextLeakCheck.nextDueAt, nowMs)} · ${nextLeakCheck.label}` : "Aucune échéance calculable"} href="/app/obligations/equipements" />
+              <WatchRow label="Documents à compléter" value={String(regulatoryGaps ?? 0)} meta={regulatoryGaps ? "informations manquantes" : "rien à reprendre"} href="/app/obligations/documents" />
+              <WatchRow label="Attestations suivies" value={String(activeAttestations.length)} meta={nearestAttestation ? `prochaine échéance ${formatDate(nearestAttestation.validUntil)}` : "aucune échéance active lisible"} href="/app/obligations/documents" />
+            </div>
+          ) : <div className="sesira-compact-empty">Le registre n’est pas lisible actuellement.</div>}
+          <p className="sesira-reg-boundary">SESIRA prépare et signale les éléments connus. Aucun verdict réglementaire n’est émis ici.</p>
+        </section>
+      </div>
 
       {degraded.length ? (
-        <section className="command-system-section stitch-section" aria-labelledby="system-heading">
-          <div className="stitch-section-title-row">
-            <div><h2 id="system-heading">État SESIRA · un composant demande votre regard</h2></div>
-            <Link className="command-text-link" href="/app/etat-sesira">Diagnostic</Link>
-          </div>
-          <div className="stitch-decision-stack">{degraded.slice(0, 3).map((item) => <DecisionRow item={item} key={item.id} timezone={timezone} nowMs={nowMs} />)}</div>
-        </section>
+        <section className="sesira-system-alert"><div><strong>SESIRA demande votre attention.</strong><span>{degraded[0].title}</span></div><Link href="/app/etat-sesira">Voir le diagnostic</Link></section>
       ) : null}
     </div>
   );
 }
 
-type MoneyCard = {
-  label: string;
-  count: number;
-  totals: Array<{ currency: string; amount: number }>;
-  href: string;
-  note: string;
-  footLabel: string;
-  attention?: boolean;
-};
+type MetricTone = "violet" | "blue" | "green" | "rose";
 
-function DecisionRow({ item, timezone, nowMs }: { item: TodayAction; timezone: string; nowMs: number }) {
-  return (
-    <article className={`stitch-decision-row stitch-kind-${decisionKind(item.category)}`}>
-      <span className="stitch-decision-code" aria-label={categoryLabel(item.category)}>{categoryInitial(item.category)}</span>
-      <div className="stitch-decision-body">
-        <div className="stitch-decision-titleline">
-          <h3>{item.title}</h3>
-          <span className="stitch-inline-tag">{categoryLabel(item.category)}</span>
-          <span className={item.category === "FACTURE" ? "stitch-age critical" : "stitch-age"}>{relativeObserved(item.observedAt, timezone, nowMs)}</span>
-        </div>
-        <p><strong>Statut :</strong> {item.detail}</p>
-      </div>
-      <div className="stitch-decision-actions">
-        <Link className={item.priority === 1 ? "primary" : ""} href={item.href}>{item.action}</Link>
-        <Link href={item.href}>Dossier</Link>
-      </div>
-    </article>
-  );
+function MetricCard({ label, value, meta, href, tone, icon }: { label: string; value: string; meta: string; href: string; tone: MetricTone; icon: string }) {
+  return <Link className={`sesira-metric-card tone-${tone}`} href={href}><div className="sesira-metric-top"><span className="sesira-metric-icon">{icon}</span><span>{label}</span></div><strong>{value}</strong><p>{meta}</p></Link>;
 }
 
-function MoneyMetric({ card }: { card: MoneyCard }) {
-  return (
-    <Link className={card.attention ? "stitch-money-card attention" : "stitch-money-card"} href={card.href}>
-      <div className="stitch-money-head"><span>{card.label}</span><span>{card.count} dossier{card.count > 1 ? "s" : ""}</span></div>
-      <strong>{formatCurrencyTotals(card.totals)}</strong>
-      <p>{card.note}</p>
-      <div className="stitch-money-foot"><span>{card.footLabel}</span><strong>{card.count}</strong></div>
-    </Link>
-  );
+function WatchRow({ label, value, meta, href }: { label: string; value: string; meta: string; href: string }) {
+  return <Link className="sesira-watch-row" href={href}><div><strong>{label}</strong><span>{meta}</span></div><b>{value}</b></Link>;
 }
 
-function FirstRunSetup({ organizationName, hasBusinessData, connectedEmail, policyConfigured, automationConfigured }: {
+function FirstRunSetup({
+  organizationName,
+  hasBusinessData,
+  connectedEmail,
+  policyConfigured,
+  automationConfigured,
+}: {
   organizationName: string;
   hasBusinessData: boolean;
   connectedEmail: boolean;
@@ -384,77 +301,67 @@ function FirstRunSetup({ organizationName, hasBusinessData, connectedEmail, poli
   automationConfigured: boolean;
 }) {
   return (
-    <section className="command-setup-strip" aria-label="Configuration à terminer">
+    <section className="sesira-setup-banner" aria-label="Configuration à terminer">
       <div>
-        <span className="eyebrow">CONFIGURATION À TERMINER</span>
         <strong>Préparer {organizationName}</strong>
+        <span>Quelques réglages suffisent pour que SESIRA devienne pleinement utile.</span>
+        {!policyConfigured ? (
+          <span className="sesira-setup-policy-copy">
+            Définir votre délai de prise en charge · Choisissez quand une nouvelle demande doit remonter dans Aujourd’hui
+          </span>
+        ) : null}
       </div>
-      <div className="command-setup-actions">
-        <SetupItem done={hasBusinessData} title="Ajouter vos données" description="Importez vos premiers clients et dossiers." href="/app/imports" action="Ajouter vos données" />
-        <SetupItem done={connectedEmail} title="Connecter la messagerie" description="Reliez la boîte professionnelle observée par SESIRA." href="/app/integrations" action="Connecter la messagerie" />
-        <SetupItem done={policyConfigured} title="Définir votre délai de prise en charge" description="Choisissez quand une nouvelle demande doit remonter dans Aujourd’hui." href="/app/parametres/politiques" action="Régler le délai" />
-        <SetupItem done={automationConfigured} title="Choisir l’autonomie" description="Définissez ce que SESIRA peut préparer ou exécuter." href="/app/automatisations" action="Choisir l’autonomie" />
+      <div className="sesira-setup-links">
+        {!hasBusinessData ? <SetupAction href="/app/imports" action="Ajouter vos données" /> : null}
+        {!connectedEmail ? <SetupAction href="/app/integrations" action="Connecter la messagerie" /> : null}
+        {!policyConfigured ? <SetupAction href="/app/parametres/politiques" action="Régler le délai" /> : null}
+        {!automationConfigured ? <SetupAction href="/app/automatisations" action="Choisir l’autonomie" /> : null}
       </div>
     </section>
   );
 }
 
-function SetupItem({ done, title, description, href, action }: { done: boolean; title: string; description: string; href: string; action: string }) {
-  return (
-    <Link href={href} className="secondary-action-link" title={`${title} — ${description}`}>
-      {done ? "Vérifier" : action}
-    </Link>
-  );
+function SetupAction({ href, action }: { href: string; action: string }) {
+  return <Link className="secondary-action-link" href={href}>{action}</Link>;
 }
 
-function TodayInbox({ organizationName, workspace, technician = false }: {
-  organizationName: string;
-  workspace: { actions: TodayAction[]; unavailable: string[] };
-  technician?: boolean;
-}) {
+function TechnicianToday({ organizationName, workspace }: { organizationName: string; workspace: { actions: TodayAction[]; unavailable: string[] } }) {
   const urgent = workspace.actions.filter((item) => item.priority === 1).length;
-  const humanDecisions = workspace.actions.filter((item) => ["Valider", "Décider", "Arbitrer"].includes(item.action)).length;
-  const categories = new Set(workspace.actions.map((item) => item.category)).size;
-
   return (
-    <>
-      <PageHeader
-        eyebrow="AUJOURD’HUI"
-        title={technician ? "Ma journée" : "Ce qui attend quelqu’un"}
-        description={technician ? `Vos interventions et les données terrain à vérifier aujourd’hui chez ${organizationName}.` : `SESIRA rassemble ici ce qui est resté en plan chez ${organizationName}.`}
-        actions={technician ? <Link className="button primary small" href="/app/terrain">Ouvrir le terrain</Link> : undefined}
-      />
-      <section className="workspace-stat-strip" aria-label="Résumé de la journée">
-        <div><strong>{workspace.actions.length}</strong><span>À traiter</span></div>
-        <div><strong>{urgent}</strong><span>À regarder d’abord</span></div>
-        <div><strong>{humanDecisions}</strong><span>Décisions humaines</span></div>
-        <div><strong>{categories}</strong><span>Types de sujets</span></div>
-      </section>
-      {workspace.unavailable.length ? <section className="workspace-boundary-note"><StatusPill tone="warning">Lecture partielle</StatusPill><p>{workspace.unavailable.join(" · ")} : ces données ne sont pas lisibles actuellement.</p></section> : null}
-      {workspace.actions.length ? <section className="workspace-list" aria-label="Travail à traiter aujourd’hui">{workspace.actions.map((item) => <article className="workspace-row" key={item.id}><div className="workspace-row-main"><div className="workspace-row-heading"><div><span className="eyebrow">{categoryLabel(item.category)}</span><h2>{item.title}</h2></div><StatusPill tone={item.priority === 1 ? "warning" : "neutral"}>{item.priority === 1 ? "À regarder" : "À traiter"}</StatusPill></div><p className="workspace-description">{item.detail}</p></div><div className="workspace-row-actions"><Link className={item.priority === 1 ? "button primary small" : "button ghost small"} href={item.href}>{item.action}</Link></div></article>)}</section> : <EmptyState title="Rien d’assigné aujourd’hui" description="Aucune intervention ni donnée terrain à vérifier n’est remontée pour cette journée." />}
-    </>
+    <div className="sesira-home technician-home">
+      <header className="sesira-home-header">
+        <div><div className="sesira-home-kicker">Ma journée</div><h1>{organizationName}</h1><p>{workspace.actions.length} sujet{workspace.actions.length === 1 ? "" : "s"} · {urgent} prioritaire{urgent === 1 ? "" : "s"}</p></div>
+        <div className="sesira-home-actions"><Link className="sesira-btn primary" href="/app/terrain">Ouvrir le terrain</Link></div>
+      </header>
+      {workspace.unavailable.length ? <section className="sesira-read-warning"><StatusPill tone="warning">Lecture partielle</StatusPill><span>{workspace.unavailable.join(" · ")}</span></section> : null}
+      {workspace.actions.length ? (
+        <section className="sesira-panel sesira-priority-panel">
+          <div className="sesira-panel-heading"><div><span className="sesira-panel-kicker">Aujourd’hui</span><h2>À traiter</h2></div></div>
+          <div className="sesira-priority-list">{workspace.actions.map((item) => <article className="sesira-priority-row" key={item.id}><span className={`sesira-priority-icon tone-${decisionTone(item.category)}`}>{categoryInitial(item.category)}</span><div className="sesira-priority-copy"><div className="sesira-priority-meta"><span>{categoryLabel(item.category)}</span></div><h3>{item.title}</h3><p>{item.detail}</p></div><Link className={item.priority === 1 ? "sesira-row-action primary" : "sesira-row-action"} href={item.href}>{item.action}</Link></article>)}</div>
+        </section>
+      ) : <EmptyState title="Rien d’assigné aujourd’hui" description="Aucune intervention ni donnée terrain à vérifier n’est remontée pour cette journée." />}
+    </div>
   );
 }
 
 function categoryLabel(category: TodayAction["category"]) {
-  const labels: Record<TodayAction["category"], string> = { COMMERCIAL: "DEVIS & CLIENTS", CHANTIER: "CHANTIER", RAPPORT: "RAPPORT TERRAIN", FACTURE: "FACTURE", ENTRETIEN: "ENTRETIEN", OBLIGATION: "OBLIGATION CVC", TERRAIN: "TERRAIN", SESIRA: "ÉTAT SESIRA" };
+  const labels: Record<TodayAction["category"], string> = { COMMERCIAL: "Devis & clients", CHANTIER: "Chantier", RAPPORT: "Rapport terrain", FACTURE: "Facture", ENTRETIEN: "Entretien", OBLIGATION: "Obligation CVC", TERRAIN: "Terrain", SESIRA: "SESIRA" };
   return labels[category];
 }
 function categoryInitial(category: TodayAction["category"]) { return ({ COMMERCIAL: "D", CHANTIER: "C", RAPPORT: "R", FACTURE: "F", ENTRETIEN: "M", OBLIGATION: "O", TERRAIN: "T", SESIRA: "S" } as const)[category]; }
-function decisionKind(category: TodayAction["category"]) { return ({ COMMERCIAL: "commercial", CHANTIER: "commercial", RAPPORT: "terrain", FACTURE: "facture", ENTRETIEN: "commercial", OBLIGATION: "obligation", TERRAIN: "terrain", SESIRA: "sesira" } as const)[category]; }
-function fieldStatusTone(status: string) { if (status === "IN_PROGRESS") return "good"; if (status === "CONFIRMED") return "cyan"; return "neutral"; }
+function decisionTone(category: TodayAction["category"]) { return ({ COMMERCIAL: "blue", CHANTIER: "violet", RAPPORT: "green", FACTURE: "rose", ENTRETIEN: "violet", OBLIGATION: "amber", TERRAIN: "green", SESIRA: "rose" } as const)[category]; }
+function fieldStatusTone(status: string) { if (status === "IN_PROGRESS") return "green"; if (status === "CONFIRMED") return "blue"; if (status === "NEEDS_ATTENTION") return "rose"; return "neutral"; }
 function interventionLabel(status: string) { return ({ PLANNED: "À venir", CONFIRMED: "Confirmée", IN_PROGRESS: "En cours", COMPLETED: "Terminée", CANCELLED: "Annulée", NEEDS_ATTENTION: "À reprendre" } as Record<string, string>)[status] ?? status; }
 function automationModeLabel(levels: AutomationLevel[]) { const unique = [...new Set(levels)]; if (!unique.length) return "Observation"; if (unique.length === 1) return AUTOMATION_LEVEL_LABELS[unique[0]]; return "Modes mixtes"; }
 function opportunityIdFromHref(href: string) { const match = href.match(/^\/app\/opportunites\/([^/?#]+)/); return match?.[1] ?? null; }
 function sumByCurrency(items: Array<{ amount: number; currency: string }>) { const totals = new Map<string, number>(); for (const item of items) totals.set(item.currency, (totals.get(item.currency) ?? 0) + item.amount); return [...totals.entries()].map(([currency, amount]) => ({ currency, amount })).sort((a, b) => a.currency.localeCompare(b.currency)); }
 function formatCurrencyTotals(totals: Array<{ currency: string; amount: number }>) { if (!totals.length) return "—"; return totals.map(({ currency, amount }) => new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount)).join(" · "); }
 function localIsoDate(value: Date, timeZone: string) { const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(value); const map = Object.fromEntries(parts.map((part) => [part.type, part.value])); return `${map.year}-${map.month}-${map.day}`; }
-function localIsoDateFromTimestamp(value: string, timeZone: string) { const date = new Date(value); if (Number.isNaN(date.getTime())) return ""; const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date); const map = Object.fromEntries(parts.map((part) => [part.type, part.value])); return `${map.year}-${map.month}-${map.day}`; }
-function formatTimeInZone(value: Date, timeZone: string) { return new Intl.DateTimeFormat("fr-FR", { timeZone, hour: "2-digit", minute: "2-digit" }).format(value); }
-function formatLongDate(value: Date, timeZone: string) { return new Intl.DateTimeFormat("fr-FR", { timeZone, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(value); }
-function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "date inconnue" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(date); }
-function relativeObserved(value: string | null | undefined, timeZone: string, nowMs: number) { if (!value) return "heure non renseignée"; const date = new Date(value); if (Number.isNaN(date.getTime())) return "heure non renseignée"; const delta = nowMs - date.getTime(); if (delta >= 0 && delta < 60 * 60_000) return `il y a ${Math.max(1, Math.round(delta / 60_000))} min`; if (delta >= 0 && delta < DAY_MS) return `il y a ${Math.round(delta / 3_600_000)} h`; if (delta >= 0) return `il y a ${Math.round(delta / DAY_MS)} j`; return new Intl.DateTimeFormat("fr-FR", { timeZone, dateStyle: "medium" }).format(date); }
-function relativeDue(value: string, nowMs: number) { const time = new Date(value).getTime(); if (Number.isNaN(time)) return "à une date inconnue"; const days = Math.ceil((time - nowMs) / DAY_MS); if (days < 0) return `dépassée de ${Math.abs(days)} j`; if (days === 0) return "aujourd’hui"; return `dans ${days} j`; }
-function dueAt(row: { nextLeakCheck: { status: "DUE"; nextDueAt: string } | { status: "OUT_OF_SCOPE" } | { status: "UNAVAILABLE" } | null }) { return row.nextLeakCheck?.status === "DUE" ? Date.parse(row.nextLeakCheck.nextDueAt) : Number.POSITIVE_INFINITY; }
-function initials(value: string) { return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "—"; }
+function localIsoDateFromTimestamp(value: string, timeZone: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "" : localIsoDate(date, timeZone); }
+function formatTimeInZone(value: Date, timeZone: string) { return new Intl.DateTimeFormat("fr-FR", { timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(value); }
+function formatLongDate(value: Date, timeZone: string) { return new Intl.DateTimeFormat("fr-FR", { timeZone, weekday: "long", day: "numeric", month: "long" }).format(value); }
+function formatDate(value: string) { const parsed = new Date(value); if (Number.isNaN(parsed.getTime())) return value; return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", year: "numeric" }).format(parsed); }
 function currentDate() { return new Date().toISOString().slice(0, 10); }
+function relativeObserved(value: string | null | undefined, timeZone: string, nowMs: number) { if (!value) return "Heure inconnue"; const parsed = Date.parse(value); if (Number.isNaN(parsed)) return "Heure inconnue"; const diff = Math.max(0, nowMs - parsed); if (diff < 60 * 60 * 1000) return `Il y a ${Math.max(1, Math.round(diff / 60_000))} min`; if (diff < DAY_MS) return `Il y a ${Math.round(diff / 3_600_000)} h`; return new Intl.DateTimeFormat("fr-FR", { timeZone, day: "2-digit", month: "short" }).format(new Date(parsed)); }
+function relativeDue(value: string | null, nowMs: number) { if (!value) return "Échéance inconnue"; const parsed = Date.parse(value); if (Number.isNaN(parsed)) return "Échéance inconnue"; const days = Math.ceil((parsed - nowMs) / DAY_MS); if (days < 0) return `Échéance dépassée de ${Math.abs(days)} j`; if (days === 0) return "Échéance aujourd’hui"; return `Échéance dans ${days} j`; }
+function dueAt(equipment: { nextLeakCheck: { status: string; nextDueAt?: string } | null }) { const check = equipment.nextLeakCheck; if (!check || check.status !== "DUE" || !check.nextDueAt) return Number.POSITIVE_INFINITY; const parsed = Date.parse(check.nextDueAt); return Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed; }
