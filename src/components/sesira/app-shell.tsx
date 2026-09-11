@@ -80,6 +80,11 @@ const SYSTEM_NAV: readonly ProductNavItem[] = [
   { href: "/app/etat-sesira", label: "État de SESIRA", icon: LifeBuoy },
 ] as const;
 
+const OBLIGATION_TABS = [
+  { href: "/app/obligations/documents", label: "Documents" },
+  { href: "/app/obligations/equipements", label: "Équipements & fluides" },
+] as const satisfies readonly SesiraAppNavItem[];
+
 export function AppShell({
   children,
   workspaceName,
@@ -201,6 +206,7 @@ function ProductSectionTabs({ pathname, items }: { pathname: string; items: read
 function tabsForPath(pathname: string, growthEnabled: boolean): readonly SesiraAppNavItem[] | null {
   if (["/app/devis", "/app/opportunites"].some((prefix) => routeMatches(pathname, prefix))) return QUOTE_TABS;
   if (["/app/interventions", "/app/rapports"].some((prefix) => routeMatches(pathname, prefix))) return INTERVENTION_TABS;
+  if (routeMatches(pathname, "/app/obligations")) return OBLIGATION_TABS;
   if (growthEnabled && routeMatches(pathname, "/app/croissance")) return GROWTH_TABS;
   return null;
 }
