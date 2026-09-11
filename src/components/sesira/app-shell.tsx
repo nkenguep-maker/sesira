@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BarChart3,
   Bell,
   Bot,
   BriefcaseBusiness,
@@ -12,6 +13,7 @@ import {
   CircleDollarSign,
   ClipboardCheck,
   FileText,
+  FolderOpen,
   Gauge,
   LayoutDashboard,
   LifeBuoy,
@@ -19,6 +21,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  TrendingUp,
   Users,
   Wrench,
   type LucideIcon,
@@ -51,7 +54,12 @@ const MANAGER_PRIMARY: readonly ProductNavItem[] = [
   { href: "/app/factures", label: "Factures", icon: CircleDollarSign },
   { href: "/app/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/app/obligations/documents", label: "Obligations", icon: ShieldCheck, matches: ["/app/obligations"] },
+] as const;
+
+const MANAGER_PILOTING: readonly ProductNavItem[] = [
   { href: "/app/automatisations", label: "Automatisations", icon: Bot, matches: ["/app/automatisations", "/app/automations"] },
+  { href: "/app/resultats", label: "Résultats", icon: BarChart3, matches: ["/app/resultats", "/app/results"] },
+  { href: "/app/documents", label: "Documents", icon: FolderOpen },
 ] as const;
 
 const TECH_PRIMARY: readonly ProductNavItem[] = [
@@ -68,6 +76,10 @@ const ORGANIZATION_NAV: readonly ProductNavItem[] = [
   { href: "/app/parametres", label: "Paramètres", icon: Settings },
 ] as const;
 
+const SYSTEM_NAV: readonly ProductNavItem[] = [
+  { href: "/app/etat-sesira", label: "État de SESIRA", icon: LifeBuoy },
+] as const;
+
 export function AppShell({
   children,
   workspaceName,
@@ -82,6 +94,11 @@ export function AppShell({
   const pathname = usePathname();
   const technician = TECH_ROLES.has(role);
   const primary = technician ? TECH_PRIMARY : MANAGER_PRIMARY;
+  const piloting = technician
+    ? []
+    : growthEnabled
+      ? [...MANAGER_PILOTING, { href: "/app/croissance", label: "Croissance", icon: TrendingUp, matches: ["/app/croissance"] } satisfies ProductNavItem]
+      : MANAGER_PILOTING;
   const tabs = technician ? null : tabsForPath(pathname, growthEnabled);
 
   return (
@@ -97,10 +114,19 @@ export function AppShell({
           </div>
         </div>
 
-        <nav className="sesira-product-nav" aria-label={technician ? "Navigation technicien" : "Navigation principale SESIRA"}>
-          <span className="sesira-product-nav-label">Navigation</span>
-          {primary.map((item) => <ProductNavLink key={item.href} pathname={pathname} item={item} />)}
-        </nav>
+        <div className="sesira-product-nav-scroll">
+          <nav className="sesira-product-nav" aria-label={technician ? "Navigation technicien" : "Navigation principale SESIRA"}>
+            <span className="sesira-product-nav-label">Navigation</span>
+            {primary.map((item) => <ProductNavLink key={item.href} pathname={pathname} item={item} />)}
+          </nav>
+
+          {!technician ? (
+            <nav className="sesira-product-nav sesira-product-nav-secondary" aria-label="Pilotage SESIRA">
+              <span className="sesira-product-nav-label">Pilotage</span>
+              {piloting.map((item) => <ProductNavLink key={item.href} pathname={pathname} item={item} />)}
+            </nav>
+          ) : null}
+        </div>
 
         <div className="sesira-product-sidebar-footer">
           {!technician ? (
@@ -113,14 +139,14 @@ export function AppShell({
       <div className="sesira-product-body">
         <header className="sesira-product-topbar">
           <div className="sesira-product-context">
-            <span>{currentSectionLabel(pathname, technician)}</span>
+            <span>{currentSectionLabel(pathname, technician, growthEnabled)}</span>
             <small>{workspaceName}</small>
           </div>
           <div className="sesira-product-topbar-actions">
             {!technician ? <Link className="sesira-product-autonomy" href="/app/automatisations"><span />Autonomie</Link> : null}
-            <Link className="sesira-product-search" href="/app/clients" aria-label="Rechercher dans SESIRA"><Search size={17} /><span>Rechercher</span><kbd>⌘K</kbd></Link>
-            <Link className="sesira-product-icon-button" href="/app/suivi" aria-label="Voir les décisions"><Bell size={18} /></Link>
-            <span className="sesira-product-avatar" aria-hidden="true">{workspaceInitial(workspaceName)}</span>
+            <Link className="sesira-product-search" href="/app/clients" aria-label="Rechercher un client"><Search size={17} /><span>Rechercher un client</span></Link>
+            <Link className="sesira-product-icon-button" href="/app/suivi" aria-label="Voir la file de décisions"><Bell size={18} /></Link>
+            <Link className="sesira-product-avatar" href="/app/parametres" aria-label="Ouvrir les paramètres de l'organisation">{workspaceInitial(workspaceName)}</Link>
           </div>
         </header>
 
@@ -173,7 +199,7 @@ function ProductSectionTabs({ pathname, items }: { pathname: string; items: read
 }
 
 function tabsForPath(pathname: string, growthEnabled: boolean): readonly SesiraAppNavItem[] | null {
-  if (["/app/devis", "/app/opportunites", "/app/suivi"].some((prefix) => routeMatches(pathname, prefix))) return QUOTE_TABS;
+  if (["/app/devis", "/app/opportunites"].some((prefix) => routeMatches(pathname, prefix))) return QUOTE_TABS;
   if (["/app/interventions", "/app/rapports"].some((prefix) => routeMatches(pathname, prefix))) return INTERVENTION_TABS;
   if (growthEnabled && routeMatches(pathname, "/app/croissance")) return GROWTH_TABS;
   return null;
@@ -194,8 +220,14 @@ function routeMatches(pathname: string, prefix: string) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
-function currentSectionLabel(pathname: string, technician: boolean) {
-  const items = technician ? TECH_PRIMARY : MANAGER_PRIMARY;
+function currentSectionLabel(pathname: string, technician: boolean, growthEnabled: boolean) {
+  const items: ProductNavItem[] = [
+    ...(technician ? TECH_PRIMARY : MANAGER_PRIMARY),
+    ...(!technician ? MANAGER_PILOTING : []),
+    ...(!technician ? ORGANIZATION_NAV : []),
+    ...SYSTEM_NAV,
+  ];
+  if (!technician && growthEnabled) items.push({ href: "/app/croissance", label: "Croissance", icon: TrendingUp, matches: ["/app/croissance"] });
   const active = items.find((item) => isProductNavActive(pathname, item));
   return active?.label ?? "SESIRA";
 }
