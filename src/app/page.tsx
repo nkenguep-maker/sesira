@@ -43,6 +43,7 @@ export default function HomePage() {
         <div className="cvc-nav-links">
           <a href="#aujourdhui">Aujourd&apos;hui</a>
           <a href="#suivi">Ce que ça suit</a>
+          <Link href="/demo">Démo</Link>
           <a href="#commencer">Commencer</a>
           <Link className="cvc-nav-login" href="/login">Connexion</Link>
           <Link className="button primary small" href="/diagnostic">Calculer</Link>
@@ -58,7 +59,7 @@ export default function HomePage() {
           </p>
           <div className="cvc-actions">
             <Link className="button primary" href="/diagnostic">Calculer ce qui se perd chez moi</Link>
-            <a className="cvc-text-link" href="#aujourdhui">Voir un écran</a>
+            <Link className="cvc-text-link" href="/demo">Ouvrir la démo →</Link>
           </div>
           <small>Gratuit · sans compte · 3 minutes</small>
         </div>
@@ -159,6 +160,7 @@ export default function HomePage() {
         <SesiraLogo />
         <p>Le suivi, c&apos;est SESIRA. Les décisions, c&apos;est vous.</p>
         <div>
+          <Link href="/demo">Démo</Link>
           <Link href="/diagnostic">Calculer</Link>
           <Link href="/login">Connexion</Link>
         </div>
