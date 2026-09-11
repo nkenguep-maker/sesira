@@ -32,70 +32,69 @@ export default async function OpportunitiesPage() {
       : "Non renseignée";
 
   return (
-    <>
+    <div className="sesira-page--opportunities">
       <PageHeader
         eyebrow="COMMERCIAL"
         title="Opportunités"
-        description="Dossiers commerciaux, variantes de devis et décisions en cours."
+        description="Les dossiers à faire avancer, leur valeur connue et les décisions commerciales en cours."
       />
 
-      <section className="premium-connection-summary">
-        <div><strong>{opportunities.length}</strong><span>Total</span></div>
-        <div><strong>{open.length}</strong><span>Ouvertes</span></div>
-        <div><strong>{won.length}</strong><span>Gagnées</span></div>
-        <div><strong>{pipelineLabel}</strong><span>Valeur ouverte</span></div>
-      </section>
-      {openCurrencies.length > 1 ? (
-        <p className="premium-muted-copy">Les opportunités ouvertes utilisent plusieurs devises. SESIRA ne les additionne pas sans règle de conversion explicite.</p>
+      {opportunities.length ? (
+        <section className="workspace-stat-strip" aria-label="Résumé du pipeline">
+          <div><strong>{open.length}</strong><span>Ouvertes</span></div>
+          <div><strong>{pipelineLabel}</strong><span>Valeur ouverte</span></div>
+          <div><strong>{reactivationCandidates.length}</strong><span>À relire</span></div>
+          <div><strong>{won.length}</strong><span>Gagnées</span></div>
+        </section>
       ) : null}
 
-      <section className="premium-results-section">
-        <div className="premium-section-heading">
-          <div><span className="eyebrow">RÉACTIVATION</span><h2>Dossiers sans activité récente</h2></div>
-          <StatusPill tone={reactivationCandidates.length ? "warning" : "neutral"}>À relire</StatusPill>
-        </div>
-        <p className="premium-muted-copy">Cette vue utilise une fenêtre de travail de {REACTIVATION_WINDOW_DAYS} jours. Ce délai n’est pas présenté comme un benchmark. Les dossiers avec opt out ou plainte sont exclus et aucune relance ne part depuis cette vue.</p>
-        {reactivationCandidates.length ? (
-          <div className="premium-connection-grid">
+      {openCurrencies.length > 1 ? (
+        <section className="premium-inline-notice">
+          <StatusPill>Devises distinctes</StatusPill>
+          <p>Les opportunités ouvertes utilisent plusieurs devises. SESIRA ne les additionne pas sans règle de conversion explicite.</p>
+        </section>
+      ) : null}
+
+      {reactivationCandidates.length ? (
+        <section className="sesira-reactivation-strip" aria-label="Dossiers à relire">
+          <div className="sesira-reactivation-head">
+            <div><span className="eyebrow">RÉACTIVATION</span><h2>Dossiers sans activité récente</h2></div>
+            <StatusPill tone="warning">{reactivationCandidates.length} à relire</StatusPill>
+          </div>
+          <p className="sesira-reactivation-copy">Cette vue utilise une fenêtre de travail de {REACTIVATION_WINDOW_DAYS} jours. Ce délai n’est pas présenté comme un benchmark. Les dossiers avec opt out ou plainte sont exclus et aucune relance ne part depuis cette vue.</p>
+          <div className="sesira-reactivation-list">
             {reactivationCandidates.slice(0, 6).map((candidate) => (
-              <article key={candidate.opportunityId} className="premium-connection-card">
-                <header>
-                  <div><span className="eyebrow">À RELIRE</span><h2>{customerById.get(candidate.customerId) ?? "Client non disponible"}</h2></div>
-                  <StatusPill>{candidate.dormantDays} jours</StatusPill>
-                </header>
-                <div className="premium-data-list compact">
-                  <div><span>Dernière activité</span><strong>{formatDate(candidate.lastActivityAt)}</strong></div>
-                  <div><span>Valeur estimée</span><strong>{formatAmount(candidate.estimatedValue, candidate.currency)}</strong></div>
-                  <div><span>État</span><strong>{stateLabel(candidate.commercialState)}</strong></div>
-                </div>
-                <Link href={`/app/opportunites/${candidate.opportunityId}`} className="button ghost small full">Relire le dossier</Link>
-              </article>
+              <Link key={candidate.opportunityId} href={`/app/opportunites/${candidate.opportunityId}`} className="sesira-reactivation-item">
+                <strong>{customerById.get(candidate.customerId) ?? "Client non disponible"}</strong>
+                <span>{formatAmount(candidate.estimatedValue, candidate.currency)}</span>
+                <span>{candidate.dormantDays} j sans activité</span>
+                <StatusPill>{stateLabel(candidate.commercialState)}</StatusPill>
+              </Link>
             ))}
           </div>
-        ) : <p className="premium-muted-copy">Aucun dossier ne correspond actuellement à cette fenêtre de travail.</p>}
-      </section>
+        </section>
+      ) : null}
 
       {opportunities.length ? (
-        <section className="premium-connection-grid">
-          {opportunities.map((opportunity) => (
-            <article key={opportunity.id} className="premium-connection-card">
-              <header>
-                <div>
-                  <span className="eyebrow">OPPORTUNITÉ</span>
-                  <h2>{customerById.get(opportunity.customerId) ?? "Client non disponible"}</h2>
+        <section aria-label="Pipeline commercial">
+          <div className="premium-section-heading">
+            <div><span className="eyebrow">PIPELINE</span><h2>Tous les dossiers</h2></div>
+            <span>{opportunities.length}</span>
+          </div>
+          <div className="sesira-pipeline-list">
+            {opportunities.map((opportunity) => (
+              <Link key={opportunity.id} href={`/app/opportunites/${opportunity.id}`} className="sesira-pipeline-row">
+                <div className="sesira-pipeline-customer">
+                  <span>Client</span>
+                  <strong>{customerById.get(opportunity.customerId) ?? "Client non disponible"}</strong>
                 </div>
+                <div className="sesira-pipeline-cell"><span>Valeur</span><strong>{formatAmount(opportunity.estimatedValue, opportunity.currency)}</strong></div>
+                <div className="sesira-pipeline-cell"><span>Devis</span><strong>{opportunity.variantCount} variante{opportunity.variantCount === 1 ? "" : "s"}</strong></div>
+                <div className="sesira-pipeline-cell"><span>Clôture prévue</span><strong>{opportunity.expectedCloseDate ? formatDate(opportunity.expectedCloseDate) : "Non renseignée"}</strong></div>
                 <StatusPill tone={stateTone(opportunity.commercialState)}>{stateLabel(opportunity.commercialState)}</StatusPill>
-              </header>
-              <div className="premium-data-list compact">
-                <div><span>Valeur estimée</span><strong>{formatAmount(opportunity.estimatedValue, opportunity.currency)}</strong></div>
-                <div><span>Variantes</span><strong>{opportunity.variantCount}</strong></div>
-                <div><span>Révisions courantes</span><strong>{opportunity.currentRevisionQuoteIds.length}</strong></div>
-                <div><span>Ouverte</span><strong>{formatDate(opportunity.openedAt)}</strong></div>
-                <div><span>Clôture prévue</span><strong>{opportunity.expectedCloseDate ? formatDate(opportunity.expectedCloseDate) : "Non renseignée"}</strong></div>
-              </div>
-              <Link href={`/app/opportunites/${opportunity.id}`} className="button ghost small full">Voir le dossier</Link>
-            </article>
-          ))}
+              </Link>
+            ))}
+          </div>
         </section>
       ) : (
         <EmptyState
@@ -103,7 +102,7 @@ export default async function OpportunitiesPage() {
           description="Les opportunités apparaîtront ici lorsqu’un dossier commercial sera créé ou importé."
         />
       )}
-    </>
+    </div>
   );
 }
 

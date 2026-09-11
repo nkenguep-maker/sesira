@@ -17,12 +17,7 @@ export default async function ClientsPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="RELATION CLIENT"
-        title="Clients"
-        description="Une vue simple de vos clients et des coordonnées réellement disponibles dans SESIRA."
-        actions={<Link className="button primary" href="/app/imports">Importer des clients</Link>}
-      />
+      <PageHeader eyebrow="RELATION CLIENT" title="Clients" description="Une vue simple de vos clients et des coordonnées réellement disponibles dans SESIRA." actions={<Link className="button primary" href="/app/imports">Importer des clients</Link>} />
 
       {customers.length ? (
         <section className="workspace-stat-strip" aria-label="Résumé des clients">
@@ -54,7 +49,6 @@ export default async function ClientsPage() {
               </div>
               <div className="workspace-row-actions">
                 <div className="workspace-preview"><span>Données disponibles</span><p>{contactSummary(customer.email, customer.phone)}</p></div>
-                <Link className="button ghost small" href="/app/devis">Voir les devis</Link>
               </div>
             </article>
           ))}

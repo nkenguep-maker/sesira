@@ -42,109 +42,88 @@ export default async function OpportunityDetailPage({ params }: PageProps) {
 
   const customerName = customers.find((customer) => customer.id === opportunity.customerId)?.displayName ?? "Client non disponible";
   const currentState = isOpportunityState(opportunity.commercialState) ? opportunity.commercialState : null;
-  const allowedTransitions = currentState
-    ? OPPORTUNITY_STATES.filter((state) => canTransitionOpportunity(currentState, state))
-    : [];
+  const allowedTransitions = currentState ? OPPORTUNITY_STATES.filter((state) => canTransitionOpportunity(currentState, state)) : [];
   const terminal = currentState ? isTerminalOpportunityState(currentState) : false;
 
   return (
-    <>
+    <div className="sesira-page--opportunity-detail">
       <PageHeader
-        eyebrow="COMMERCIAL"
+        eyebrow="DOSSIER COMMERCIAL"
         title={customerName}
-        description="Variantes, options, signaux observés et décisions disponibles pour ce dossier."
-        actions={<Link href="/app/opportunites" className="button ghost small">Retour</Link>}
+        description="La situation commerciale, les signaux observés et le prochain choix à faire sur ce dossier."
+        actions={<Link href="/app/opportunites" className="button ghost small">Retour au pipeline</Link>}
       />
 
-      <section className="premium-connection-summary">
+      <section className="workspace-stat-strip">
         <div><strong>{stateLabel(opportunity.commercialState)}</strong><span>État</span></div>
         <div><strong>{formatAmount(opportunity.estimatedValue, opportunity.currency)}</strong><span>Valeur estimée</span></div>
         <div><strong>{opportunity.variants.length}</strong><span>Variantes</span></div>
         <div><strong>{opportunity.options.length}</strong><span>Options</span></div>
       </section>
 
-      <CommercialSignalsPanel opportunityId={opportunity.id} snapshot={commercialSnapshot} />
+      <div className="sesira-dossier-grid">
+        <div>
+          <CommercialSignalsPanel opportunityId={opportunity.id} snapshot={commercialSnapshot} />
 
-      {financing.status === "OK" ? (
-        <FinancingPanel
-          organizationRole={viewer.role}
-          opportunityId={opportunity.id}
-          customerId={opportunity.customerId}
-          partners={financing.data.partners}
-          referrals={financing.data.referrals}
-        />
-      ) : (
-        <section className="workspace-boundary-note">
-          <StatusPill tone="warning">Financement indisponible</StatusPill>
-          <p>Les partenaires et signalements ne sont pas lisibles actuellement. SESIRA n’affiche aucun statut de remplacement.</p>
-        </section>
-      )}
-
-      <section className="panel">
-        <div className="panel-head">
-          <div><span className="eyebrow">DÉCISION</span><h2>Changer l’état du dossier</h2></div>
-          <StatusPill tone={terminal ? "neutral" : currentState === "ACTIVE" ? "warning" : "good"}>{stateLabel(opportunity.commercialState)}</StatusPill>
-        </div>
-        {!currentState ? (
-          <p className="panel-copy">Cet état n’est pas reconnu. Aucune action de changement d’état n’est proposée.</p>
-        ) : terminal ? (
-          <p className="panel-copy">Ce dossier est clôturé. Aucune transition supplémentaire n’est disponible.</p>
-        ) : allowedTransitions.length ? (
-          <div className="premium-focus-actions">
-            {allowedTransitions.map((target) => (
-              <form action={transitionOpportunityAction} key={target}>
-                <input type="hidden" name="opportunityId" value={opportunity.id} />
-                <input type="hidden" name="newState" value={target} />
-                <button type="submit" className="button ghost small">{transitionActionLabel(target)}</button>
-              </form>
-            ))}
-          </div>
-        ) : (
-          <p className="panel-copy">Aucune transition supplémentaire n’est disponible.</p>
-        )}
-        <p className="premium-muted-copy">SESIRA revérifie l’état du dossier au moment d’enregistrer l’action. Si le dossier a changé entre temps, l’action est refusée plutôt que forcée.</p>
-      </section>
-
-      {currentState === "WON" ? (
-        <section className="panel">
-          <div className="panel-head">
-            <div><span className="eyebrow">PROCHAIN PAS</span><h2>{operational?.nextStepAt ? "Un prochain pas est prévu" : "Cette vente n’a pas encore de suite planifiée"}</h2></div>
-            <StatusPill tone={operational?.nextStepAt ? "good" : valuePolicy.enabled ? "warning" : "neutral"}>{operational?.nextStepAt ? "Planifiée" : valuePolicy.enabled ? "À surveiller" : "Non planifiée"}</StatusPill>
-          </div>
-          {operational?.nextStepAt ? (
-            <>
-              <div className="premium-data-list">
-                <div><span>Date</span><strong>{formatDate(operational.nextStepAt)}</strong></div>
-                <div><span>Type</span><strong>{operational.nextStepKind ?? "Non précisé"}</strong></div>
-                <div><span>Origine</span><strong>{sourceLabel(operational.nextStepSource)}</strong></div>
-              </div>
-              <form action={setOperationalNextStepAction}>
-                <input type="hidden" name="opportunityId" value={opportunity.id} />
-                <input type="hidden" name="clear" value="1" />
-                <button className="button ghost small" type="submit">Retirer ce prochain pas</button>
-              </form>
-            </>
+          {financing.status === "OK" ? (
+            <FinancingPanel organizationRole={viewer.role} opportunityId={opportunity.id} customerId={opportunity.customerId} partners={financing.data.partners} referrals={financing.data.referrals} />
           ) : (
-            <form action={setOperationalNextStepAction} className="settings-stack">
-              <input type="hidden" name="opportunityId" value={opportunity.id} />
-              <label className="panel"><span className="eyebrow">DATE CIBLE</span><input type="date" name="nextStepDate" required /></label>
-              <label className="panel">
-                <span className="eyebrow">TYPE DE PROCHAIN PAS</span>
-                <select name="nextStepKind" defaultValue="Intervention à planifier">
-                  <option>Intervention à planifier</option>
-                  <option>Rendez vous client</option>
-                  <option>Préparation administrative</option>
-                  <option>Autre action opérationnelle</option>
-                </select>
-              </label>
-              <button type="submit" className="button primary">Enregistrer le prochain pas</button>
-            </form>
+            <section className="workspace-boundary-note"><StatusPill tone="warning">Financement indisponible</StatusPill><p>Les partenaires et signalements ne sont pas lisibles actuellement. SESIRA n’affiche aucun statut de remplacement.</p></section>
           )}
-          <p className="premium-muted-copy">
-            {valuePolicy.enabled ? `Règle active : cette vente remonte après ${valuePolicy.graceHours ?? "un délai non disponible"} h sans prochain pas.` : "La règle « vendu mais non planifié » n’est pas active pour cette organisation."} <Link href="/app/parametres/politiques">Voir la règle</Link>
-          </p>
-        </section>
-      ) : null}
+        </div>
+
+        <aside className="sesira-dossier-side" aria-label="Décisions du dossier">
+          <section className="panel">
+            <div className="panel-head">
+              <div><span className="eyebrow">DÉCISION</span><h2>État du dossier</h2></div>
+              <StatusPill tone={terminal ? "neutral" : currentState === "ACTIVE" ? "warning" : "good"}>{stateLabel(opportunity.commercialState)}</StatusPill>
+            </div>
+            {!currentState ? (
+              <p className="panel-copy">Cet état n’est pas reconnu. Aucune action de changement d’état n’est proposée.</p>
+            ) : terminal ? (
+              <p className="panel-copy">Ce dossier est clôturé. Aucune transition supplémentaire n’est disponible.</p>
+            ) : allowedTransitions.length ? (
+              <div className="premium-focus-actions">
+                {allowedTransitions.map((target) => (
+                  <form action={transitionOpportunityAction} key={target}>
+                    <input type="hidden" name="opportunityId" value={opportunity.id} />
+                    <input type="hidden" name="newState" value={target} />
+                    <button type="submit" className={target === "WON" ? "button primary small" : "button ghost small"}>{transitionActionLabel(target)}</button>
+                  </form>
+                ))}
+              </div>
+            ) : <p className="panel-copy">Aucune transition supplémentaire n’est disponible.</p>}
+            <p className="premium-muted-copy">SESIRA revérifie l’état du dossier au moment d’enregistrer l’action. Si le dossier a changé entre temps, l’action est refusée plutôt que forcée.</p>
+          </section>
+
+          {currentState === "WON" ? (
+            <section className="panel">
+              <div className="panel-head">
+                <div><span className="eyebrow">PROCHAIN PAS</span><h2>{operational?.nextStepAt ? "Suite planifiée" : "Suite à planifier"}</h2></div>
+                <StatusPill tone={operational?.nextStepAt ? "good" : valuePolicy.enabled ? "warning" : "neutral"}>{operational?.nextStepAt ? "Planifiée" : valuePolicy.enabled ? "À surveiller" : "Non planifiée"}</StatusPill>
+              </div>
+              {operational?.nextStepAt ? (
+                <>
+                  <div className="premium-data-list">
+                    <div><span>Date</span><strong>{formatDate(operational.nextStepAt)}</strong></div>
+                    <div><span>Type</span><strong>{operational.nextStepKind ?? "Non précisé"}</strong></div>
+                    <div><span>Origine</span><strong>{sourceLabel(operational.nextStepSource)}</strong></div>
+                  </div>
+                  <form action={setOperationalNextStepAction}><input type="hidden" name="opportunityId" value={opportunity.id} /><input type="hidden" name="clear" value="1" /><button className="button ghost small" type="submit">Retirer ce prochain pas</button></form>
+                </>
+              ) : (
+                <form action={setOperationalNextStepAction} className="workspace-inline-form">
+                  <input type="hidden" name="opportunityId" value={opportunity.id} />
+                  <label><span>Date cible</span><input type="date" name="nextStepDate" required /></label>
+                  <label><span>Type de prochain pas</span><select name="nextStepKind" defaultValue="Intervention à planifier"><option>Intervention à planifier</option><option>Rendez vous client</option><option>Préparation administrative</option><option>Autre action opérationnelle</option></select></label>
+                  <button type="submit" className="button primary">Enregistrer le prochain pas</button>
+                </form>
+              )}
+              <p className="premium-muted-copy">{valuePolicy.enabled ? `Règle active : cette vente remonte après ${valuePolicy.graceHours ?? "un délai non disponible"} h sans prochain pas.` : "La règle « vendu mais non planifié » n’est pas active pour cette organisation."} <Link href="/app/parametres/politiques">Voir la règle</Link></p>
+            </section>
+          ) : null}
+        </aside>
+      </div>
 
       <section className="premium-results-section">
         <div className="premium-section-heading"><div><span className="eyebrow">VARIANTES</span><h2>Versions commerciales</h2></div></div>
@@ -152,18 +131,8 @@ export default async function OpportunityDetailPage({ params }: PageProps) {
           <div className="premium-connection-grid">
             {opportunity.variants.map((variant) => (
               <article key={variant.variantKey} className="premium-connection-card">
-                <header>
-                  <div><span className="eyebrow">VARIANTE</span><h2>{variant.variantKey}</h2></div>
-                  <StatusPill>{variant.revisions.length} révision{variant.revisions.length > 1 ? "s" : ""}</StatusPill>
-                </header>
-                <div className="premium-data-list compact">
-                  {variant.revisions.map((revision) => (
-                    <div key={revision.quoteId}>
-                      <span>Révision {revision.revision}{revision.isCurrent ? " · courante" : ""}</span>
-                      <strong>{formatRevision(revision.amount, opportunity.currency, revision.status)}</strong>
-                    </div>
-                  ))}
-                </div>
+                <header><div><span className="eyebrow">VARIANTE</span><h2>{variant.variantKey}</h2></div><StatusPill>{variant.revisions.length} révision{variant.revisions.length > 1 ? "s" : ""}</StatusPill></header>
+                <div className="premium-data-list compact">{variant.revisions.map((revision) => <div key={revision.quoteId}><span>Révision {revision.revision}{revision.isCurrent ? " · courante" : ""}</span><strong>{formatRevision(revision.amount, opportunity.currency, revision.status)}</strong></div>)}</div>
               </article>
             ))}
           </div>
@@ -176,51 +145,22 @@ export default async function OpportunityDetailPage({ params }: PageProps) {
           <div className="premium-connection-grid">
             {opportunity.options.map((option) => (
               <article key={option.id} className="premium-connection-card">
-                <header>
-                  <div><span className="eyebrow">{option.optionKey}</span><h2>{option.name}</h2></div>
-                  <StatusPill tone={option.status === "INCLUDED" ? "good" : option.status === "REJECTED" ? "warning" : "neutral"}>{optionStatusLabel(option.status)}</StatusPill>
-                </header>
-                <div className="premium-data-list compact">
-                  <div><span>Montant</span><strong>{formatAmount(option.amount, option.currency)}</strong></div>
-                  <div><span>Ordre</span><strong>{option.ordinal}</strong></div>
-                  <div><span>Devis</span><strong>{shortId(option.quoteId)}</strong></div>
-                </div>
+                <header><div><span className="eyebrow">{option.optionKey}</span><h2>{option.name}</h2></div><StatusPill tone={option.status === "INCLUDED" ? "good" : option.status === "REJECTED" ? "warning" : "neutral"}>{optionStatusLabel(option.status)}</StatusPill></header>
+                <div className="premium-data-list compact"><div><span>Montant</span><strong>{formatAmount(option.amount, option.currency)}</strong></div><div><span>Ordre</span><strong>{option.ordinal}</strong></div><div><span>Devis</span><strong>{shortId(option.quoteId)}</strong></div></div>
               </article>
             ))}
           </div>
         ) : <p className="premium-muted-copy">Aucune option n’est enregistrée pour les devis de cette opportunité.</p>}
       </section>
-    </>
+    </div>
   );
 }
 
-function stateLabel(state: string) {
-  const labels: Record<string, string> = { NEW: "Nouvelle", QUALIFYING: "Qualification", ACTIVE: "Active", WON: "Gagnée", LOST: "Perdue", CANCELLED: "Annulée" };
-  return labels[state] ?? state;
-}
-function transitionActionLabel(state: string) {
-  const labels: Record<string, string> = { QUALIFYING: "Passer en qualification", ACTIVE: "Activer", WON: "Marquer gagnée", LOST: "Marquer perdue", CANCELLED: "Annuler" };
-  return labels[state] ?? stateLabel(state);
-}
-function optionStatusLabel(status: string) {
-  const labels: Record<string, string> = { PROPOSED: "Proposée", INCLUDED: "Incluse", EXCLUDED: "Exclue", REJECTED: "Rejetée" };
-  return labels[status] ?? status;
-}
-function sourceLabel(source: string | null) {
-  const labels: Record<string, string> = { MANUAL: "Ajout manuel", INTERVENTION: "Intervention planifiée", SYSTEM: "SESIRA" };
-  return source ? labels[source] ?? "SESIRA" : "Non précisée";
-}
-function formatAmount(amount: number | null, currency: string) {
-  if (amount === null) return "Non renseigné";
-  return new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
-}
-function formatRevision(amount: number | null, currency: string, status: string) {
-  return `${formatAmount(amount, currency)} · ${status}`;
-}
-function shortId(value: string) {
-  return value.length > 12 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value;
-}
-function formatDate(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "Date inconnue" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(date);
-}
+function stateLabel(state: string) { const labels: Record<string, string> = { NEW: "Nouvelle", QUALIFYING: "Qualification", ACTIVE: "Active", WON: "Gagnée", LOST: "Perdue", CANCELLED: "Annulée" }; return labels[state] ?? state; }
+function transitionActionLabel(state: string) { const labels: Record<string, string> = { QUALIFYING: "Passer en qualification", ACTIVE: "Activer", WON: "Marquer gagnée", LOST: "Marquer perdue", CANCELLED: "Annuler" }; return labels[state] ?? stateLabel(state); }
+function optionStatusLabel(status: string) { const labels: Record<string, string> = { PROPOSED: "Proposée", INCLUDED: "Incluse", EXCLUDED: "Exclue", REJECTED: "Rejetée" }; return labels[status] ?? status; }
+function sourceLabel(source: string | null) { const labels: Record<string, string> = { MANUAL: "Ajout manuel", INTERVENTION: "Intervention planifiée", SYSTEM: "SESIRA" }; return source ? labels[source] ?? "SESIRA" : "Non précisée"; }
+function formatAmount(amount: number | null, currency: string) { if (amount === null) return "Non renseigné"; return new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount); }
+function formatRevision(amount: number | null, currency: string, status: string) { return `${formatAmount(amount, currency)} · ${status}`; }
+function shortId(value: string) { return value.length > 12 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value; }
+function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "Date inconnue" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(date); }

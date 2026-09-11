@@ -1,0 +1,277 @@
+/* SESIRA product polish pass — intentionally loaded after the redesign layer. */
+
+.sesira-product-nav-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.12) transparent;
+}
+
+.sesira-product-nav-secondary {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+
+.sesira-product-search { min-width: 164px; }
+.sesira-product-avatar { text-decoration: none; transition: transform .15s ease, background .15s ease; }
+.sesira-product-avatar:hover { background: var(--p-accent-strong); transform: translateY(-1px); }
+
+.sesira-product-shell .page-header { margin-bottom: 22px; align-items: center; }
+.sesira-product-shell .page-header h1 { font-size: clamp(29px, 2.6vw, 38px); }
+.sesira-product-shell .page-header p { margin-top: 7px; font-size: 14px; }
+
+.sesira-product-shell .premium-connection-summary,
+.sesira-product-shell .workspace-stat-strip,
+.sesira-product-shell .metric-grid {
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.sesira-product-shell .premium-connection-summary > div,
+.sesira-product-shell .workspace-stat-strip > div,
+.sesira-product-shell .metric-card {
+  min-height: 84px;
+  padding: 15px 16px;
+  border-radius: 11px;
+  box-shadow: 0 3px 12px rgba(21,43,46,.025);
+}
+.sesira-product-shell .premium-connection-summary strong,
+.sesira-product-shell .workspace-stat-strip strong,
+.sesira-product-shell .metric-card strong {
+  margin-bottom: 6px;
+  font-size: 23px;
+}
+
+.sesira-product-shell .premium-connection-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.sesira-product-shell .premium-connection-card,
+.sesira-product-shell .panel,
+.sesira-product-shell .workspace-row {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(21,43,46,.03);
+}
+
+.sesira-product-shell .premium-connection-card header,
+.sesira-product-shell .workspace-row-heading,
+.sesira-product-shell .panel-head { gap: 14px; }
+
+.sesira-product-shell .premium-connection-card h2,
+.sesira-product-shell .workspace-row-heading h2,
+.sesira-product-shell .panel-head h2 {
+  line-height: 1.2;
+  letter-spacing: -.018em;
+}
+
+.sesira-product-shell .workspace-list { gap: 10px; }
+.sesira-product-shell .workspace-row { padding: 18px; }
+.sesira-product-shell .workspace-row-main { min-width: 0; }
+.sesira-product-shell .workspace-meta { gap: 7px 18px; }
+.sesira-product-shell .workspace-meta > span { min-width: 0; }
+.sesira-product-shell .workspace-meta > span b { margin-bottom: 2px; }
+.sesira-product-shell .workspace-description { max-width: 78ch; }
+.sesira-product-shell .workspace-row-actions { align-content: start; }
+
+.sesira-product-shell .workspace-preview,
+.sesira-product-shell .workspace-gap-box,
+.sesira-product-shell .workspace-boundary-note,
+.sesira-product-shell .premium-inline-notice {
+  border-radius: 10px;
+}
+
+.sesira-product-shell .workspace-boundary-note {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+}
+.sesira-product-shell .workspace-boundary-note p,
+.sesira-product-shell .premium-inline-notice p { line-height: 1.45; }
+
+.sesira-product-shell .workspace-inline-form label span { margin-bottom: 5px; }
+.sesira-product-shell input,
+.sesira-product-shell select,
+.sesira-product-shell textarea {
+  border-radius: 8px;
+  min-height: 38px;
+}
+.sesira-product-shell textarea { min-height: 88px; }
+
+.sesira-product-shell .sesira-action-drawer {
+  border: 1px solid var(--p-line);
+  border-radius: 9px;
+  background: #fff;
+  overflow: hidden;
+}
+.sesira-product-shell .sesira-action-drawer > summary {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  cursor: pointer;
+  list-style: none;
+  color: var(--p-accent-strong);
+  font-size: 12px;
+  font-weight: 760;
+}
+.sesira-product-shell .sesira-action-drawer > summary::-webkit-details-marker { display: none; }
+.sesira-product-shell .sesira-action-drawer[open] > summary { border-bottom: 1px solid var(--p-line); background: var(--p-card-soft); }
+.sesira-product-shell .sesira-action-drawer-body { display: grid; gap: 12px; padding: 12px; }
+
+/* Opportunities */
+.sesira-page--opportunities .sesira-reactivation-strip {
+  margin-bottom: 18px;
+  border: 1px solid #ead9c7;
+  border-radius: 12px;
+  background: #fffaf4;
+  overflow: hidden;
+}
+.sesira-page--opportunities .sesira-reactivation-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid #f0e3d5;
+}
+.sesira-page--opportunities .sesira-reactivation-head h2 { margin: 3px 0 0; font-size: 16px; }
+.sesira-page--opportunities .sesira-reactivation-copy { margin: 0; padding: 10px 16px; color: var(--p-muted); font-size: 11.5px; line-height: 1.45; }
+.sesira-page--opportunities .sesira-reactivation-list { display: grid; }
+.sesira-page--opportunities .sesira-reactivation-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(100px,.5fr) minmax(100px,.5fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 16px;
+  border-top: 1px solid #f0e3d5;
+  text-decoration: none;
+  color: inherit;
+}
+.sesira-page--opportunities .sesira-reactivation-item:hover { background: #fff7ee; }
+.sesira-page--opportunities .sesira-reactivation-item strong { font-size: 12.5px; }
+.sesira-page--opportunities .sesira-reactivation-item span { color: var(--p-muted); font-size: 11px; }
+.sesira-page--opportunities .sesira-pipeline-list { border: 1px solid var(--p-line); border-radius: 12px; background: #fff; overflow: hidden; }
+.sesira-page--opportunities .sesira-pipeline-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(120px,.7fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 70px;
+  padding: 12px 16px;
+  color: inherit;
+  text-decoration: none;
+}
+.sesira-page--opportunities .sesira-pipeline-row + .sesira-pipeline-row { border-top: 1px solid var(--p-line); }
+.sesira-page--opportunities .sesira-pipeline-row:hover { background: #f9fbfb; }
+.sesira-page--opportunities .sesira-pipeline-customer strong { display: block; font-size: 13px; }
+.sesira-page--opportunities .sesira-pipeline-customer span,
+.sesira-page--opportunities .sesira-pipeline-cell span { display: block; margin-bottom: 2px; color: var(--p-faint); font-size: 9.5px; font-weight: 750; text-transform: uppercase; letter-spacing: .06em; }
+.sesira-page--opportunities .sesira-pipeline-cell strong { font-size: 12px; font-weight: 700; }
+
+/* Opportunity dossier */
+.sesira-page--opportunity-detail .sesira-dossier-grid { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(300px,.75fr); gap: 14px; align-items: start; }
+.sesira-page--opportunity-detail .sesira-dossier-side { display: grid; gap: 12px; position: sticky; top: 88px; }
+.sesira-page--opportunity-detail .premium-results-section { margin-top: 20px; }
+
+/* Terrain */
+.sesira-page--terrain .sesira-day-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: -6px 0 18px; }
+.sesira-page--terrain .sesira-day-date { display: inline-flex; align-items: center; min-height: 34px; padding: 0 10px; border: 1px solid var(--p-line); border-radius: 8px; background: #fff; font-size: 12px; font-weight: 700; }
+.sesira-page--terrain .workspace-row { grid-template-columns: minmax(0,1fr) minmax(220px,280px); }
+.sesira-page--terrain .workspace-row-actions { gap: 8px; }
+.sesira-page--terrain .workspace-row-actions > form .button { width: 100%; }
+.sesira-page--terrain .terrain-next { border-color: #b9d7d8; box-shadow: 0 8px 24px rgba(14,105,112,.07); }
+.sesira-page--terrain .terrain-next .workspace-row-heading h2 { font-size: 18px; }
+
+/* Reports & documents */
+.sesira-page--reports .workspace-row-actions,
+.sesira-page--documents .workspace-row-actions { min-width: 210px; }
+.sesira-page--documents .workspace-inline-form.compact { display: none; }
+.sesira-page--documents .sesira-action-drawer .workspace-inline-form.compact { display: grid; }
+.sesira-page--documents .document-confidence { font-variant-numeric: tabular-nums; }
+
+/* Regulatory */
+.sesira-page--regulatory .workspace-section { scroll-margin-top: 90px; }
+.sesira-page--regulatory .sesira-regulatory-jumpnav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin: -4px 0 18px;
+  padding-bottom: 2px;
+}
+.sesira-page--regulatory .sesira-regulatory-jumpnav a {
+  white-space: nowrap;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid var(--p-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--p-muted);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+}
+.sesira-page--regulatory .sesira-regulatory-jumpnav a:hover { color: var(--p-accent-strong); border-color: #b9d3d5; }
+
+/* Organization, settings and system */
+.sesira-page--team .premium-connection-card { min-height: 0; }
+.sesira-page--team .team-coming-soon { display: flex; align-items: center; gap: 8px; color: var(--p-muted); font-size: 11px; }
+.sesira-page--settings .settings-stack { grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; }
+.sesira-page--settings .settings-stack > .panel { height: 100%; }
+.sesira-page--status .workspace-row { grid-template-columns: minmax(0,1fr) minmax(250px,320px); }
+.sesira-page--status .workspace-meta { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.sesira-page--status .workspace-meta > span { padding: 8px 10px; border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-card-soft); }
+.sesira-page--status .workspace-inline-form { border-top: 0; padding-top: 0; }
+
+/* Results */
+.sesira-page--results .premium-period-nav { position: sticky; top: 78px; z-index: 10; width: fit-content; backdrop-filter: blur(10px); }
+.sesira-page--results .premium-observed-grid,
+.sesira-page--results .premium-estimate-grid { gap: 10px; }
+.sesira-page--results .premium-observed-grid article,
+.sesira-page--results .premium-estimate-grid article { border-radius: 11px; box-shadow: 0 3px 14px rgba(21,43,46,.025); }
+
+@media (max-width: 1120px) {
+  .sesira-page--opportunities .sesira-pipeline-row { grid-template-columns: minmax(190px,1.4fr) minmax(110px,.7fr) minmax(110px,.7fr) auto; }
+  .sesira-page--opportunities .sesira-pipeline-row .sesira-pipeline-cell:nth-of-type(3) { display: none; }
+  .sesira-page--opportunity-detail .sesira-dossier-grid { grid-template-columns: 1fr; }
+  .sesira-page--opportunity-detail .sesira-dossier-side { position: static; }
+  .sesira-page--settings .settings-stack { grid-template-columns: 1fr; }
+  .sesira-page--status .workspace-meta { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
+@media (max-width: 820px) {
+  .sesira-product-shell .page-header { align-items: flex-start; }
+  .sesira-product-shell .premium-connection-summary,
+  .sesira-product-shell .workspace-stat-strip,
+  .sesira-product-shell .metric-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .sesira-product-shell .premium-connection-grid { grid-template-columns: 1fr; }
+  .sesira-product-shell .workspace-row,
+  .sesira-page--terrain .workspace-row,
+  .sesira-page--status .workspace-row { grid-template-columns: 1fr; }
+  .sesira-product-shell .workspace-row-actions { border-left: 0; border-top: 1px solid var(--p-line); padding-left: 0; padding-top: 12px; }
+  .sesira-page--opportunities .sesira-reactivation-item { grid-template-columns: 1fr auto; }
+  .sesira-page--opportunities .sesira-reactivation-item > span:nth-of-type(2) { display: none; }
+  .sesira-page--opportunities .sesira-pipeline-row { grid-template-columns: minmax(0,1fr) auto; gap: 10px; }
+  .sesira-page--opportunities .sesira-pipeline-cell { display: none; }
+  .sesira-page--status .workspace-meta { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .sesira-product-topbar { height: 60px; padding-inline: 14px; }
+  .sesira-product-search { min-width: 38px; width: 38px; padding: 0; }
+  .sesira-product-search span { display: none; }
+  .sesira-product-autonomy { display: none; }
+  .sesira-product-main { padding: 22px 14px 48px; }
+  .sesira-product-shell .page-header { gap: 14px; margin-bottom: 18px; }
+  .sesira-product-shell .page-header h1 { font-size: 30px; }
+  .sesira-product-shell .page-actions { width: 100%; flex-wrap: wrap; }
+  .sesira-product-shell .premium-connection-summary > div,
+  .sesira-product-shell .workspace-stat-strip > div { min-height: 76px; padding: 13px; }
+  .sesira-product-shell .premium-connection-summary strong,
+  .sesira-product-shell .workspace-stat-strip strong { font-size: 20px; }
+  .sesira-product-tabs { max-width: 100%; overflow-x: auto; }
+  .sesira-page--terrain .sesira-day-toolbar { align-items: flex-start; flex-direction: column; }
+  .sesira-page--status .workspace-meta { grid-template-columns: 1fr; }
+}

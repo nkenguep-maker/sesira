@@ -21,14 +21,16 @@ export default async function EquipmentObligationsPage() {
   const unknown = rows.filter((row) => row.nextLeakCheck?.status === "UNAVAILABLE").length;
 
   return (
-    <>
-      <PageHeader eyebrow="OBLIGATIONS CVC" title="Équipements & fluides" description="SESIRA affiche les données connues, la règle utilisée et la prochaine échéance calculée. Il ne rend aucune conclusion réglementaire." />
-      <section className="workspace-stat-strip" aria-label="État des équipements">
-        <div><strong>{rows.length}</strong><span>Équipements</span></div>
-        <div><strong>{withDue}</strong><span>Échéances calculées</span></div>
-        <div><strong>{workspace.data.attentions.length}</strong><span>Points à regarder</span></div>
-        <div><strong>{unknown}</strong><span>Calculs indisponibles</span></div>
-      </section>
+    <div className="sesira-page--regulatory">
+      <PageHeader eyebrow="OBLIGATIONS CVC" title="Équipements & fluides" description="Les données connues, la règle utilisée et la prochaine échéance calculée par équipement — sans transformer le calcul en verdict." />
+      {rows.length ? (
+        <section className="workspace-stat-strip" aria-label="État des équipements">
+          <div><strong>{rows.length}</strong><span>Équipements</span></div>
+          <div><strong>{withDue}</strong><span>Échéances calculées</span></div>
+          <div><strong>{workspace.data.attentions.length}</strong><span>Points à regarder</span></div>
+          <div><strong>{unknown}</strong><span>Calculs indisponibles</span></div>
+        </section>
+      ) : null}
       <section className="workspace-boundary-note"><StatusPill>Pas de verdict</StatusPill><p>Une échéance calculée dépend des données enregistrées et de la règle de référence conservée par SESIRA. Une donnée manquante reste visible comme manquante.</p></section>
       {rows.length ? (
         <section className="workspace-list" aria-label="Équipements suivis">
@@ -61,7 +63,7 @@ export default async function EquipmentObligationsPage() {
           ))}
         </section>
       ) : <EmptyState title="Aucun équipement suivi" description="Les équipements apparaîtront ici lorsqu’ils seront enregistrés dans votre espace." />}
-    </>
+    </div>
   );
 }
 
