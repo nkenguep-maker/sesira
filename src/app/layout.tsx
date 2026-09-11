@@ -17,6 +17,7 @@ import "./dashboard-legibility-depth.css";
 import "./dashboard-simple.css";
 import "./product-redesign.css";
 import "./product-redesign-extras.css";
+import "./product-redesign-patches.css";
 
 const hanken = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-hanken", display: "swap" });
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });
