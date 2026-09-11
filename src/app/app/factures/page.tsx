@@ -53,6 +53,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
         </section>
       ) : null}
 
+      <section className="premium-inline-notice">
+        <StatusPill>Décision financière humaine</StatusPill>
+        <p>SESIRA suit les échéances et les états de recouvrement, mais ne change ni le montant, ni la devise, ni le statut comptable de référence. La prochaine décision reste humaine.</p>
+      </section>
+
       <EInvoicingStatus organizationId={viewer.organization.id} invoiceLabels={invoiceLabels} />
 
       {rows.length ? (
@@ -80,7 +85,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
                     <span><b>Dernière relance</b>{row.reminderLastSentAt ? formatDateTime(row.reminderLastSentAt) : "Aucune"}</span>
                   </div>
 
-                  {row.collectionState === "PROMISE_TO_PAY" ? <div className={row.paymentPromiseLate ? "workspace-gap-box" : "workspace-preview"}><span>Promesse de paiement</span><p>{row.paymentPromiseDueAt ? formatDateTime(row.paymentPromiseDueAt) : "Date non renseignée"}{row.paymentPromiseNote ? ` · ${row.paymentPromiseNote}` : ""}</p>{row.paymentPromiseLate ? <p>La date promise est dépassée. La suite reste une décision humaine.</p> : null}</div> : null}
+                  {row.collectionState === "PROMISE_TO_PAY" ? <div className={row.paymentPromiseLate ? "workspace-gap-box" : "workspace-preview"}><span>Promesse de paiement</span><p>{row.paymentPromiseDueAt ? formatDateTime(row.paymentPromiseDueAt) : "Date non renseignée"}{row.paymentPromiseNote ? ` · ${row.paymentPromiseNote}` : ""}</p>{row.paymentPromiseLate ? <p>La date promise est dépassée. La prochaine décision reste humaine.</p> : null}</div> : null}
                   {row.collectionState === "DISPUTED" ? <div className="workspace-gap-box"><strong>Litige ouvert</strong><p>{row.disputeReason ?? "Motif non disponible"}</p></div> : null}
                 </div>
 
