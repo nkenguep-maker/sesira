@@ -15,6 +15,7 @@ import "./dashboard-command-center.css";
 import "./dashboard-stitch-extras.css";
 import "./dashboard-legibility-depth.css";
 import "./dashboard-simple.css";
+import "./product-redesign.css";
 
 const hanken = Hanken_Grotesk({
   subsets: ["latin"],
