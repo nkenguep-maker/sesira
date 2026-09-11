@@ -74,7 +74,7 @@ export default async function MaintenancePage() {
         </section>
       ) : <EmptyState title="Aucun contrat de maintenance" description="Les contrats apparaîtront ici lorsqu’ils seront enregistrés ou synchronisés." action={<Link className="button primary" href="/app/imports">Importer des données</Link>} />}
 
-      <section className="premium-trust-note"><span className="eyebrow">DÉCISION HUMAINE</span><h2>SESIRA prépare l’échéance, pas la décision contractuelle.</h2><p>Le renouvellement, le prix, les nouvelles conditions et une éventuelle résiliation restent décidés par votre entreprise.</p></section>
+      <section className="premium-trust-note"><span className="eyebrow">DÉCISION HUMAINE</span><h2>SESIRA prépare l’échéance, pas la décision contractuelle.</h2><p>SESIRA ne renouvelle pas un contrat et ne change pas son prix. Le renouvellement, les nouvelles conditions et une éventuelle résiliation restent décidés par votre entreprise.</p></section>
     </>
   );
 }
