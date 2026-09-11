@@ -2,13 +2,16 @@
 .sesira-page--policies { display: grid; gap: 16px; }
 .sesira-page--policies .page-header { margin-bottom: 4px; }
 .sesira-page--policies .policy-card { margin: 0; }
-.sesira-page--policies .policy-form-grid {
+
+.sesira-page--policies .policy-form-grid,
+.sesira-page--calls .policy-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 16px;
 }
-.sesira-page--policies .policy-field {
+.sesira-page--policies .policy-field,
+.sesira-page--calls .policy-field {
   min-width: 0;
   display: grid;
   align-content: start;
@@ -18,24 +21,33 @@
   border-radius: 9px;
   background: var(--p-card-soft);
 }
-.sesira-page--policies .policy-field > span:first-child {
+.sesira-page--policies .policy-field > span:first-child,
+.sesira-page--calls .policy-field > span:first-child {
   color: var(--p-muted);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
-.sesira-page--policies .policy-field small { color: var(--p-faint); font-size: 11px; line-height: 1.45; }
+.sesira-page--policies .policy-field small,
+.sesira-page--calls .policy-field small { color: var(--p-faint); font-size: 11px; line-height: 1.45; }
 .sesira-page--policies .policy-toggle { grid-column: 1 / -1; }
 .sesira-page--policies .policy-toggle > span:last-child { display: flex; align-items: center; gap: 9px; color: var(--p-ink); font-size: 13px; font-weight: 680; }
 .sesira-page--policies .policy-toggle input[type="checkbox"] { width: 17px; height: 17px; min-height: 0; }
-.sesira-page--policies .policy-wide { grid-column: 1 / -1; }
-.sesira-page--policies .policy-form-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+.sesira-page--policies .policy-wide,
+.sesira-page--calls .policy-wide { grid-column: 1 / -1; }
+.sesira-page--policies .policy-form-actions,
+.sesira-page--calls .policy-form-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+.sesira-page--calls .sesira-action-drawer { margin-top: 14px; }
 
 @media (max-width: 760px) {
-  .sesira-page--policies .policy-form-grid { grid-template-columns: 1fr; }
+  .sesira-page--policies .policy-form-grid,
+  .sesira-page--calls .policy-form-grid { grid-template-columns: 1fr; }
   .sesira-page--policies .policy-toggle,
   .sesira-page--policies .policy-wide,
-  .sesira-page--policies .policy-form-actions { grid-column: auto; }
-  .sesira-page--policies .policy-form-actions .button { width: 100%; }
+  .sesira-page--policies .policy-form-actions,
+  .sesira-page--calls .policy-wide,
+  .sesira-page--calls .policy-form-actions { grid-column: auto; }
+  .sesira-page--policies .policy-form-actions .button,
+  .sesira-page--calls .policy-form-actions .button { width: 100%; }
 }
