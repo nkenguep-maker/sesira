@@ -40,7 +40,7 @@ export default async function AutomationsPage() {
   const cards = buildAutomationCards(configs, runsByConfig);
   const activeKeys = new Set(cards.map((card) => card.key));
   const recentActivity = cards.reduce((total, card) => total + card.recentActivity.length, 0);
-  const currentMode = cards[0]?.level ? AUTOMATION_LEVEL_LABELS[cards[0].level] : "Observation";
+  const currentMode = cards[0]?.level ? AUTOMATION_LEVEL_LABELS[cards[0].level] : null;
   const needsAttention = cards.filter((card) => card.health.tone === "amber").length;
 
   return (
@@ -52,12 +52,14 @@ export default async function AutomationsPage() {
         actions={<Link className="button ghost" href="/app/parametres/politiques">Règles de l’organisation</Link>}
       />
 
-      <section className="premium-automation-summary" aria-label="Résumé des automatisations">
-        <div><strong>{cards.length}</strong><span>Actives</span></div>
-        <div><strong>{currentMode}</strong><span>Mode actuel</span></div>
-        <div><strong>{recentActivity}</strong><span>Activités récentes</span></div>
-        <div><strong>{needsAttention}</strong><span>À vérifier</span></div>
-      </section>
+      {cards.length ? (
+        <section className="premium-automation-summary" aria-label="Résumé des automatisations">
+          <div><strong>{cards.length}</strong><span>Actives</span></div>
+          <div><strong>{currentMode ?? "—"}</strong><span>Mode actuel</span></div>
+          <div><strong>{recentActivity}</strong><span>Activités récentes</span></div>
+          <div><strong>{needsAttention}</strong><span>À vérifier</span></div>
+        </section>
+      ) : null}
 
       {cards.length ? (
         <section className="premium-automation-list" aria-label="Automatisations actives">
@@ -95,7 +97,7 @@ export default async function AutomationsPage() {
           ))}
         </section>
       ) : (
-        <section className="premium-empty-editorial"><span className="eyebrow">OBSERVATION</span><h2>Aucune automatisation active.</h2><p>SESIRA peut commencer par observer vos processus sans déclencher d’action externe.</p></section>
+        <section className="premium-empty-editorial"><span className="eyebrow">AUCUNE RÈGLE ACTIVE</span><h2>Commencez par observer avant d’automatiser.</h2><p>Aucun mode d’automatisation actif n’est enregistré pour cette organisation. Configurez une règle seulement lorsque votre équipe a défini ce que SESIRA peut faire et ce qui doit rester humain.</p></section>
       )}
 
       <section className="premium-catalog-section">
