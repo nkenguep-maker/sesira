@@ -63,3 +63,8 @@ export { getSpeedToLeadStats } from "./speed-to-lead";
 
 export type { ReactivationCandidateRow } from "./reactivation";
 export { getReactivationCandidates } from "./reactivation";
+
+export type {
+  DispatchStatus, DispatchConflictKind, TeamDispatchDayRow, DispatchConflictRow,
+} from "./dispatch";
+export { getTeamDispatchDay, getDispatchConflicts } from "./dispatch";

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   attentionFromSourceKey,
+  dispatchAssignmentKey,
   externalEffectKey,
   productCreationKey,
   providerDeliveryKey,
@@ -147,5 +148,43 @@ describe("Rule: keys never depend on mutable business values", () => {
       externalEffectKey("quote_reminder", QUOTE_ID, 2),
     ];
     expect(second).toEqual(first);
+  });
+});
+
+describe("dispatchAssignmentKey", () => {
+  const TECH_ID = "11111111-2222-4333-8444-555555555555";
+  const INT_ID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
+
+  it("formats as dispatch:{intervention}:{tech}:{yyyymmddThhmm}", () => {
+    expect(dispatchAssignmentKey(INT_ID, TECH_ID, "2026-10-06T09:00:00.000Z")).toBe(
+      `dispatch:${INT_ID}:${TECH_ID}:20261006T0900`,
+    );
+  });
+
+  it("strips seconds/milliseconds — same key across retry jitter within a minute", () => {
+    const a = dispatchAssignmentKey(INT_ID, TECH_ID, "2026-10-06T09:00:03.421Z");
+    const b = dispatchAssignmentKey(INT_ID, TECH_ID, "2026-10-06T09:00:58.001Z");
+    expect(a).toBe(b);
+  });
+
+  it("distinguishes different minutes", () => {
+    const a = dispatchAssignmentKey(INT_ID, TECH_ID, "2026-10-06T09:00:00.000Z");
+    const b = dispatchAssignmentKey(INT_ID, TECH_ID, "2026-10-06T09:01:00.000Z");
+    expect(a).not.toBe(b);
+  });
+
+  it("rejects non-uuid intervention or technician", () => {
+    expect(() =>
+      dispatchAssignmentKey("nope", TECH_ID, "2026-10-06T09:00:00Z"),
+    ).toThrow();
+    expect(() =>
+      dispatchAssignmentKey(INT_ID, "nope", "2026-10-06T09:00:00Z"),
+    ).toThrow();
+  });
+
+  it("rejects malformed timestamp", () => {
+    expect(() =>
+      dispatchAssignmentKey(INT_ID, TECH_ID, "not-a-timestamp"),
+    ).toThrow();
   });
 });

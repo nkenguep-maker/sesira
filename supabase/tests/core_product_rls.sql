@@ -3140,8 +3140,372 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C41 — Dispatch planning core assertions
+-- =========================================================================
+-- Fixtures: a second technician (member of tenant A), two vehicles per tenant,
+-- interventions to receive assignments. Then the RPC + trigger scenarios.
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, is_sso_user, is_anonymous
+) values (
+  '00000000-0000-0000-0000-000000000000',
+  '91100000-0000-4000-8000-0000000000c1',
+  'authenticated', 'authenticated', 'c41-tech@sesira.test', crypt('not-used', gen_salt('bf')), now(),
+  '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"C41 Tech"}'::jsonb,
+  now(), now(), false, false
+);
+
+insert into public.organization_members (organization_id, user_id, role, status) values
+  ('91000000-0000-4000-8000-000000000001', '91100000-0000-4000-8000-0000000000c1', 'MEMBER', 'ACTIVE');
+
+insert into public.field_vehicles (id, organization_id, label, status) values
+  ('c1100000-0000-4000-8000-000000000001', '91000000-0000-4000-8000-000000000001', 'Van A', 'ACTIVE'),
+  ('c1100000-0000-4000-8000-000000000002', '91000000-0000-4000-8000-000000000001', 'Van B', 'ACTIVE'),
+  ('c1100000-0000-4000-8000-0000000000b1', '92000000-0000-4000-8000-000000000002', 'Van Tenant B', 'ACTIVE');
+
+insert into public.interventions (id, organization_id, customer_id, title, status, scheduled_at, duration_minutes)
+values
+  ('c1200000-0000-4000-8000-000000000001', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', 'C41 test intervention', 'PLANNED', '2026-10-06T09:00:00Z'::timestamptz, 120),
+  ('c1200000-0000-4000-8000-000000000002', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', 'C41 test intervention 2', 'PLANNED', '2026-10-06T14:00:00Z'::timestamptz, 60);
+
+-- Cross-tenant isolation
+do $$
+declare
+  visible integer;
+begin
+  select count(*) into visible from public.field_vehicles
+    where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then
+    raise exception 'C41: tenant A must not see tenant B field_vehicles (got %)', visible;
+  end if;
+  select count(*) into visible from public.intervention_dispatch_assignments
+    where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then
+    raise exception 'C41: tenant A must not see tenant B assignments (got %)', visible;
+  end if;
+end;
+$$;
+
+-- Assign create + idempotency + CAS + acknowledge + en_route + events
+do $$
+declare
+  assign_r record;
+  assign_id uuid;
+  ack_res boolean;
+  v_after integer;
+  captured text;
+begin
+  select assignment_id, version, created into assign_r
+  from public.assign_dispatch(
+    '91000000-0000-4000-8000-000000000001', 'c1200000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-0000000000c1', 'c1100000-0000-4000-8000-000000000001',
+    '2026-10-06T09:00:00Z'::timestamptz, '2026-10-06T11:00:00Z'::timestamptz,
+    'c41-idem-1', null
+  );
+  if not assign_r.created or assign_r.version <> 1 then
+    raise exception 'C41: initial create expected created=true v=1 (got created=% v=%)', assign_r.created, assign_r.version;
+  end if;
+  assign_id := assign_r.assignment_id;
+
+  -- Idempotent replay
+  select assignment_id, version, created into assign_r
+  from public.assign_dispatch(
+    '91000000-0000-4000-8000-000000000001', 'c1200000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-0000000000c1', 'c1100000-0000-4000-8000-000000000001',
+    '2026-10-06T09:00:00Z'::timestamptz, '2026-10-06T11:00:00Z'::timestamptz,
+    'c41-idem-1', null
+  );
+  if assign_r.created or assign_r.assignment_id <> assign_id or assign_r.version <> 1 then
+    raise exception 'C41: idempotent replay must return same id created=false v=1';
+  end if;
+
+  -- CAS update (no idempotency_key, version_expected=1)
+  select assignment_id, version, created into assign_r
+  from public.assign_dispatch(
+    '91000000-0000-4000-8000-000000000001', 'c1200000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-0000000000c1', 'c1100000-0000-4000-8000-000000000002',
+    '2026-10-06T09:30:00Z'::timestamptz, '2026-10-06T11:30:00Z'::timestamptz,
+    null, 1
+  );
+  if assign_r.created or assign_r.version <> 2 then
+    raise exception 'C41: CAS update expected created=false v=2 (got created=% v=%)', assign_r.created, assign_r.version;
+  end if;
+
+  -- Stale version rejected + audit written
+  begin
+    perform public.assign_dispatch(
+      '91000000-0000-4000-8000-000000000001', 'c1200000-0000-4000-8000-000000000001',
+      '91100000-0000-4000-8000-0000000000c1', 'c1100000-0000-4000-8000-000000000002',
+      '2026-10-06T09:30:00Z'::timestamptz, '2026-10-06T11:30:00Z'::timestamptz,
+      null, 1
+    );
+    raise exception 'C41: stale version should have raised';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '40001' then
+      raise exception 'C41: expected 40001 on stale version (got %)', captured;
+    end if;
+  end;
+  if not exists (
+    select 1 from public.audit_logs
+    where organization_id = '91000000-0000-4000-8000-000000000001'
+      and action = 'dispatch.assign_conflict'
+      and entity_id = assign_id
+  ) then
+    raise exception 'C41: dispatch.assign_conflict audit row must exist after stale-version attempt';
+  end if;
+
+  -- Acknowledge (v=2 → v=3)
+  select public.acknowledge_dispatch(
+    '91000000-0000-4000-8000-000000000001', assign_id,
+    '91100000-0000-4000-8000-0000000000c1', 2
+  ) into ack_res;
+  if not ack_res then
+    raise exception 'C41: acknowledge_dispatch expected true';
+  end if;
+  select version into v_after from public.intervention_dispatch_assignments where id = assign_id;
+  if v_after <> 3 then
+    raise exception 'C41: after acknowledge expected v=3 (got %)', v_after;
+  end if;
+
+  -- En-route (v=3 → v=4)
+  if not public.mark_en_route(
+    '91000000-0000-4000-8000-000000000001', assign_id,
+    '2026-10-06T08:45:00Z'::timestamptz, 3
+  ) then
+    raise exception 'C41: mark_en_route expected true';
+  end if;
+
+  -- Events per transition >= 3
+  if (
+    select count(*) from public.events
+    where organization_id = '91000000-0000-4000-8000-000000000001'
+      and entity_type = 'intervention_dispatch_assignment'
+      and entity_id = assign_id
+  ) < 3 then
+    raise exception 'C41: expected >= 3 events for assignment %', assign_id;
+  end if;
+end;
+$$;
+
+-- State-machine trigger: illegal direct UPDATE blocked
+do $$
+declare
+  captured text;
+begin
+  begin
+    update public.intervention_dispatch_assignments
+      set dispatch_status = 'COMPLETED'
+    where organization_id = '91000000-0000-4000-8000-000000000001'
+      and intervention_id = 'c1200000-0000-4000-8000-000000000001'
+      and dispatch_status = 'EN_ROUTE';
+    raise exception 'C41: EN_ROUTE → COMPLETED direct UPDATE should have failed';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C41: expected 22023 on illegal transition (got %)', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Compat guard: cannot COMPLETE dispatch while intervention is PLANNED
+do $$
+declare
+  assign_r record;
+  captured text;
+begin
+  select assignment_id, version, created into assign_r
+  from public.assign_dispatch(
+    '91000000-0000-4000-8000-000000000001', 'c1200000-0000-4000-8000-000000000002',
+    '91100000-0000-4000-8000-0000000000c1', null,
+    '2026-10-06T14:00:00Z'::timestamptz, '2026-10-06T15:00:00Z'::timestamptz,
+    'c41-idem-2', null
+  );
+  perform public.acknowledge_dispatch(
+    '91000000-0000-4000-8000-000000000001', assign_r.assignment_id,
+    '91100000-0000-4000-8000-0000000000c1', assign_r.version
+  );
+  update public.intervention_dispatch_assignments
+    set dispatch_status = 'IN_PROGRESS', version = version + 1
+  where id = assign_r.assignment_id;
+
+  begin
+    update public.intervention_dispatch_assignments
+      set dispatch_status = 'COMPLETED', version = version + 1
+    where id = assign_r.assignment_id;
+    raise exception 'C41: dispatch COMPLETED must fail when intervention.status = PLANNED';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C41: expected 22023 on compat guard (got %)', captured;
+    end if;
+  end;
+
+  -- Bring intervention to COMPLETED, then dispatch COMPLETED succeeds
+  update public.interventions
+    set status = 'COMPLETED', completed_at = now()
+  where id = 'c1200000-0000-4000-8000-000000000002'
+    and organization_id = '91000000-0000-4000-8000-000000000001';
+
+  update public.intervention_dispatch_assignments
+    set dispatch_status = 'COMPLETED', version = version + 1
+  where id = assign_r.assignment_id;
+
+  -- Terminal immutable
+  begin
+    update public.intervention_dispatch_assignments
+      set dispatch_status = 'NEEDS_ATTENTION', version = version + 1
+    where id = assign_r.assignment_id;
+    raise exception 'C41: terminal COMPLETED must be immutable';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C41: expected 22023 on terminal immutable (got %)', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- CANCELLED allowed on any intervention.status
+do $$
+declare
+  assign_r record;
+  ok boolean;
+begin
+  insert into public.interventions (id, organization_id, customer_id, title, status, scheduled_at, duration_minutes)
+  values ('c1200000-0000-4000-8000-000000000003', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', 'C41 intervention 3', 'PLANNED', '2026-10-06T16:00:00Z'::timestamptz, 60);
+  select assignment_id, version, created into assign_r
+  from public.assign_dispatch(
+    '91000000-0000-4000-8000-000000000001', 'c1200000-0000-4000-8000-000000000003',
+    '91100000-0000-4000-8000-0000000000c1', null,
+    '2026-10-06T16:00:00Z'::timestamptz, '2026-10-06T17:00:00Z'::timestamptz,
+    'c41-idem-3', null
+  );
+  select public.release_assignment(
+    '91000000-0000-4000-8000-000000000001', assign_r.assignment_id,
+    'client cancelled', assign_r.version
+  ) into ok;
+  if not ok then
+    raise exception 'C41: release_assignment expected true';
+  end if;
+end;
+$$;
+
+-- Double booking (tech + vehicle) + timezone boundary
+do $$
+declare
+  tech_conflicts integer;
+  vehicle_conflicts integer;
+  day_rows integer;
+begin
+  insert into public.interventions (id, organization_id, customer_id, title, status, scheduled_at, duration_minutes) values
+    ('c1200000-0000-4000-8000-00000000000a', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', 'C41 dbook A', 'PLANNED', '2026-10-07T10:00:00Z'::timestamptz, 90),
+    ('c1200000-0000-4000-8000-00000000000b', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', 'C41 dbook B', 'PLANNED', '2026-10-07T10:30:00Z'::timestamptz, 90);
+
+  perform public.assign_dispatch('91000000-0000-4000-8000-000000000001','c1200000-0000-4000-8000-00000000000a','91100000-0000-4000-8000-0000000000c1','c1100000-0000-4000-8000-000000000001','2026-10-07T10:00:00Z'::timestamptz,'2026-10-07T11:30:00Z'::timestamptz,'c41-dbook-a',null);
+  perform public.assign_dispatch('91000000-0000-4000-8000-000000000001','c1200000-0000-4000-8000-00000000000b','91100000-0000-4000-8000-0000000000c1','c1100000-0000-4000-8000-000000000002','2026-10-07T10:30:00Z'::timestamptz,'2026-10-07T12:00:00Z'::timestamptz,'c41-dbook-b',null);
+
+  select count(*) into tech_conflicts from public.get_dispatch_conflicts(
+    '91000000-0000-4000-8000-000000000001', 30
+  ) where conflict_kind = 'TECH_DOUBLE_BOOKING';
+  if tech_conflicts < 1 then
+    raise exception 'C41: expected >= 1 TECH_DOUBLE_BOOKING (got %)', tech_conflicts;
+  end if;
+
+  -- Vehicle double book: same vehicle across two techs
+  insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, is_sso_user, is_anonymous)
+    values ('00000000-0000-0000-0000-000000000000','91100000-0000-4000-8000-0000000000c2','authenticated','authenticated','c41-tech2@sesira.test',crypt('x',gen_salt('bf')),now(),'{}'::jsonb,'{}'::jsonb,now(),now(),false,false);
+  insert into public.organization_members (organization_id, user_id, role, status) values
+    ('91000000-0000-4000-8000-000000000001', '91100000-0000-4000-8000-0000000000c2', 'MEMBER', 'ACTIVE');
+  insert into public.interventions (id, organization_id, customer_id, title, status, scheduled_at, duration_minutes)
+    values ('c1200000-0000-4000-8000-00000000000c', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', 'C41 dbook C', 'PLANNED', '2026-10-07T10:15:00Z'::timestamptz, 60);
+  perform public.assign_dispatch('91000000-0000-4000-8000-000000000001','c1200000-0000-4000-8000-00000000000c','91100000-0000-4000-8000-0000000000c2','c1100000-0000-4000-8000-000000000001','2026-10-07T10:15:00Z'::timestamptz,'2026-10-07T11:15:00Z'::timestamptz,'c41-dbook-c',null);
+
+  select count(*) into vehicle_conflicts from public.get_dispatch_conflicts(
+    '91000000-0000-4000-8000-000000000001', 30
+  ) where conflict_kind = 'VEHICLE_DOUBLE_BOOKING';
+  if vehicle_conflicts < 1 then
+    raise exception 'C41: expected >= 1 VEHICLE_DOUBLE_BOOKING (got %)', vehicle_conflicts;
+  end if;
+
+  -- Timezone boundary: 2026-10-07T22:30Z = 2026-10-08 00:30 Europe/Paris.
+  insert into public.interventions (id, organization_id, customer_id, title, status, scheduled_at, duration_minutes)
+    values ('c1200000-0000-4000-8000-00000000000d', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', 'C41 tz', 'PLANNED', '2026-10-07T22:30:00Z'::timestamptz, 60);
+  perform public.assign_dispatch('91000000-0000-4000-8000-000000000001','c1200000-0000-4000-8000-00000000000d','91100000-0000-4000-8000-0000000000c1',null,'2026-10-07T22:30:00Z'::timestamptz,'2026-10-07T23:30:00Z'::timestamptz,'c41-tz',null);
+
+  select count(*) into day_rows from public.get_team_dispatch_day(
+    '91000000-0000-4000-8000-000000000001', '2026-10-08'::date, 'Europe/Paris'
+  ) where intervention_id = 'c1200000-0000-4000-8000-00000000000d';
+  if day_rows <> 1 then
+    raise exception 'C41: expected 1 row for 2026-10-08 Europe/Paris (got %)', day_rows;
+  end if;
+
+  select count(*) into day_rows from public.get_team_dispatch_day(
+    '91000000-0000-4000-8000-000000000001', '2026-10-07'::date, 'Europe/Paris'
+  ) where intervention_id = 'c1200000-0000-4000-8000-00000000000d';
+  if day_rows <> 0 then
+    raise exception 'C41: expected 0 rows for 2026-10-07 Europe/Paris (got %)', day_rows;
+  end if;
+end;
+$$;
+
+-- Availability block conflict
+do $$
+declare
+  ac integer;
+begin
+  insert into public.technician_availability_blocks (organization_id, user_id, from_at, to_at, reason, source)
+  values ('91000000-0000-4000-8000-000000000001', '91100000-0000-4000-8000-0000000000c1', '2026-10-06T08:00:00Z'::timestamptz, '2026-10-06T12:00:00Z'::timestamptz, 'TRAINING', 'MANUAL');
+  select count(*) into ac from public.get_dispatch_conflicts(
+    '91000000-0000-4000-8000-000000000001', 30
+  ) where conflict_kind = 'AVAILABILITY_BLOCKED';
+  if ac < 1 then
+    raise exception 'C41: expected >= 1 AVAILABILITY_BLOCKED (got %)', ac;
+  end if;
+end;
+$$;
+
+-- Attention dedup
+do $$
+declare
+  first_count integer;
+  second_count integer;
+begin
+  select public.scan_dispatch_attentions('91000000-0000-4000-8000-000000000001') into first_count;
+  select public.scan_dispatch_attentions('91000000-0000-4000-8000-000000000001') into second_count;
+  if second_count <> 0 then
+    raise exception 'C41: second scan_dispatch_attentions should insert 0 rows (got %)', second_count;
+  end if;
+end;
+$$;
+
+-- Cross-tenant technician rejected
+do $$
+declare
+  captured text;
+begin
+  begin
+    perform public.assign_dispatch(
+      '91000000-0000-4000-8000-000000000001', 'c1200000-0000-4000-8000-000000000001',
+      '92100000-0000-4000-8000-000000000002', null,
+      '2026-10-06T09:00:00Z'::timestamptz, '2026-10-06T11:00:00Z'::timestamptz,
+      'c41-idem-cross-tech', null
+    );
+    raise exception 'C41: cross-tenant technician assignment must be rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured not in ('42501','22023') then
+      raise exception 'C41: expected 42501 or 22023 on cross-tenant tech (got %)', captured;
+    end if;
+  end;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end and C21 V2 validation assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation and C41 dispatch planning assertions passed' as result;
 
 rollback;

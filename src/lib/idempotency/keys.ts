@@ -248,6 +248,38 @@ export function aiRunKey(
 }
 
 /**
+ * Dispatch assignment identity. Used by C41 `assign_dispatch` so a retried
+ * assignment request with the same coordinates does not create a duplicate
+ * row when the caller retries within the same minute (network jitter,
+ * proxy replay). Seconds/ms are stripped so replays within the same minute
+ * of the same operator intent collapse.
+ *
+ * Format: `dispatch:{intervention_id}:{technician_user_id}:{yyyymmddThhmm}`
+ */
+export function dispatchAssignmentKey(
+  interventionId: string,
+  technicianUserId: string,
+  scheduledStartIso: string,
+): string {
+  assertUuid("interventionId", interventionId);
+  assertUuid("technicianUserId", technicianUserId);
+  assertNonEmpty("scheduledStartIso", scheduledStartIso, 40);
+  const parsed = new Date(scheduledStartIso);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new RangeError(
+      `scheduledStartIso must be an ISO timestamp (got ${JSON.stringify(scheduledStartIso)})`,
+    );
+  }
+  const iso = parsed.toISOString();
+  const yyyy = iso.slice(0, 4);
+  const mm = iso.slice(5, 7);
+  const dd = iso.slice(8, 10);
+  const hh = iso.slice(11, 13);
+  const mi = iso.slice(14, 16);
+  return `dispatch:${interventionId}:${technicianUserId}:${yyyy}${mm}${dd}T${hh}${mi}`;
+}
+
+/**
  * Types of identifiers a key builder MAY accept. Used by the store
  * layer to keep the surface area explicit — a call site that mixes
  * a mutable value into a key trips a type error.

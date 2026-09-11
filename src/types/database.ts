@@ -1458,6 +1458,171 @@ export type Database = {
           },
         ]
       }
+      field_vehicles: {
+        Row: {
+          created_at: string
+          external_ref: string | null
+          id: string
+          label: string
+          metadata: Json
+          organization_id: string
+          registration: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          external_ref?: string | null
+          id?: string
+          label: string
+          metadata?: Json
+          organization_id: string
+          registration?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          external_ref?: string | null
+          id?: string
+          label?: string
+          metadata?: Json
+          organization_id?: string
+          registration?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_vehicles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intervention_dispatch_assignments: {
+        Row: {
+          acknowledged_at: string | null
+          arrived_at: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          completed_at: string | null
+          created_at: string
+          dispatch_status: string
+          en_route_at: string | null
+          id: string
+          idempotency_key: string | null
+          intervention_id: string
+          organization_id: string
+          route_order: number | null
+          scheduled_end: string
+          scheduled_start: string
+          started_at: string | null
+          technician_user_id: string
+          updated_at: string
+          vehicle_id: string | null
+          version: number
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          arrived_at?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dispatch_status?: string
+          en_route_at?: string | null
+          id?: string
+          idempotency_key?: string | null
+          intervention_id: string
+          organization_id: string
+          route_order?: number | null
+          scheduled_end: string
+          scheduled_start: string
+          started_at?: string | null
+          technician_user_id: string
+          updated_at?: string
+          vehicle_id?: string | null
+          version?: number
+        }
+        Update: {
+          acknowledged_at?: string | null
+          arrived_at?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dispatch_status?: string
+          en_route_at?: string | null
+          id?: string
+          idempotency_key?: string | null
+          intervention_id?: string
+          organization_id?: string
+          route_order?: number | null
+          scheduled_end?: string
+          scheduled_start?: string
+          started_at?: string | null
+          technician_user_id?: string
+          updated_at?: string
+          vehicle_id?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intervention_dispatch_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      technician_availability_blocks: {
+        Row: {
+          created_at: string
+          from_at: string
+          id: string
+          note: string | null
+          organization_id: string
+          reason: string
+          source: string
+          to_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_at: string
+          id?: string
+          note?: string | null
+          organization_id: string
+          reason: string
+          source?: string
+          to_at: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_at?: string
+          id?: string
+          note?: string | null
+          organization_id?: string
+          reason?: string
+          source?: string
+          to_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_availability_blocks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -3235,6 +3400,104 @@ export type Database = {
           target_organization_id: string
         }
         Returns: boolean
+      }
+      assign_dispatch: {
+        Args: {
+          target_organization_id: string
+          target_intervention_id: string
+          target_technician_user_id: string
+          target_vehicle_id: string | null
+          target_scheduled_start: string
+          target_scheduled_end: string
+          target_idempotency_key: string | null
+          target_version_expected: number | null
+        }
+        Returns: {
+          assignment_id: string
+          version: number
+          created: boolean
+        }[]
+      }
+      acknowledge_dispatch: {
+        Args: {
+          target_organization_id: string
+          target_assignment_id: string
+          target_acknowledged_by_user_id: string
+          target_version_expected: number
+        }
+        Returns: boolean
+      }
+      mark_en_route: {
+        Args: {
+          target_organization_id: string
+          target_assignment_id: string
+          target_at: string
+          target_version_expected: number
+        }
+        Returns: boolean
+      }
+      reorder_route: {
+        Args: {
+          target_organization_id: string
+          target_technician_user_id: string
+          target_day: string
+          target_timezone: string
+          target_ordered_assignment_ids: string[]
+        }
+        Returns: number
+      }
+      release_assignment: {
+        Args: {
+          target_organization_id: string
+          target_assignment_id: string
+          target_reason: string
+          target_version_expected: number
+        }
+        Returns: boolean
+      }
+      get_team_dispatch_day: {
+        Args: {
+          target_organization_id: string
+          target_day: string
+          target_timezone: string
+        }
+        Returns: {
+          technician_user_id: string
+          assignment_id: string
+          intervention_id: string
+          vehicle_id: string | null
+          dispatch_status: string
+          scheduled_start: string
+          scheduled_end: string
+          route_order: number | null
+          version: number
+          intervention_title: string
+          intervention_status: string
+          customer_id: string
+          customer_display_name: string | null
+          address_line1: string | null
+          address_city: string | null
+        }[]
+      }
+      get_dispatch_conflicts: {
+        Args: {
+          target_organization_id: string
+          target_horizon_days: number
+        }
+        Returns: {
+          conflict_kind: string
+          technician_user_id: string | null
+          vehicle_id: string | null
+          assignment_id_a: string
+          assignment_id_b: string | null
+          detail: string
+        }[]
+      }
+      scan_dispatch_attentions: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: number
       }
     }
     Enums: {
