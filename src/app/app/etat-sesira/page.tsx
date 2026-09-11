@@ -18,14 +18,65 @@ export default async function PlatformStatePage({ searchParams }: { searchParams
     return <><PageHeader eyebrow="PILOTAGE" title="État SESIRA" description="État technique des services de votre espace." /><section className="app-state-message"><strong>État indisponible</strong><p>SESIRA ne peut pas lire ses mesures techniques pour le moment. Aucun score de remplacement n’est affiché.</p></section></>;
   }
   const rows = workspace.data;
+  const degraded = rows.filter((row) => row.status === "DEGRADED").length;
+  const disabled = rows.filter((row) => row.status.startsWith("DISABLED")).length;
+
   return (
-    <>
-      <PageHeader eyebrow="PILOTAGE" title="État SESIRA" description="Mesures brutes des services réellement enregistrés : succès, erreurs, temps de réponse et files d’attente. Aucun score de santé synthétique n’est inventé." />
+    <div className="sesira-page--status">
+      <PageHeader eyebrow="PILOTAGE" title="État SESIRA" description="Les mesures techniques réellement enregistrées. Cette page montre les incidents et les signaux bruts, pas un score de santé synthétique." />
       <ResultNotice result={params.result} />
-      <section className="workspace-stat-strip"><div><strong>{rows.filter((row) => row.status === "ENABLED").length}</strong><span>Actifs</span></div><div><strong>{rows.filter((row) => row.status === "DEGRADED").length}</strong><span>Dégradés</span></div><div><strong>{rows.filter((row) => row.status.startsWith("DISABLED")).length}</strong><span>Désactivés</span></div><div><strong>{rows.reduce((sum, row) => sum + row.errorsLastHour, 0)}</strong><span>Erreurs · 1 h</span></div></section>
+
+      {rows.length ? (
+        <section className="workspace-stat-strip">
+          <div><strong>{rows.filter((row) => row.status === "ENABLED").length}</strong><span>Actifs</span></div>
+          <div><strong>{degraded}</strong><span>Dégradés</span></div>
+          <div><strong>{disabled}</strong><span>Désactivés</span></div>
+          <div><strong>{rows.reduce((sum, row) => sum + row.errorsLastHour, 0)}</strong><span>Erreurs · 1 h</span></div>
+        </section>
+      ) : null}
+
       <section className="workspace-boundary-note"><StatusPill>Mesures observées</StatusPill><p>Si SESIRA n’a reçu aucun signal d’activité, temps de réponse ou mesure de file d’attente, la donnée reste indiquée comme absente. Elle n’est pas remplacée par zéro.</p></section>
-      {rows.length ? <section className="workspace-list">{rows.map((row) => <article className="workspace-row" key={row.id}><div className="workspace-row-main"><div className="workspace-row-heading"><div><span className="eyebrow">{componentLabel(row.kind)}</span><h2>{row.label}</h2></div><StatusPill tone={row.status === "ENABLED" ? "good" : row.status === "DEGRADED" ? "warning" : "neutral"}>{componentStatus(row.status)}</StatusPill></div><div className="workspace-meta"><span><b>Dernier succès</b>{row.lastSuccessAt ? formatDateTime(row.lastSuccessAt) : "Non disponible"}</span><span><b>Dernière erreur</b>{row.lastErrorAt ? formatDateTime(row.lastErrorAt) : "Aucune enregistrée"}</span><span><b>Succès · 1 h</b>{row.successesLastHour}</span><span><b>Erreurs · 1 h</b>{row.errorsLastHour}</span><span><b>Nouvelles tentatives · 1 h</b>{row.retriesLastHour}</span><span><b>Temps moyen · 1 h</b>{row.avgLatencyMs === null ? "Non disponible" : `${Math.round(row.avgLatencyMs)} ms`}</span><span><b>File d’attente</b>{row.backlogSize === null ? "Non mesurée" : row.backlogSize}</span><span><b>Région</b>{row.region ?? "Non renseignée"}</span></div>{row.lastErrorMessage ? <div className="workspace-gap-box"><strong>Dernière erreur enregistrée</strong><p>{row.lastErrorMessage}</p></div> : null}{row.statusReason ? <p className="workspace-description">Raison de l’état : {row.statusReason}</p> : null}</div><div className="workspace-row-actions"><form action={togglePlatformComponentAction} className="workspace-inline-form compact"><input type="hidden" name="componentKind" value={row.kind} /><input type="hidden" name="intent" value={row.status.startsWith("DISABLED") ? "enable" : "disable"} /><label><span>Motif obligatoire</span><input name="reason" maxLength={1000} required placeholder={row.status.startsWith("DISABLED") ? "Pourquoi réactiver ce service" : "Pourquoi arrêter ce service"} /></label><button className={row.status.startsWith("DISABLED") ? "button primary small" : "button ghost small"} type="submit">{row.status.startsWith("DISABLED") ? "Réactiver" : "Arrêter ce service"}</button></form></div></article>)}</section> : <EmptyState title="Aucun service enregistré" description="Aucun service technique n’est actuellement enregistré dans cet espace." />}
-    </>
+
+      {rows.length ? (
+        <section className="workspace-list" aria-label="Services SESIRA">
+          {rows.map((row) => (
+            <article className="workspace-row" key={row.id}>
+              <div className="workspace-row-main">
+                <div className="workspace-row-heading">
+                  <div><span className="eyebrow">{componentLabel(row.kind)}</span><h2>{row.label}</h2></div>
+                  <StatusPill tone={row.status === "ENABLED" ? "good" : row.status === "DEGRADED" ? "warning" : "neutral"}>{componentStatus(row.status)}</StatusPill>
+                </div>
+                <div className="workspace-meta">
+                  <span><b>Dernier succès</b>{row.lastSuccessAt ? formatDateTime(row.lastSuccessAt) : "Non disponible"}</span>
+                  <span><b>Dernière erreur</b>{row.lastErrorAt ? formatDateTime(row.lastErrorAt) : "Aucune enregistrée"}</span>
+                  <span><b>Succès · 1 h</b>{row.successesLastHour}</span>
+                  <span><b>Erreurs · 1 h</b>{row.errorsLastHour}</span>
+                  <span><b>Nouvelles tentatives · 1 h</b>{row.retriesLastHour}</span>
+                  <span><b>Temps moyen · 1 h</b>{row.avgLatencyMs === null ? "Non disponible" : `${Math.round(row.avgLatencyMs)} ms`}</span>
+                  <span><b>File d’attente</b>{row.backlogSize === null ? "Non mesurée" : row.backlogSize}</span>
+                  <span><b>Région</b>{row.region ?? "Non renseignée"}</span>
+                </div>
+                {row.lastErrorMessage ? <div className="workspace-gap-box"><strong>Dernière erreur enregistrée</strong><p>{row.lastErrorMessage}</p></div> : null}
+                {row.statusReason ? <p className="workspace-description">Raison de l’état : {row.statusReason}</p> : null}
+              </div>
+              <div className="workspace-row-actions">
+                <details className="sesira-action-drawer">
+                  <summary>{row.status.startsWith("DISABLED") ? "Réactiver ce service" : "Contrôle manuel"}</summary>
+                  <div className="sesira-action-drawer-body">
+                    <form action={togglePlatformComponentAction} className="workspace-inline-form compact">
+                      <input type="hidden" name="componentKind" value={row.kind} />
+                      <input type="hidden" name="intent" value={row.status.startsWith("DISABLED") ? "enable" : "disable"} />
+                      <label><span>Motif obligatoire</span><input name="reason" maxLength={1000} required placeholder={row.status.startsWith("DISABLED") ? "Pourquoi réactiver ce service" : "Pourquoi arrêter ce service"} /></label>
+                      <button className={row.status.startsWith("DISABLED") ? "button primary small" : "button ghost small"} type="submit">{row.status.startsWith("DISABLED") ? "Réactiver" : "Arrêter ce service"}</button>
+                    </form>
+                  </div>
+                </details>
+              </div>
+            </article>
+          ))}
+        </section>
+      ) : <EmptyState title="Aucun service enregistré" description="Aucun service technique n’est actuellement enregistré dans cet espace." />}
+    </div>
   );
 }
 
