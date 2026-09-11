@@ -20,33 +20,26 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
   ]);
 
   if (reportsResult.status === "ERROR" || deliveryResult.status === "ERROR") {
-    return (
-      <>
-        <PageHeader eyebrow="OPÉRATIONS" title="Rapports terrain" description="Relecture, validation et préparation des comptes rendus d’intervention." />
-        <section className="app-state-message"><strong>Rapports indisponibles</strong><p>SESIRA ne peut pas lire le rapport et sa preuve de livraison de manière fiable. Aucun état de remplacement n’est inventé.</p></section>
-      </>
-    );
+    return <><PageHeader eyebrow="OPÉRATIONS" title="Rapports terrain" description="Relecture, validation et préparation des comptes rendus d’intervention." /><section className="app-state-message"><strong>Rapports indisponibles</strong><p>SESIRA ne peut pas lire le rapport et sa preuve de livraison de manière fiable. Aucun état de remplacement n’est inventé.</p></section></>;
   }
 
-  const interventionNames = new Map(
-    interventionsResult.status === "OK"
-      ? interventionsResult.rows.map((row) => [row.id, row.title] as const)
-      : [],
-  );
+  const interventionNames = new Map(interventionsResult.status === "OK" ? interventionsResult.rows.map((row) => [row.id, row.title] as const) : []);
   const deliveryByReport = new Map(deliveryResult.rows.map((row) => [row.reportId, row] as const));
   const rows = reportsResult.rows;
 
   return (
-    <>
-      <PageHeader eyebrow="OPÉRATIONS" title="Rapports terrain" description="Un rapport peut être structuré par SESIRA, mais les observations, le diagnostic et la validation restent humains." />
+    <div className="sesira-page--reports">
+      <PageHeader eyebrow="OPÉRATIONS" title="Rapports terrain" description="Relisez ce qui manque, approuvez ce qui est prêt et gardez la preuve de livraison distincte de l’état du rapport." />
       <ResultNotice result={params.result} />
 
-      <section className="workspace-stat-strip" aria-label="État des rapports">
-        <div><strong>{rows.filter((row) => row.status === "DRAFT").length}</strong><span>Brouillons</span></div>
-        <div><strong>{rows.filter((row) => row.status === "REVIEWED").length}</strong><span>Relus</span></div>
-        <div><strong>{rows.filter((row) => row.status === "APPROVED").length}</strong><span>Approuvés</span></div>
-        <div><strong>{rows.filter((row) => row.reportGaps.length > 0).length}</strong><span>Informations manquantes</span></div>
-      </section>
+      {rows.length ? (
+        <section className="workspace-stat-strip" aria-label="État des rapports">
+          <div><strong>{rows.filter((row) => row.status === "DRAFT").length}</strong><span>Brouillons</span></div>
+          <div><strong>{rows.filter((row) => row.status === "REVIEWED").length}</strong><span>Relus</span></div>
+          <div><strong>{rows.filter((row) => row.status === "APPROVED").length}</strong><span>Approuvés</span></div>
+          <div><strong>{rows.filter((row) => row.reportGaps.length > 0).length}</strong><span>À compléter</span></div>
+        </section>
+      ) : null}
 
       <section className="workspace-boundary-note">
         <StatusPill tone="warning">Preuve de livraison provider</StatusPill>
@@ -64,10 +57,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
               <article className="workspace-row" key={row.id}>
                 <div className="workspace-row-main">
                   <div className="workspace-row-heading">
-                    <div>
-                      <span className="eyebrow">{interventionNames.get(row.interventionId) ?? "Intervention"}</span>
-                      <h2>{row.summary ? truncate(row.summary, 88) : "Compte rendu à compléter"}</h2>
-                    </div>
+                    <div><span className="eyebrow">{interventionNames.get(row.interventionId) ?? "Intervention"}</span><h2>{row.summary ? truncate(row.summary, 88) : "Compte rendu à compléter"}</h2></div>
                     <StatusPill tone={reportTone(row.status, hasGaps, providerProof)}>{reportLabel(row.status, hasGaps, providerProof)}</StatusPill>
                   </div>
 
@@ -80,29 +70,13 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
 
                   {row.customerFacingSummary ? <div className="workspace-preview"><span>Résumé client</span><p>{row.customerFacingSummary}</p></div> : null}
                   {hasGaps ? <div className="workspace-gap-box"><strong>À compléter avant relecture</strong><p>{gapSummary(row.reportGaps)}</p></div> : null}
-                  {row.status === "SENT" && providerProof ? (
-                    <div className="workspace-preview"><span>Livraison confirmée</span><p>{row.sentAt ? formatDateTime(row.sentAt) : "Date inconnue"} · provider {delivery?.provider} · référence {delivery?.externalRef}</p></div>
-                  ) : null}
-                  {row.status === "SENT" && !providerProof ? (
-                    <div className="workspace-gap-box"><strong>État de livraison incohérent</strong><p>Le rapport est marqué SENT mais la preuve provider attendue est absente. SESIRA ne présente pas cet état comme une livraison confirmée.</p></div>
-                  ) : null}
+                  {row.status === "SENT" && providerProof ? <div className="workspace-preview"><span>Livraison confirmée</span><p>{row.sentAt ? formatDateTime(row.sentAt) : "Date inconnue"} · provider {delivery?.provider} · référence {delivery?.externalRef}</p></div> : null}
+                  {row.status === "SENT" && !providerProof ? <div className="workspace-gap-box"><strong>État de livraison incohérent</strong><p>Le rapport est marqué SENT mais la preuve provider attendue est absente. SESIRA ne présente pas cet état comme une livraison confirmée.</p></div> : null}
                 </div>
 
                 <div className="workspace-row-actions">
-                  {row.status === "DRAFT" && !hasGaps ? (
-                    <form action={transitionFieldReportAction}>
-                      <input type="hidden" name="reportId" value={row.id} />
-                      <input type="hidden" name="nextStatus" value="REVIEWED" />
-                      <button type="submit" className="button primary small">Marquer relu</button>
-                    </form>
-                  ) : null}
-                  {row.status === "REVIEWED" ? (
-                    <form action={transitionFieldReportAction}>
-                      <input type="hidden" name="reportId" value={row.id} />
-                      <input type="hidden" name="nextStatus" value="APPROVED" />
-                      <button type="submit" className="button primary small">Approuver</button>
-                    </form>
-                  ) : null}
+                  {row.status === "DRAFT" && !hasGaps ? <form action={transitionFieldReportAction}><input type="hidden" name="reportId" value={row.id} /><input type="hidden" name="nextStatus" value="REVIEWED" /><button type="submit" className="button primary small">Marquer relu</button></form> : null}
+                  {row.status === "REVIEWED" ? <form action={transitionFieldReportAction}><input type="hidden" name="reportId" value={row.id} /><input type="hidden" name="nextStatus" value="APPROVED" /><button type="submit" className="button primary small">Approuver</button></form> : null}
                   {row.status === "APPROVED" ? <p className="workspace-action-note">Prêt pour un envoi via un provider connecté. Aucun envoi n’est déclenché depuis cette page.</p> : null}
                 </div>
               </article>
@@ -110,37 +84,13 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
           })}
         </section>
       ) : <EmptyState title="Aucun rapport terrain" description="Les comptes rendus apparaîtront ici lorsqu’une intervention disposera d’un rapport." />}
-    </>
+    </div>
   );
 }
 
-function ResultNotice({ result }: { result?: string }) {
-  if (!result) return null;
-  return result === "saved"
-    ? <section className="premium-inline-notice"><StatusPill tone="good">Enregistré</StatusPill><p>La transition a été confirmée.</p></section>
-    : <section className="premium-inline-notice"><StatusPill tone="warning">Non appliqué</StatusPill><p>Le rapport n’a pas changé d’état. Vérifiez son état actuel et les informations manquantes.</p></section>;
-}
-
-function reportTone(status: string, hasGaps: boolean, providerProof: boolean): "good" | "warning" | "neutral" {
-  if (hasGaps) return "warning";
-  if (status === "SENT") return providerProof ? "good" : "warning";
-  if (status === "APPROVED") return "good";
-  return "neutral";
-}
-
-function reportLabel(status: string, hasGaps: boolean, providerProof: boolean) {
-  if (hasGaps && status === "DRAFT") return "À compléter";
-  if (status === "SENT") return providerProof ? "Livré" : "À vérifier";
-  return ({ DRAFT: "Brouillon", REVIEWED: "Relu", APPROVED: "Approuvé", ARCHIVED: "Archivé" } as Record<string, string>)[status] ?? status;
-}
-
-function gapSummary(gaps: unknown[]) {
-  return gaps.slice(0, 4).map((gap) => {
-    if (typeof gap === "string") return gap;
-    if (gap && typeof gap === "object" && "reason" in gap) return String((gap as { reason?: unknown }).reason ?? "Information manquante");
-    return "Information manquante";
-  }).join(" · ");
-}
-
+function ResultNotice({ result }: { result?: string }) { if (!result) return null; return result === "saved" ? <section className="premium-inline-notice"><StatusPill tone="good">Enregistré</StatusPill><p>La transition a été confirmée.</p></section> : <section className="premium-inline-notice"><StatusPill tone="warning">Non appliqué</StatusPill><p>Le rapport n’a pas changé d’état. Vérifiez son état actuel et les informations manquantes.</p></section>; }
+function reportTone(status: string, hasGaps: boolean, providerProof: boolean): "good" | "warning" | "neutral" { if (hasGaps) return "warning"; if (status === "SENT") return providerProof ? "good" : "warning"; if (status === "APPROVED") return "good"; return "neutral"; }
+function reportLabel(status: string, hasGaps: boolean, providerProof: boolean) { if (hasGaps && status === "DRAFT") return "À compléter"; if (status === "SENT") return providerProof ? "Livré" : "À vérifier"; return ({ DRAFT: "Brouillon", REVIEWED: "Relu", APPROVED: "Approuvé", ARCHIVED: "Archivé" } as Record<string, string>)[status] ?? status; }
+function gapSummary(gaps: unknown[]) { return gaps.slice(0, 4).map((gap) => { if (typeof gap === "string") return gap; if (gap && typeof gap === "object" && "reason" in gap) return String((gap as { reason?: unknown }).reason ?? "Information manquante"); return "Information manquante"; }).join(" · "); }
 function truncate(value: string, max: number) { return value.length <= max ? value : `${value.slice(0, max - 1)}…`; }
 function formatDateTime(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "Date inconnue" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(date); }
