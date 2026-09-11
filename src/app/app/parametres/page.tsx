@@ -17,8 +17,8 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <>
-      <PageHeader eyebrow="SYSTÈME" title="Paramètres" description="Votre espace de travail, vos règles et la récupération de vos données." />
+    <div className="sesira-page--settings">
+      <PageHeader eyebrow="ORGANISATION" title="Paramètres" description="L’espace de travail, les règles de décision et la récupération des données de votre entreprise." />
       <section className="settings-stack">
         <article className="panel">
           <div className="panel-head"><div><span className="eyebrow">ESPACE</span><h2>Organisation</h2></div><StatusPill tone={settings?.status === "ACTIVE" ? "good" : "neutral"}>{settings?.status === "ACTIVE" ? "Active" : settings?.status ?? "Indisponible"}</StatusPill></div>
@@ -41,13 +41,10 @@ export default async function SettingsPage() {
         <article className="panel">
           <div className="panel-head"><div><span className="eyebrow">VOS DONNÉES</span><h2>Récupérer les données de l’entreprise</h2></div><StatusPill tone="good">JSON + CSV</StatusPill></div>
           <p className="panel-copy">L’export contient les données stockées par SESIRA et rattachées à votre organisation, y compris les domaines C40. Les secrets techniques et jetons d’accès sont retirés. L’export ne dépend pas de votre abonnement.</p>
-          <div className="premium-focus-actions">
-            <a className="button primary small" href="/app/parametres/export/json">Télécharger en JSON</a>
-            <a className="button ghost small" href="/app/parametres/export/csv">Télécharger en CSV</a>
-          </div>
+          <div className="premium-focus-actions"><a className="button primary small" href="/app/parametres/export/json">Télécharger en JSON</a><a className="button ghost small" href="/app/parametres/export/csv">Télécharger en CSV</a></div>
           <p className="premium-muted-copy">Le CSV est un format long : jeu de données, numéro de ligne, champ, valeur. Il reste lisible dans un tableur et ne perd pas les champs imbriqués.</p>
         </article>
       </section>
-    </>
+    </div>
   );
 }
