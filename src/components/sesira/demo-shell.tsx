@@ -13,7 +13,6 @@ import {
   FileText,
   FolderOpen,
   LayoutDashboard,
-  LifeBuoy,
   ListTodo,
   LogOut,
   Search,
