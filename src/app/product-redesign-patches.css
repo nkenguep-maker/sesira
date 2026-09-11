@@ -1,0 +1,10 @@
+.sesira-product-shell .sesira-client-heading { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.sesira-product-shell .sesira-client-heading > div:last-child { min-width: 0; }
+.sesira-product-shell .sesira-demo-badge { min-height: 28px; display: inline-flex; align-items: center; padding: 0 9px; border-radius: 999px; background: #fff2df; color: #9a5718; border: 1px solid #efd8bb; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+.sesira-product-shell .metric-card-label { display: inline-flex !important; align-items: center; gap: 6px; }
+.sesira-product-shell .empty-orbit svg { color: var(--p-accent); }
+.sesira-product-shell .page-actions:has(.button) { flex-wrap: wrap; }
+.sesira-product-shell .premium-muted-copy { margin-top: 16px; }
+.sesira-product-shell .workspace-row-actions > .button { width: 100%; }
+.sesira-product-shell .workspace-row-actions > form > .button { width: 100%; }
+.sesira-product-shell .workspace-row-actions .sesira-action-drawer .button { width: 100%; }

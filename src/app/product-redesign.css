@@ -1,0 +1,373 @@
+/* SESIRA product redesign — scoped to the authenticated product only. */
+.sesira-product-shell {
+  --p-bg: #f4f7f7;
+  --p-card: #ffffff;
+  --p-card-soft: #f8faf9;
+  --p-sidebar: #102629;
+  --p-sidebar-2: #173438;
+  --p-ink: #172124;
+  --p-muted: #69767a;
+  --p-faint: #8d989b;
+  --p-line: #dce4e4;
+  --p-line-strong: #cfdada;
+  --p-accent: #0e6970;
+  --p-accent-strong: #0a555b;
+  --p-accent-soft: #e5f2f2;
+  --p-good: #237a57;
+  --p-good-soft: #e8f5ef;
+  --p-warn: #a45a16;
+  --p-warn-soft: #fff2df;
+  --p-danger: #b14646;
+  --p-danger-soft: #fbecec;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  background: var(--p-bg);
+  color: var(--p-ink);
+  font-family: var(--font-hanken), system-ui, sans-serif;
+}
+
+.sesira-product-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 14px 16px;
+  background: linear-gradient(180deg, var(--p-sidebar), #0d2023 72%);
+  color: #dce6e6;
+  border-right: 1px solid rgba(255,255,255,.07);
+  z-index: 30;
+}
+
+.sesira-product-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.sesira-product-logo-link { display: inline-flex; align-items: center; color: white; text-decoration: none; }
+.sesira-product-sidebar .sesira-logo { color: #fff; }
+.sesira-product-workspace { min-width: 0; display: grid; gap: 2px; }
+.sesira-product-workspace strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; line-height: 1.2; color: #fff; font-weight: 760; }
+.sesira-product-workspace span { color: #8fa4a7; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+
+.sesira-product-nav { display: grid; gap: 3px; padding-top: 18px; overflow-y: auto; }
+.sesira-product-nav-label { padding: 0 11px 8px; font-size: 10px; font-weight: 800; color: #6f8b8e; letter-spacing: .12em; text-transform: uppercase; }
+.sesira-product-nav a,
+.sesira-product-org-menu a,
+.sesira-product-help {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 11px;
+  border-radius: 9px;
+  color: #aebfc1;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 610;
+  transition: background .15s ease, color .15s ease, transform .15s ease;
+}
+.sesira-product-nav a:hover,
+.sesira-product-org-menu a:hover,
+.sesira-product-help:hover { background: rgba(255,255,255,.065); color: #fff; }
+.sesira-product-nav a.active,
+.sesira-product-org-menu a.active { background: #e8f5f3; color: #0d555a; box-shadow: inset 0 0 0 1px rgba(255,255,255,.32); }
+.sesira-product-nav a.active svg,
+.sesira-product-org-menu a.active svg { color: var(--p-accent); }
+
+.sesira-product-sidebar-footer { margin-top: auto; display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
+.sesira-product-org { position: relative; }
+.sesira-product-org > summary { list-style: none; min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 7px 9px; border-radius: 10px; cursor: pointer; color: #d8e2e3; }
+.sesira-product-org > summary::-webkit-details-marker { display: none; }
+.sesira-product-org > summary:hover { background: rgba(255,255,255,.055); }
+.sesira-product-org-icon { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,.07); }
+.sesira-product-org-copy { min-width: 0; display: grid; flex: 1; }
+.sesira-product-org-copy strong { font-size: 13px; }
+.sesira-product-org-copy small { color: #7f989b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sesira-product-org-chevron { transition: transform .18s ease; color: #799396; }
+.sesira-product-org[open] .sesira-product-org-chevron { transform: rotate(180deg); }
+.sesira-product-org-menu { display: grid; gap: 2px; padding: 4px 0 6px 9px; }
+.sesira-product-org-menu a { min-height: 36px; font-size: 13px; }
+.sesira-product-role-note { display: block; padding: 2px 12px 7px; color: #698589; font-size: 10px; text-transform: uppercase; letter-spacing: .09em; }
+.sesira-product-help { min-height: 38px; font-size: 13px; }
+
+.sesira-product-body { min-width: 0; min-height: 100vh; }
+.sesira-product-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 30px;
+  background: rgba(255,255,255,.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--p-line);
+}
+.sesira-product-context { min-width: 0; display: grid; gap: 1px; }
+.sesira-product-context > span { font-size: 15px; font-weight: 760; color: var(--p-ink); }
+.sesira-product-context small { color: var(--p-muted); font-size: 11px; }
+.sesira-product-topbar-actions { display: flex; align-items: center; gap: 8px; }
+.sesira-product-autonomy,
+.sesira-product-search,
+.sesira-product-icon-button {
+  height: 38px;
+  border: 1px solid var(--p-line-strong);
+  background: #fff;
+  color: #4f5c60;
+  text-decoration: none;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 680;
+  box-shadow: 0 1px 1px rgba(16,37,40,.03);
+}
+.sesira-product-autonomy { padding: 0 12px; }
+.sesira-product-autonomy > span { width: 7px; height: 7px; border-radius: 999px; background: var(--p-good); box-shadow: 0 0 0 3px var(--p-good-soft); }
+.sesira-product-search { min-width: 176px; justify-content: flex-start; padding: 0 10px; color: #647175; }
+.sesira-product-search span { flex: 1; text-align: left; }
+.sesira-product-search kbd { padding: 2px 5px; border-radius: 5px; background: #f3f6f6; border: 1px solid #e5ebeb; font: 10px var(--font-jetbrains), monospace; color: #879194; }
+.sesira-product-icon-button { width: 38px; }
+.sesira-product-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 999px; background: var(--p-sidebar); color: white; font-weight: 800; font-size: 13px; margin-left: 3px; }
+
+.sesira-product-main { width: min(1460px, 100%); margin: 0 auto; padding: 30px 34px 64px; }
+.sesira-product-tabs { display: inline-flex; align-items: center; gap: 4px; padding: 4px; margin: 0 0 26px; background: #e9eeee; border-radius: 10px; }
+.sesira-product-tabs a { min-height: 34px; display: inline-flex; align-items: center; padding: 0 13px; border-radius: 7px; color: #687579; text-decoration: none; font-size: 12.5px; font-weight: 690; }
+.sesira-product-tabs a:hover { color: var(--p-ink); }
+.sesira-product-tabs a.active { background: #fff; color: var(--p-accent-strong); box-shadow: 0 1px 3px rgba(23,33,36,.10); }
+
+/* Universal page primitives */
+.sesira-product-shell .page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 22px;
+  margin: 0 0 26px;
+  padding: 0;
+  border: 0;
+}
+.sesira-product-shell .page-header > div:first-child { max-width: 780px; }
+.sesira-product-shell .eyebrow { margin-bottom: 7px; color: var(--p-accent); font-size: 10px; line-height: 1; font-weight: 830; letter-spacing: .11em; text-transform: uppercase; }
+.sesira-product-shell .page-header h1 { margin: 0; color: var(--p-ink); font-size: clamp(30px, 3vw, 42px); line-height: 1.04; letter-spacing: -.035em; font-weight: 790; }
+.sesira-product-shell .page-header p { margin: 9px 0 0; max-width: 68ch; color: var(--p-muted); font-size: 14.5px; line-height: 1.5; }
+.sesira-product-shell .page-actions { display: flex; gap: 8px; align-items: center; }
+
+.sesira-product-shell .button,
+.sesira-product-shell button.button,
+.sesira-product-shell a.button {
+  min-height: 40px;
+  border-radius: 9px;
+  border: 1px solid var(--p-line-strong);
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: #fff;
+  color: var(--p-ink);
+  text-decoration: none;
+  font: 700 13px var(--font-hanken), sans-serif;
+  box-shadow: 0 1px 1px rgba(20,35,38,.03);
+  cursor: pointer;
+}
+.sesira-product-shell .button.small { min-height: 34px; padding: 0 11px; font-size: 12px; border-radius: 8px; }
+.sesira-product-shell .button.primary { background: var(--p-accent); border-color: var(--p-accent); color: #fff; box-shadow: 0 4px 12px rgba(14,105,112,.16); }
+.sesira-product-shell .button.primary:hover { background: var(--p-accent-strong); }
+.sesira-product-shell .button.ghost:hover { background: #f6f9f9; border-color: #c7d2d2; }
+.sesira-product-shell .secondary-action-link { color: var(--p-accent); font-weight: 720; text-decoration: none; }
+
+.sesira-product-shell .status-pill { display: inline-flex; align-items: center; min-height: 27px; padding: 0 9px; border-radius: 999px; background: #eef2f2; color: #607074; font-size: 10.5px; line-height: 1; font-weight: 790; letter-spacing: .01em; }
+.sesira-product-shell .status-pill.good { background: var(--p-good-soft); color: var(--p-good); }
+.sesira-product-shell .status-pill.warning { background: var(--p-warn-soft); color: var(--p-warn); }
+
+.sesira-product-shell .empty-state {
+  min-height: 0 !important;
+  padding: 42px 24px !important;
+  border: 1px solid var(--p-line) !important;
+  border-radius: 14px !important;
+  background: var(--p-card) !important;
+  box-shadow: 0 7px 24px rgba(21,43,46,.045) !important;
+  text-align: center;
+}
+.sesira-product-shell .empty-orbit { width: 46px !important; height: 46px !important; margin: 0 auto 16px !important; border-radius: 12px !important; background: var(--p-accent-soft) !important; border: 0 !important; box-shadow: none !important; }
+.sesira-product-shell .empty-orbit span { width: 8px !important; height: 8px !important; background: var(--p-accent) !important; }
+.sesira-product-shell .empty-state h2 { margin: 0 0 6px; font-size: 18px; letter-spacing: -.015em; }
+.sesira-product-shell .empty-state p { max-width: 54ch; margin: 0 auto; color: var(--p-muted); font-size: 13.5px; line-height: 1.55; }
+.sesira-product-shell .empty-action { margin-top: 18px; }
+
+/* Summaries and KPI strips */
+.sesira-product-shell .premium-connection-summary,
+.sesira-product-shell .workspace-stat-strip,
+.sesira-product-shell .metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.sesira-product-shell .premium-connection-summary > div,
+.sesira-product-shell .workspace-stat-strip > div,
+.sesira-product-shell .metric-card {
+  min-height: 100px;
+  padding: 18px;
+  border: 1px solid var(--p-line);
+  border-radius: 13px;
+  background: var(--p-card);
+  box-shadow: 0 5px 18px rgba(21,43,46,.035);
+}
+.sesira-product-shell .premium-connection-summary strong,
+.sesira-product-shell .workspace-stat-strip strong,
+.sesira-product-shell .metric-card strong { display: block; margin-bottom: 7px; color: var(--p-ink); font-size: 26px; line-height: 1; letter-spacing: -.025em; }
+.sesira-product-shell .premium-connection-summary span,
+.sesira-product-shell .workspace-stat-strip span,
+.sesira-product-shell .metric-card > span { color: var(--p-muted); font-size: 11.5px; font-weight: 680; }
+.sesira-product-shell .metric-card small { color: var(--p-faint); font-size: 11px; }
+
+/* Card and list surfaces across Devis, Connections, Workspaces */
+.sesira-product-shell .premium-connection-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 0 0 22px; }
+.sesira-product-shell .premium-connection-card,
+.sesira-product-shell .workspace-row,
+.sesira-product-shell .premium-card,
+.sesira-product-shell .premium-panel,
+.sesira-product-shell .workspace-card,
+.sesira-product-shell .result-card {
+  border: 1px solid var(--p-line) !important;
+  border-radius: 14px !important;
+  background: var(--p-card) !important;
+  box-shadow: 0 6px 22px rgba(21,43,46,.04) !important;
+}
+.sesira-product-shell .premium-connection-card { padding: 20px; }
+.sesira-product-shell .premium-connection-card > header,
+.sesira-product-shell .workspace-row-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.sesira-product-shell .premium-connection-card h2,
+.sesira-product-shell .workspace-row h2 { margin: 3px 0 0; color: var(--p-ink); font-size: 18px; line-height: 1.2; letter-spacing: -.015em; }
+
+.sesira-product-shell .premium-data-list,
+.sesira-product-shell .workspace-meta { display: grid; gap: 0; margin-top: 15px; border-top: 1px solid #edf1f1; }
+.sesira-product-shell .premium-data-list > div,
+.sesira-product-shell .workspace-meta > span { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid #edf1f1; color: var(--p-muted); font-size: 12px; }
+.sesira-product-shell .premium-data-list strong,
+.sesira-product-shell .workspace-meta b { color: var(--p-ink); font-weight: 720; }
+.sesira-product-shell .workspace-meta > span { flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; }
+
+.sesira-product-shell .workspace-list { display: grid; gap: 12px; }
+.sesira-product-shell .workspace-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; padding: 20px; }
+.sesira-product-shell .workspace-row-main { min-width: 0; }
+.sesira-product-shell .workspace-status-stack { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.sesira-product-shell .workspace-row-actions { min-width: min(360px, 34vw); display: grid; align-content: start; gap: 10px; padding-left: 18px; border-left: 1px solid #edf1f1; }
+.sesira-product-shell .workspace-row-actions.two-actions { grid-template-columns: 1fr; }
+
+.sesira-product-shell .premium-inline-notice,
+.sesira-product-shell .workspace-boundary-note,
+.sesira-product-shell .workspace-preview,
+.sesira-product-shell .workspace-gap-box,
+.sesira-product-shell .app-state-message,
+.sesira-product-shell .premium-trust-note {
+  border: 1px solid var(--p-line) !important;
+  border-radius: 12px !important;
+  background: var(--p-card-soft) !important;
+  box-shadow: none !important;
+}
+.sesira-product-shell .premium-inline-notice,
+.sesira-product-shell .workspace-boundary-note { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; margin: 0 0 18px; }
+.sesira-product-shell .premium-inline-notice p,
+.sesira-product-shell .workspace-boundary-note p { margin: 2px 0 0; color: var(--p-muted); font-size: 12.5px; line-height: 1.5; }
+.sesira-product-shell .workspace-preview,
+.sesira-product-shell .workspace-gap-box { margin-top: 12px; padding: 13px 14px; }
+.sesira-product-shell .workspace-gap-box { background: var(--p-warn-soft) !important; border-color: #f0d8b8 !important; }
+.sesira-product-shell .workspace-preview span,
+.sesira-product-shell .workspace-gap-box > span { display: block; margin-bottom: 4px; color: var(--p-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.sesira-product-shell .workspace-preview p,
+.sesira-product-shell .workspace-gap-box p,
+.sesira-product-shell .workspace-description,
+.sesira-product-shell .workspace-action-note { color: var(--p-muted); font-size: 12.5px; line-height: 1.5; }
+.sesira-product-shell .premium-trust-note { margin-top: 22px; padding: 18px 20px; }
+.sesira-product-shell .premium-trust-note h2 { margin: 5px 0 6px; font-size: 17px; }
+.sesira-product-shell .premium-trust-note p { max-width: 80ch; margin: 0; color: var(--p-muted); font-size: 12.5px; line-height: 1.55; }
+
+/* Forms */
+.sesira-product-shell form label { display: grid; gap: 6px; color: #5d6a6e; font-size: 11px; font-weight: 720; }
+.sesira-product-shell input,
+.sesira-product-shell select,
+.sesira-product-shell textarea {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--p-line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--p-ink);
+  padding: 9px 11px;
+  font: 500 13px var(--font-hanken), sans-serif;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.sesira-product-shell textarea { min-height: 100px; resize: vertical; }
+.sesira-product-shell input:focus,
+.sesira-product-shell select:focus,
+.sesira-product-shell textarea:focus { border-color: #77aeb2; box-shadow: 0 0 0 3px rgba(14,105,112,.10); }
+.sesira-product-shell .workspace-inline-form { display: grid; gap: 9px; }
+
+/* Section headings and table-like content */
+.sesira-product-shell .premium-section-heading,
+.sesira-product-shell .workspace-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 26px 0 12px; }
+.sesira-product-shell .premium-section-heading h2,
+.sesira-product-shell .workspace-section-heading h2 { margin: 0; font-size: 19px; letter-spacing: -.015em; }
+.sesira-product-shell table { width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; border: 1px solid var(--p-line); border-radius: 12px; background: #fff; box-shadow: 0 5px 18px rgba(21,43,46,.03); }
+.sesira-product-shell th { height: 42px; padding: 0 13px; background: #f7f9f9; border-bottom: 1px solid var(--p-line); color: #718084; font-size: 10.5px; font-weight: 800; text-align: left; text-transform: uppercase; letter-spacing: .06em; }
+.sesira-product-shell td { min-height: 50px; padding: 12px 13px; border-bottom: 1px solid #edf1f1; color: #3d494d; font-size: 12.5px; vertical-align: middle; }
+.sesira-product-shell tr:last-child td { border-bottom: 0; }
+.sesira-product-shell tbody tr:hover td { background: #fbfdfd; }
+
+/* Dashboard can live naturally inside the same product shell */
+.sesira-product-shell .sesira-home { max-width: none; padding: 0; }
+.sesira-product-shell .sesira-home-header { margin-bottom: 24px; }
+.sesira-product-shell .sesira-home-header h1 { font-size: clamp(30px, 3vw, 42px); }
+.sesira-product-shell .sesira-metric-card,
+.sesira-product-shell .sesira-panel { border-color: var(--p-line); box-shadow: 0 6px 22px rgba(21,43,46,.04); }
+
+@media (max-width: 1180px) {
+  .sesira-product-shell { grid-template-columns: 214px minmax(0, 1fr); }
+  .sesira-product-main { padding-left: 24px; padding-right: 24px; }
+  .sesira-product-search { min-width: 40px; width: 40px; }
+  .sesira-product-search span, .sesira-product-search kbd { display: none; }
+  .sesira-product-shell .premium-connection-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 860px) {
+  .sesira-product-shell { display: block; }
+  .sesira-product-sidebar { position: sticky; height: auto; padding: 10px 12px; flex-direction: row; align-items: center; gap: 12px; overflow-x: auto; }
+  .sesira-product-brand { border: 0; padding: 0; flex: 0 0 auto; }
+  .sesira-product-workspace, .sesira-product-nav-label, .sesira-product-sidebar-footer { display: none; }
+  .sesira-product-nav { display: flex; gap: 4px; padding: 0; overflow: visible; }
+  .sesira-product-nav a { min-height: 36px; white-space: nowrap; padding: 0 10px; }
+  .sesira-product-nav a svg { display: none; }
+  .sesira-product-topbar { height: 58px; padding: 0 16px; }
+  .sesira-product-context small, .sesira-product-autonomy { display: none; }
+  .sesira-product-main { padding: 20px 16px 44px; }
+  .sesira-product-shell .premium-connection-summary,
+  .sesira-product-shell .workspace-stat-strip,
+  .sesira-product-shell .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sesira-product-shell .workspace-row { grid-template-columns: 1fr; }
+  .sesira-product-shell .workspace-row-actions { min-width: 0; padding: 14px 0 0; border-left: 0; border-top: 1px solid #edf1f1; }
+}
+
+@media (max-width: 560px) {
+  .sesira-product-topbar-actions .sesira-product-icon-button { display: none; }
+  .sesira-product-shell .page-header { align-items: flex-start; flex-direction: column; }
+  .sesira-product-shell .page-header h1 { font-size: 30px; }
+  .sesira-product-shell .premium-connection-summary,
+  .sesira-product-shell .workspace-stat-strip,
+  .sesira-product-shell .metric-grid { grid-template-columns: 1fr; }
+  .sesira-product-tabs { width: 100%; overflow-x: auto; }
+}
