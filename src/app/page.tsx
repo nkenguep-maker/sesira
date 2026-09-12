@@ -7,13 +7,13 @@ import { SesiraLogo } from "@/components/sesira/logo";
 import styles from "./coolify-landing.module.css";
 
 export const metadata: Metadata = {
-  title: "SESIRA | Le suivi des entreprises d’intervention",
+  title: "SESIRA | Le suivi opérationnel des entreprises d’intervention",
   description:
-    "SESIRA montre chaque matin les devis à relancer, les factures à reprendre et les dossiers d’intervention qui demandent une décision.",
+    "SESIRA suit chaque dossier entre vente, planning, terrain, facturation et échéances, puis remet la prochaine décision devant la bonne personne.",
   openGraph: {
-    title: "SESIRA | Le suivi des entreprises d’intervention",
+    title: "SESIRA | Le suivi opérationnel des entreprises d’intervention",
     description:
-      "Vous avez déjà fait le travail. SESIRA remet devant vous les dossiers qui n’ont pas avancé.",
+      "Du premier contact au renouvellement, SESIRA garde le contexte et fait remonter les dossiers qui attendent une décision.",
     type: "website",
   },
 };
@@ -26,39 +26,39 @@ const HERO_PRIORITIES = [
 
 const SCENARIOS = [
   {
-    tag: "DEVIS",
+    tag: "COMMERCIAL",
     name: "Sophie Lefèvre",
     value: "18 450 €",
-    title: "Sept jours de silence après envoi",
-    context: "Aucune réponse enregistrée et aucune relance faite.",
-    action: "Remettre le devis dans la file",
+    title: "Devis envoyé, réponse absente",
+    context: "SESIRA garde la prochaine date de suivi, la réponse quand elle arrive et les objections qui nécessitent un humain.",
+    action: "Relance · réponse · approbation",
     tone: "warm",
   },
   {
-    tag: "CHANTIER",
+    tag: "OPÉRATIONS",
     name: "Dupont SARL",
     value: "22 400 €",
     title: "Vente gagnée, aucune date au planning",
-    context: "Le client a signé mais le chantier n’a toujours pas de créneau.",
-    action: "Faire décider le planning",
+    context: "L’affaire reste visible jusqu’à la planification, l’intervention et le rapport terrain.",
+    action: "Planning · technicien · rapport",
     tone: "teal",
   },
   {
-    tag: "FACTURE",
+    tag: "ENCAISSEMENT",
     name: "Garage Montreuil",
     value: "21 800 €",
     title: "Promesse de règlement dépassée",
-    context: "Le dossier revient avec l’historique du suivi au lieu de repartir de zéro.",
-    action: "Décider de la prochaine relance",
+    context: "Facture, échéance, promesse de règlement et historique restent reliés au même dossier.",
+    action: "Facture · échéance · suivi",
     tone: "ink",
   },
   {
-    tag: "ENTRETIEN",
+    tag: "MAINTENANCE",
     name: "Martin & Fils",
     value: "26 jours",
     title: "Contrat proche de l’échéance",
-    context: "Le renouvellement et les pièces du dossier doivent être préparés avant l’urgence.",
-    action: "Préparer le renouvellement",
+    context: "Contrat, équipement, documents et échéance restent liés. Pour le CVC, SESIRA prépare aussi les éléments F-Gas et CERFA sans rendre de verdict réglementaire.",
+    action: "Renouvellement · documents · CVC",
     tone: "soft",
   },
 ] as const;
@@ -81,10 +81,10 @@ export default function HomePage() {
 
       <header className="landing-five-hero">
         <div className="landing-five-hero__copy">
-          <span className={styles.eyebrow}>SESIRA · LE SUIVI DES ENTREPRISES QUI ENVOIENT DES TECHNICIENS</span>
-          <h1>Vous avez déjà fait le travail.<br />Le devis est parti. Et puis plus rien.</h1>
+          <span className={styles.eyebrow}>SESIRA · LE SUIVI OPÉRATIONNEL DES ENTREPRISES D’INTERVENTION</span>
+          <h1>Chaque matin, voyez les dossiers qui attendent une décision.</h1>
           <p>
-            Chaque matin, SESIRA vous dit quel devis relancer et quelle facture réclamer.
+            SESIRA suit chaque dossier entre vente, terrain et encaissement. Il garde le contexte et remet la prochaine action devant la bonne personne.
           </p>
           <div className={styles.heroActions}>
             <Link className={styles.primaryCta} href="/diagnostic">Calculer ce qui se perd chez moi</Link>
@@ -118,7 +118,7 @@ export default function HomePage() {
         <div className="landing-five-section-head">
           <div>
             <span className={styles.sectionEyebrow}>LE TABLEAU DE BORD</span>
-            <h2 id="product-title">Les dossiers qui demandent une décision, au même endroit.</h2>
+            <h2 id="product-title">Les décisions du jour arrivent en premier.</h2>
           </div>
           <Link href="/demo">Ouvrir la démo complète →</Link>
         </div>
@@ -130,10 +130,10 @@ export default function HomePage() {
       <section id="exemples" className="landing-five-examples" aria-labelledby="examples-title">
         <div className="landing-five-section-head">
           <div>
-            <span className={styles.sectionEyebrow}>EXEMPLES · DONNÉES FICTIVES</span>
-            <h2 id="examples-title">Les petits écarts qui coûtent cher.</h2>
+            <span className={styles.sectionEyebrow}>DU PREMIER CONTACT AU RENOUVELLEMENT · DONNÉES FICTIVES</span>
+            <h2 id="examples-title">Le même dossier reste suivi jusqu’à l’étape suivante.</h2>
           </div>
-          <p>Une seule série de dossiers circule dans toute la démonstration.</p>
+          <p>Commercial, planning, terrain, facturation et maintenance gardent le même contexte.</p>
         </div>
         <div className="landing-five-example-grid">
           {SCENARIOS.map((scenario) => (
@@ -150,19 +150,19 @@ export default function HomePage() {
 
       <section className="landing-five-guardrails" aria-labelledby="guardrails-title">
         <div className="landing-five-guardrails__head">
-          <span className={styles.sectionEyebrow}>CE QUE SESIRA NE FAIT PAS</span>
-          <h2 id="guardrails-title">Deux règles visibles dans le produit.</h2>
+          <span className={styles.sectionEyebrow}>AUTONOMIE ET VÉRITÉ</span>
+          <h2 id="guardrails-title">Le produit avance seulement sur des faits et des règles explicites.</h2>
         </div>
         <div className="landing-five-guardrails__grid">
           <article>
-            <span>DONNÉE MANQUANTE</span>
+            <span>ÉTAT RÉEL</span>
             <strong>Une donnée absente n’est jamais remplacée par un faux zéro.</strong>
-            <p>Si le statut n’est pas connu, SESIRA le laisse inconnu au lieu de fabriquer une certitude.</p>
+            <p>Un statut inconnu reste inconnu. Une action externe non confirmée reste en attente ou indisponible.</p>
           </article>
           <article>
-            <span>DÉCISION</span>
+            <span>AUTONOMIE GRADUELLE</span>
             <strong>SESIRA prépare. Vous décidez.</strong>
-            <p>Les arbitrages sensibles et les actions externes restent sous les règles que vous avez choisies.</p>
+            <p>Observation, proposition, approbation, puis automatique : vous choisissez jusqu’où chaque règle peut aller.</p>
           </article>
         </div>
       </section>
@@ -172,7 +172,7 @@ export default function HomePage() {
           <span className={styles.sectionEyebrow}>OBSERVE · 90 JOURS</span>
           <h2 id="offer-title">Quatre-vingt-dix jours d’observation avant de changer quoi que ce soit.</h2>
           <p>
-            SESIRA observe vos demandes, devis et relances. Il n’envoie rien. À la fin, vous obtenez un constat daté de ce qui n’a pas été repris.
+            Selon les données disponibles, SESIRA observe les demandes, devis, dossiers à planifier, interventions, factures et échéances. Aucune action externe pendant le constat. À la fin, vous obtenez un état daté de ce qui attendait une reprise.
           </p>
         </div>
         <div className="landing-five-offer__action">
