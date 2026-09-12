@@ -78,12 +78,15 @@ export function OfflineFieldCapture({ interventionId }: { interventionId: string
       void flush(readQueue(storageKey));
     };
     const onOffline = () => setOnline(false);
+    const onManualSync = () => void flush(readQueue(storageKey));
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
+    window.addEventListener("sesira:field-sync", onManualSync);
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
+      window.removeEventListener("sesira:field-sync", onManualSync);
     };
   }, [flush, storageKey]);
 
