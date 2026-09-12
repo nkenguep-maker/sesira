@@ -4086,8 +4086,110 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C45 — Document trust assertions
+-- =========================================================================
+-- Fixtures: create a document row + document_version for tenant A.
+insert into public.documents (id, organization_id, file_reference, file_name, kind, status)
+values ('c4500000-0000-4000-8000-000000000001', '91000000-0000-4000-8000-000000000001', 'field-binaries/91/doc-1', 'contract.pdf', 'CONTRACT', 'UPLOADED');
+
+do $$
+declare
+  version_id uuid;
+  req_r record;
+  provider_id uuid;
+  captured text;
+begin
+  -- Create version
+  select public.create_document_version(
+    '91000000-0000-4000-8000-000000000001',
+    'c4500000-0000-4000-8000-000000000001',
+    repeat('d', 64),
+    'field-binaries', 'documents/c4500000/v1.pdf',
+    'application/pdf', 12345, null
+  ) into version_id;
+  if version_id is null then
+    raise exception 'C45: create_document_version should return id';
+  end if;
+
+  select id into provider_id from public.trust_providers where provider_kind = 'TEST';
+
+  -- Request trust
+  select request_id, status, created into req_r
+  from public.request_document_trust(
+    '91000000-0000-4000-8000-000000000001', version_id,
+    'TIMESTAMP', 'ADVANCED', provider_id, 'trust-idem-1'
+  );
+  if req_r.status <> 'DRAFT' or not req_r.created then
+    raise exception 'C45: initial request expected DRAFT created=true';
+  end if;
+
+  -- Idempotent replay
+  select request_id, status, created into req_r
+  from public.request_document_trust(
+    '91000000-0000-4000-8000-000000000001', version_id,
+    'TIMESTAMP', 'ADVANCED', provider_id, 'trust-idem-1'
+  );
+  if req_r.created then
+    raise exception 'C45: replay should not create';
+  end if;
+
+  -- DRAFT → READY (transition test)
+  if not public.mark_trust_request_ready(
+    '91000000-0000-4000-8000-000000000001', req_r.request_id
+  ) then
+    raise exception 'C45: mark_trust_request_ready should succeed';
+  end if;
+
+  -- Illegal transition READY → CONFIRMED via direct UPDATE blocked
+  begin
+    update public.document_trust_requests
+      set status = 'CONFIRMED'
+    where id = req_r.request_id;
+    raise exception 'C45: READY→CONFIRMED direct UPDATE must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C45: expected 22023 on illegal transition (got %)', captured;
+    end if;
+  end;
+
+  -- Cancel from READY
+  if not public.cancel_trust_request(
+    '91000000-0000-4000-8000-000000000001', req_r.request_id, 'test cancel'
+  ) then
+    raise exception 'C45: cancel_trust_request should succeed on READY';
+  end if;
+
+  -- Terminal (CANCELLED) immutable
+  begin
+    update public.document_trust_requests
+      set status = 'DRAFT'
+    where id = req_r.request_id;
+    raise exception 'C45: CANCELLED must be immutable';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C45: expected 22023 on terminal immutability (got %)', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Cross-tenant + trust_providers global read
+do $$
+declare visible integer;
+begin
+  select count(*) into visible from public.document_trust_requests
+    where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then raise exception 'C45: tenant A must not see tenant B requests'; end if;
+  select count(*) into visible from public.trust_providers where provider_kind = 'TEST';
+  if visible = 0 then raise exception 'C45: trust_providers should be readable to authenticated'; end if;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures and C44 transactional SMS assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures, C44 transactional SMS and C45 document trust assertions passed' as result;
 
 rollback;

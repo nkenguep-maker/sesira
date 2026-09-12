@@ -1962,6 +1962,183 @@ export type Database = {
         }
         Relationships: []
       }
+      document_versions: {
+        Row: {
+          created_at: string
+          document_id: string
+          id: string
+          mime_type: string | null
+          organization_id: string
+          sha256: string
+          size_bytes: number | null
+          source_reference: string | null
+          storage_bucket: string
+          storage_path: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          id?: string
+          mime_type?: string | null
+          organization_id: string
+          sha256: string
+          size_bytes?: number | null
+          source_reference?: string | null
+          storage_bucket: string
+          storage_path: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          id?: string
+          mime_type?: string | null
+          organization_id?: string
+          sha256?: string
+          size_bytes?: number | null
+          source_reference?: string | null
+          storage_bucket?: string
+          storage_path?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      trust_providers: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json
+          production_ready: boolean
+          provider_kind: string
+          region: string | null
+          status: string
+          supported_capabilities: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json
+          production_ready?: boolean
+          provider_kind: string
+          region?: string | null
+          status?: string
+          supported_capabilities?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json
+          production_ready?: boolean
+          provider_kind?: string
+          region?: string | null
+          status?: string
+          supported_capabilities?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      document_trust_requests: {
+        Row: {
+          created_at: string
+          document_version_id: string
+          external_ref: string | null
+          id: string
+          idempotency_key: string
+          organization_id: string
+          provider_id: string | null
+          provider_snapshot: Json
+          requested_capability: string
+          requested_level: string
+          status: string
+          submitted_at: string | null
+          terminal_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_version_id: string
+          external_ref?: string | null
+          id?: string
+          idempotency_key: string
+          organization_id: string
+          provider_id?: string | null
+          provider_snapshot?: Json
+          requested_capability: string
+          requested_level: string
+          status?: string
+          submitted_at?: string | null
+          terminal_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_version_id?: string
+          external_ref?: string | null
+          id?: string
+          idempotency_key?: string
+          organization_id?: string
+          provider_id?: string | null
+          provider_snapshot?: Json
+          requested_capability?: string
+          requested_level?: string
+          status?: string
+          submitted_at?: string | null
+          terminal_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      document_trust_evidence: {
+        Row: {
+          certificate_metadata: Json
+          confirmed_at: string
+          created_at: string
+          id: string
+          organization_id: string
+          provider_ref: string
+          raw_evidence_storage_path: string | null
+          request_id: string
+          signature_seal_level_reported_by_provider: string | null
+          timestamp_token_reference: string | null
+          verification_notes: string | null
+          verification_performed_at: string | null
+          verification_result: string
+        }
+        Insert: {
+          certificate_metadata?: Json
+          confirmed_at: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          provider_ref: string
+          raw_evidence_storage_path?: string | null
+          request_id: string
+          signature_seal_level_reported_by_provider?: string | null
+          timestamp_token_reference?: string | null
+          verification_notes?: string | null
+          verification_performed_at?: string | null
+          verification_result?: string
+        }
+        Update: {
+          certificate_metadata?: Json
+          confirmed_at?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          provider_ref?: string
+          raw_evidence_storage_path?: string | null
+          request_id?: string
+          signature_seal_level_reported_by_provider?: string | null
+          timestamp_token_reference?: string | null
+          verification_notes?: string | null
+          verification_performed_at?: string | null
+          verification_result?: string
+        }
+        Relationships: []
+      }
       sms_templates: {
         Row: {
           allowed_variables: string[]
@@ -4233,6 +4410,80 @@ export type Database = {
           target_note: string | null
         }
         Returns: string
+      }
+      create_document_version: {
+        Args: {
+          target_organization_id: string
+          target_document_id: string
+          target_sha256: string
+          target_storage_bucket: string
+          target_storage_path: string
+          target_mime_type: string | null
+          target_size_bytes: number | null
+          target_source_reference: string | null
+        }
+        Returns: string
+      }
+      request_document_trust: {
+        Args: {
+          target_organization_id: string
+          target_document_version_id: string
+          target_capability: string
+          target_requested_level: string
+          target_provider_id: string | null
+          target_idempotency_key: string
+        }
+        Returns: {
+          request_id: string
+          status: string
+          created: boolean
+        }[]
+      }
+      mark_trust_request_ready: {
+        Args: {
+          target_organization_id: string
+          target_request_id: string
+        }
+        Returns: boolean
+      }
+      mark_trust_request_submitted: {
+        Args: {
+          target_organization_id: string
+          target_request_id: string
+          target_external_ref: string
+        }
+        Returns: boolean
+      }
+      record_trust_evidence: {
+        Args: {
+          target_organization_id: string
+          target_request_id: string
+          target_provider_ref: string
+          target_confirmed_at: string
+          target_raw_evidence_storage_path: string | null
+          target_certificate_metadata: Json
+          target_timestamp_token_reference: string | null
+          target_signature_seal_level_reported_by_provider: string | null
+          target_outcome: string
+        }
+        Returns: string | null
+      }
+      verify_trust_evidence: {
+        Args: {
+          target_organization_id: string
+          target_evidence_id: string
+          target_verification_result: string
+          target_verification_notes: string | null
+        }
+        Returns: boolean
+      }
+      cancel_trust_request: {
+        Args: {
+          target_organization_id: string
+          target_request_id: string
+          target_reason: string
+        }
+        Returns: boolean
       }
     }
     Enums: {
