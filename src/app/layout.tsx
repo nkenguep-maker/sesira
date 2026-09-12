@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 
+import { LandingGeneratedImages } from "@/components/marketing/landing-generated-images";
+
 import "./globals.css";
 import "./ui-additions.css";
 import "./premium-surfaces.css";
@@ -32,5 +34,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fr"><body className={`${hanken.variable} ${jetbrains.variable}`}>{children}</body></html>;
+  return (
+    <html lang="fr">
+      <body className={`${hanken.variable} ${jetbrains.variable}`}>
+        {children}
+        <LandingGeneratedImages />
+      </body>
+    </html>
+  );
 }
