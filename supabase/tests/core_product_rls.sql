@@ -3754,8 +3754,241 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C43 — Guided field procedures assertions
+-- =========================================================================
+-- Fixtures: reuse C41 tenant A org + intervention. Create a template + steps.
+
+insert into public.field_procedure_templates (id, organization_id, key, version, label, active) values
+  ('c4300000-0000-4000-8000-000000000001', '91000000-0000-4000-8000-000000000001', 'test-proc', 1, 'Test Procedure v1', true);
+
+insert into public.field_procedure_steps (id, template_id, ordinal, kind, required, unit, range_min, range_max, human_wording) values
+  ('c4310000-0000-4000-8000-000000000001', 'c4300000-0000-4000-8000-000000000001', 1, 'CHECK', true, null, null, null, 'Vérifier étanchéité'),
+  ('c4310000-0000-4000-8000-000000000002', 'c4300000-0000-4000-8000-000000000001', 2, 'MEASUREMENT', true, 'bar', 0, 10, 'Mesure pression');
+
+-- Start run + submit step results (SYNCED + CONFLICT out of range)
+do $$
+declare
+  run_id uuid;
+  res record;
+begin
+  select public.start_procedure_run(
+    '91000000-0000-4000-8000-000000000001',
+    'c1200000-0000-4000-8000-000000000001',
+    'c4300000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-0000000000c1'
+  ) into run_id;
+  if run_id is null then
+    raise exception 'C43: start_procedure_run should return an id';
+  end if;
+
+  -- Step 1 SYNCED
+  select result_id, sync_status, created into res
+  from public.submit_step_result(
+    '91000000-0000-4000-8000-000000000001', run_id,
+    'c4310000-0000-4000-8000-000000000001',
+    '{"ok": true}'::jsonb,
+    '2026-10-08T10:00:00Z'::timestamptz,
+    '91100000-0000-4000-8000-0000000000c1',
+    'off-1', null
+  );
+  if res.sync_status <> 'SYNCED' or not res.created then
+    raise exception 'C43: step 1 expected SYNCED created=true';
+  end if;
+
+  -- Replay same offline_client_id → same row, created=false
+  select result_id, sync_status, created into res
+  from public.submit_step_result(
+    '91000000-0000-4000-8000-000000000001', run_id,
+    'c4310000-0000-4000-8000-000000000001',
+    '{"ok": true}'::jsonb,
+    '2026-10-08T10:00:01Z'::timestamptz,
+    '91100000-0000-4000-8000-0000000000c1',
+    'off-1', null
+  );
+  if res.created then
+    raise exception 'C43: replay of same offline_client_id must not create';
+  end if;
+
+  -- Step 2 out of range → CONFLICT
+  select result_id, sync_status, created into res
+  from public.submit_step_result(
+    '91000000-0000-4000-8000-000000000001', run_id,
+    'c4310000-0000-4000-8000-000000000002',
+    '{"value": 15}'::jsonb,
+    '2026-10-08T10:01:00Z'::timestamptz,
+    '91100000-0000-4000-8000-0000000000c1',
+    'off-2', null
+  );
+  if res.sync_status <> 'CONFLICT' then
+    raise exception 'C43: measurement out of range must be CONFLICT (got %)', res.sync_status;
+  end if;
+
+  -- complete_run should fail because step 2 has no SYNCED result
+  declare
+    captured text;
+  begin
+    perform public.complete_run(
+      '91000000-0000-4000-8000-000000000001', run_id, 'try'
+    );
+    raise exception 'C43: complete_run should fail when required step lacks SYNCED';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C43: expected 22023 on missing steps (got %)', captured;
+    end if;
+  end;
+
+  -- Resolve conflict to SYNCED for step 2 (with a fresh SYNCED submission — the conflict row stays)
+  -- Retry step 2 in-range → SYNCED
+  select result_id, sync_status, created into res
+  from public.submit_step_result(
+    '91000000-0000-4000-8000-000000000001', run_id,
+    'c4310000-0000-4000-8000-000000000002',
+    '{"value": 5}'::jsonb,
+    '2026-10-08T10:02:00Z'::timestamptz,
+    '91100000-0000-4000-8000-0000000000c1',
+    'off-2b', null
+  );
+  if res.sync_status <> 'SYNCED' then
+    raise exception 'C43: in-range value must be SYNCED';
+  end if;
+
+  -- Now complete_run should succeed
+  if not public.complete_run(
+    '91000000-0000-4000-8000-000000000001', run_id, 'good'
+  ) then
+    raise exception 'C43: complete_run should succeed with all required steps SYNCED';
+  end if;
+
+  -- Terminal immutable — direct UPDATE blocked
+  declare
+    captured text;
+  begin
+    update public.intervention_procedure_runs
+      set status = 'IN_PROGRESS'
+    where id = run_id;
+    raise exception 'C43: COMPLETED run must be immutable';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C43: expected 22023 on terminal mutation (got %)', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Binary reserve + finalize (matching sha256) then mismatched
+do $$
+declare
+  reserve_res record;
+  finalize_res record;
+  captured text;
+begin
+  select artifact_id, storage_bucket, storage_path, upload_status, created into reserve_res
+  from public.reserve_binary_artifact(
+    '91000000-0000-4000-8000-000000000001',
+    'c1200000-0000-4000-8000-000000000001',
+    null, 'PHOTO',
+    repeat('a', 64),
+    '2026-10-08T11:00:00Z'::timestamptz,
+    '91100000-0000-4000-8000-0000000000c1',
+    'bin-off-1', '{}'::jsonb
+  );
+  if not reserve_res.created or reserve_res.upload_status <> 'RESERVED' then
+    raise exception 'C43: initial reserve expected RESERVED + created=true';
+  end if;
+  if reserve_res.storage_path not like '%c1200000-0000-4000-8000-000000000001%' then
+    raise exception 'C43: storage_path must include intervention id';
+  end if;
+
+  -- Replay same sha → same row
+  select artifact_id, upload_status, created into reserve_res
+  from public.reserve_binary_artifact(
+    '91000000-0000-4000-8000-000000000001',
+    'c1200000-0000-4000-8000-000000000001',
+    null, 'PHOTO',
+    repeat('a', 64),
+    '2026-10-08T11:00:05Z'::timestamptz,
+    '91100000-0000-4000-8000-0000000000c1',
+    'bin-off-2', '{}'::jsonb
+  );
+  if reserve_res.created then
+    raise exception 'C43: replay of same sha256 must return existing row';
+  end if;
+
+  -- Finalize matching sha → FINALIZED
+  select artifact_id, upload_status, conflict_reason into finalize_res
+  from public.finalize_binary_artifact(
+    '91000000-0000-4000-8000-000000000001',
+    reserve_res.artifact_id,
+    repeat('a', 64), 12345, 'image/jpeg'
+  );
+  if finalize_res.upload_status <> 'FINALIZED' then
+    raise exception 'C43: matching sha should FINALIZE (got %)', finalize_res.upload_status;
+  end if;
+
+  -- Reserve another + finalize mismatched → CONFLICT
+  select artifact_id, upload_status into reserve_res
+  from public.reserve_binary_artifact(
+    '91000000-0000-4000-8000-000000000001',
+    'c1200000-0000-4000-8000-000000000001',
+    null, 'DOCUMENT',
+    repeat('b', 64),
+    '2026-10-08T11:05:00Z'::timestamptz,
+    '91100000-0000-4000-8000-0000000000c1',
+    'bin-off-3', '{}'::jsonb
+  );
+  select artifact_id, upload_status, conflict_reason into finalize_res
+  from public.finalize_binary_artifact(
+    '91000000-0000-4000-8000-000000000001',
+    reserve_res.artifact_id,
+    repeat('c', 64), 999, 'application/pdf'
+  );
+  if finalize_res.upload_status <> 'CONFLICT' then
+    raise exception 'C43: mismatched sha should CONFLICT (got %)', finalize_res.upload_status;
+  end if;
+  if finalize_res.conflict_reason is null then
+    raise exception 'C43: CONFLICT must carry a conflict_reason';
+  end if;
+
+  -- Bad sha length rejected
+  begin
+    perform public.finalize_binary_artifact(
+      '91000000-0000-4000-8000-000000000001',
+      reserve_res.artifact_id,
+      'nope', 0, 'x'
+    );
+    raise exception 'C43: bad sha length must be rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C43: expected 22023 on bad sha (got %)', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Cross-tenant isolation
+do $$
+declare
+  visible integer;
+begin
+  select count(*) into visible from public.intervention_procedure_runs
+    where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then
+    raise exception 'C43: tenant A must not see tenant B runs (got %)', visible;
+  end if;
+  select count(*) into visible from public.binary_field_artifacts
+    where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then
+    raise exception 'C43: tenant A must not see tenant B binaries (got %)', visible;
+  end if;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning and C42 fleet telemetry assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry and C43 guided procedures assertions passed' as result;
 
 rollback;

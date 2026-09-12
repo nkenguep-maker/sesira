@@ -1788,6 +1788,240 @@ export type Database = {
           },
         ]
       }
+      field_procedure_templates: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          key: string
+          label: string
+          organization_id: string | null
+          sector_key: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          key: string
+          label: string
+          organization_id?: string | null
+          sector_key?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          key?: string
+          label?: string
+          organization_id?: string | null
+          sector_key?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      field_procedure_steps: {
+        Row: {
+          created_at: string
+          human_wording: string
+          id: string
+          kind: string
+          metadata: Json
+          ordinal: number
+          range_max: number | null
+          range_min: number | null
+          required: boolean
+          template_id: string
+          unit: string | null
+        }
+        Insert: {
+          created_at?: string
+          human_wording: string
+          id?: string
+          kind: string
+          metadata?: Json
+          ordinal: number
+          range_max?: number | null
+          range_min?: number | null
+          required?: boolean
+          template_id: string
+          unit?: string | null
+        }
+        Update: {
+          created_at?: string
+          human_wording?: string
+          id?: string
+          kind?: string
+          metadata?: Json
+          ordinal?: number
+          range_max?: number | null
+          range_min?: number | null
+          required?: boolean
+          template_id?: string
+          unit?: string | null
+        }
+        Relationships: []
+      }
+      intervention_procedure_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          intervention_id: string
+          organization_id: string
+          review_notes: string | null
+          started_at: string | null
+          status: string
+          template_id: string
+          template_version: number
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          intervention_id: string
+          organization_id: string
+          review_notes?: string | null
+          started_at?: string | null
+          status?: string
+          template_id: string
+          template_version: number
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          intervention_id?: string
+          organization_id?: string
+          review_notes?: string | null
+          started_at?: string | null
+          status?: string
+          template_id?: string
+          template_version?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      field_step_results: {
+        Row: {
+          actor_user_id: string
+          captured_at: string
+          conflict_reason: string | null
+          created_at: string
+          device_ref: string | null
+          id: string
+          offline_client_id: string | null
+          organization_id: string
+          run_id: string
+          step_id: string
+          sync_status: string
+          value_json: Json
+        }
+        Insert: {
+          actor_user_id: string
+          captured_at: string
+          conflict_reason?: string | null
+          created_at?: string
+          device_ref?: string | null
+          id?: string
+          offline_client_id?: string | null
+          organization_id: string
+          run_id: string
+          step_id: string
+          sync_status?: string
+          value_json?: Json
+        }
+        Update: {
+          actor_user_id?: string
+          captured_at?: string
+          conflict_reason?: string | null
+          created_at?: string
+          device_ref?: string | null
+          id?: string
+          offline_client_id?: string | null
+          organization_id?: string
+          run_id?: string
+          step_id?: string
+          sync_status?: string
+          value_json?: Json
+        }
+        Relationships: []
+      }
+      binary_field_artifacts: {
+        Row: {
+          actual_sha256: string | null
+          captured_at: string
+          conflict_reason: string | null
+          content_type: string | null
+          created_at: string
+          expected_sha256: string
+          finalized_at: string | null
+          id: string
+          intervention_id: string
+          kind: string
+          offline_client_id: string | null
+          organization_id: string
+          payload_snapshot: Json
+          run_id: string | null
+          size_bytes: number | null
+          step_result_id: string | null
+          storage_bucket: string
+          storage_path: string
+          upload_status: string
+          uploaded_by_user_id: string
+        }
+        Insert: {
+          actual_sha256?: string | null
+          captured_at: string
+          conflict_reason?: string | null
+          content_type?: string | null
+          created_at?: string
+          expected_sha256: string
+          finalized_at?: string | null
+          id?: string
+          intervention_id: string
+          kind: string
+          offline_client_id?: string | null
+          organization_id: string
+          payload_snapshot?: Json
+          run_id?: string | null
+          size_bytes?: number | null
+          step_result_id?: string | null
+          storage_bucket?: string
+          storage_path: string
+          upload_status?: string
+          uploaded_by_user_id: string
+        }
+        Update: {
+          actual_sha256?: string | null
+          captured_at?: string
+          conflict_reason?: string | null
+          content_type?: string | null
+          created_at?: string
+          expected_sha256?: string
+          finalized_at?: string | null
+          id?: string
+          intervention_id?: string
+          kind?: string
+          offline_client_id?: string | null
+          organization_id?: string
+          payload_snapshot?: Json
+          run_id?: string | null
+          size_bytes?: number | null
+          step_result_id?: string | null
+          storage_bucket?: string
+          storage_path?: string
+          upload_status?: string
+          uploaded_by_user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -3755,6 +3989,102 @@ export type Database = {
           target_organization_id: string
         }
         Returns: number
+      }
+      start_procedure_run: {
+        Args: {
+          target_organization_id: string
+          target_intervention_id: string
+          target_template_id: string
+          target_actor_user_id: string
+        }
+        Returns: string
+      }
+      submit_step_result: {
+        Args: {
+          target_organization_id: string
+          target_run_id: string
+          target_step_id: string
+          target_value_json: Json
+          target_captured_at: string
+          target_actor_user_id: string
+          target_offline_client_id: string | null
+          target_device_ref: string | null
+        }
+        Returns: {
+          result_id: string
+          sync_status: string
+          created: boolean
+        }[]
+      }
+      reserve_binary_artifact: {
+        Args: {
+          target_organization_id: string
+          target_intervention_id: string
+          target_run_id: string | null
+          target_kind: string
+          target_expected_sha256: string
+          target_captured_at: string
+          target_uploaded_by_user_id: string
+          target_offline_client_id: string | null
+          target_payload_snapshot: Json
+        }
+        Returns: {
+          artifact_id: string
+          storage_bucket: string
+          storage_path: string
+          upload_status: string
+          created: boolean
+        }[]
+      }
+      finalize_binary_artifact: {
+        Args: {
+          target_organization_id: string
+          target_artifact_id: string
+          target_actual_sha256: string
+          target_size_bytes: number
+          target_content_type: string
+        }
+        Returns: {
+          artifact_id: string
+          upload_status: string
+          conflict_reason: string | null
+        }[]
+      }
+      submit_signature_evidence: {
+        Args: {
+          target_organization_id: string
+          target_run_id: string
+          target_artifact_id: string
+          target_signer_name: string
+          target_signer_role: string
+          target_consent_version: string
+        }
+        Returns: boolean
+      }
+      mark_run_ready_for_review: {
+        Args: {
+          target_organization_id: string
+          target_run_id: string
+        }
+        Returns: boolean
+      }
+      complete_run: {
+        Args: {
+          target_organization_id: string
+          target_run_id: string
+          target_review_notes: string | null
+        }
+        Returns: boolean
+      }
+      resolve_step_conflict: {
+        Args: {
+          target_organization_id: string
+          target_result_id: string
+          target_actor_user_id: string
+          target_decision: string
+          target_note: string | null
+        }
+        Returns: boolean
       }
     }
     Enums: {
