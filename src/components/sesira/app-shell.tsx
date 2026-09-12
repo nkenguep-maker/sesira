@@ -99,7 +99,9 @@ export function AppShell({
   const pathname = usePathname();
   const technician = TECH_ROLES.has(role);
 
-  if (technician && routeMatches(pathname, "/app/terrain")) {
+  // /app/terrain is the field product. It must never inherit the office/manager shell,
+  // even when an owner or admin opens it to test the technician experience.
+  if (routeMatches(pathname, "/app/terrain")) {
     return <>{children}</>;
   }
 

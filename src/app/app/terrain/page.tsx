@@ -10,7 +10,6 @@ import {
   Navigation,
   Phone,
   RotateCcw,
-  Settings,
   UserRound,
   Wrench,
 } from "lucide-react";
@@ -44,7 +43,7 @@ export default async function FieldPage({ searchParams }: { searchParams: Search
       <main className={styles.page}>
         <div className={styles.shell}>
           <header className={styles.topbar}><div className={styles.brand}><strong>SESIRA Terrain</strong><span>{viewer.organization.name}</span></div></header>
-          <section className={styles.empty}><AlertTriangle size={26} /><strong>Journée indisponible</strong><p>SESIRA ne peut pas lire vos interventions terrain pour le moment. Aucun état n’est remplacé par une donnée inventée.</p></section>
+          <section className={styles.empty}><AlertTriangle size={26} /><strong>Journée indisponible</strong><p>Impossible de charger vos interventions pour le moment.</p></section>
         </div>
         <BottomNav date={date} interventionId={null} />
       </main>
@@ -57,7 +56,6 @@ export default async function FieldPage({ searchParams }: { searchParams: Search
   const nextIntervention = interventions.find((row) => !["COMPLETED", "CANCELLED"].includes(row.status));
   const focused = interventions.find((row) => row.interventionId === params.focus) ?? null;
   const procedureUi = focused ? await getTerrainProcedureUi(viewer.organization.id, focused.interventionId) : null;
-  const completedCount = interventions.filter((row) => row.status === "COMPLETED").length;
   const navInterventionId = focused?.interventionId ?? nextIntervention?.interventionId ?? null;
 
   return (
@@ -74,7 +72,7 @@ export default async function FieldPage({ searchParams }: { searchParams: Search
         <section className={styles.hero} id="aujourdhui">
           <span className={styles.kicker}>Ma journée</span>
           <h1>{friendlyDayTitle(date, timezone)}</h1>
-          <p>{interventions.length} intervention{interventions.length === 1 ? "" : "s"} · {completedCount} terminée{completedCount === 1 ? "" : "s"}. Une intervention normale reste silencieuse côté bureau.</p>
+          <p>{interventions.length ? `${interventions.length} intervention${interventions.length === 1 ? "" : "s"} prévue${interventions.length === 1 ? "" : "s"}` : "Aucune intervention prévue"}</p>
         </section>
 
         <div className={styles.dateStrip}>
@@ -99,8 +97,7 @@ export default async function FieldPage({ searchParams }: { searchParams: Search
 
         <section className={styles.section} aria-labelledby="day-list-title">
           <div className={styles.sectionHeading}>
-            <div><span>Planning</span><h2 id="day-list-title">Aujourd’hui</h2></div>
-            <small>{completedCount}/{interventions.length} terminées</small>
+            <div><span>Planning</span><h2 id="day-list-title">Mes interventions</h2></div>
           </div>
 
           {interventions.length ? (
@@ -121,19 +118,19 @@ export default async function FieldPage({ searchParams }: { searchParams: Search
               ))}
             </div>
           ) : (
-            <div className={styles.empty}><CheckCircle2 size={26} /><strong>Aucune intervention aujourd’hui</strong><p>Votre journée est vide pour cette date. Rien n’est ajouté artificiellement.</p></div>
+            <div className={styles.empty}><CheckCircle2 size={26} /><strong>Journée libre</strong><p>Aucune intervention ne vous est assignée pour cette date.</p></div>
           )}
         </section>
 
         {conflicts.length ? (
           <section className={styles.section} aria-labelledby="conflicts-title">
-            <div className={styles.sectionHeading}><div><span>À vérifier</span><h2 id="conflicts-title">Saisies conservées</h2></div><small>{conflicts.length}</small></div>
+            <div className={styles.sectionHeading}><div><span>À régler</span><h2 id="conflicts-title">Saisies à vérifier</h2></div><small>{conflicts.length}</small></div>
             <div className={styles.conflicts}>
               {conflicts.map((item) => (
                 <article className={styles.conflictCard} key={item.artifactId}>
                   <span className={styles.kicker}>{artifactLabel(item.artifactKind)}</span>
-                  <h3>Une saisie demande votre décision</h3>
-                  <p>{item.conflictReason ?? "SESIRA a conservé les deux versions et n’a rien écrasé automatiquement."}</p>
+                  <h3>Choisissez la bonne version</h3>
+                  <p>{item.conflictReason ?? "Cette saisie a été conservée après un changement de l’intervention."}</p>
                   <div className={styles.conflictMeta}>
                     <span><b>Capturé</b>{formatDateTime(item.capturedAt)}</span>
                     <span><b>Reçu</b>{formatDateTime(item.uploadedAt)}</span>
@@ -154,10 +151,6 @@ export default async function FieldPage({ searchParams }: { searchParams: Search
         <section className={styles.section}>
           <TerrainSyncCenter />
         </section>
-
-        <aside className={styles.boundary}>
-          Les heures de capture et de réception restent distinctes. Une donnée locale reste « en attente » jusqu’à confirmation. Aucun classement, score ou comparaison entre techniciens n’est produit par cette surface.
-        </aside>
       </div>
 
       <BottomNav date={date} interventionId={navInterventionId} />
@@ -192,8 +185,8 @@ function FocusedIntervention({ row, date, procedureUi }: { row: TechnicianInterv
   return (
     <section className={styles.section} id="intervention" aria-labelledby="focus-title">
       <div className={styles.sectionHeading}>
-        <div><span>Intervention</span><h2 id="focus-title">Mission ouverte</h2></div>
-        <Link href={`/app/terrain?date=${encodeURIComponent(date)}`} className={styles.connectionPill}>Fermer</Link>
+        <div><span>Intervention</span><h2 id="focus-title">Mission</h2></div>
+        <Link href={`/app/terrain?date=${encodeURIComponent(date)}`} className={styles.connectionPill}>Retour</Link>
       </div>
 
       <article className={styles.focusCard}>
@@ -256,7 +249,7 @@ function FocusedIntervention({ row, date, procedureUi }: { row: TechnicianInterv
       {row.startedAt && !terminal ? <OfflineFieldCapture interventionId={row.interventionId} /> : null}
 
       {row.status === "COMPLETED" ? (
-        <div className={`${styles.notice} ${styles.noticeGood}`}><CheckCircle2 size={18} /><div><strong>Intervention terminée</strong><div>Le dossier reste consultable. Rien n’est remonté au bureau sauf exception ou décision nécessaire.</div></div></div>
+        <div className={`${styles.notice} ${styles.noticeGood}`}><CheckCircle2 size={18} /><div><strong>Intervention terminée</strong><div>Le dossier est enregistré.</div></div></div>
       ) : null}
     </section>
   );
@@ -267,11 +260,10 @@ function BottomNav({ date, interventionId }: { date: string; interventionId: str
     ? `/app/terrain?date=${encodeURIComponent(date)}&focus=${encodeURIComponent(interventionId)}#intervention`
     : `/app/terrain?date=${encodeURIComponent(date)}#aujourdhui`;
   return (
-    <nav className={styles.bottomNav} aria-label="Navigation terrain">
+    <nav className={styles.bottomNav} aria-label="Navigation terrain" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
       <Link href={`/app/terrain?date=${encodeURIComponent(date)}#aujourdhui`} data-active="true"><CalendarDays size={18} /><span>Aujourd’hui</span></Link>
-      <Link href={interventionHref}><Wrench size={18} /><span>Intervention</span></Link>
+      <Link href={interventionHref}><Wrench size={18} /><span>Mission</span></Link>
       <Link href={`/app/terrain?date=${encodeURIComponent(date)}#envois`}><FileText size={18} /><span>Envois</span></Link>
-      <Link href="/app/terrain/moi"><Settings size={18} /><span>Moi</span></Link>
     </nav>
   );
 }
@@ -296,17 +288,17 @@ function ResultNotice({ result }: { result?: string }) {
     "note-saved": "Saisie enregistrée.",
     "procedure-started": "Procédure démarrée.",
     "step-saved": "Étape enregistrée.",
-    "photo-saved": "Photo enregistrée et liée à l’étape.",
-    "signature-saved": "Émargement enregistré et lié à l’étape.",
-    "procedure-ready": "Procédure prête pour la relecture.",
+    "photo-saved": "Photo enregistrée.",
+    "signature-saved": "Émargement enregistré.",
+    "procedure-ready": "Prêt pour la relecture.",
     "procedure-completed": "Procédure terminée.",
-    conflict: "La saisie est conservée et demande une vérification.",
-    "procedure-conflict": "La valeur est conservée mais demande une vérification.",
-    "binary-conflict": "Le fichier est conservé mais son intégrité demande une vérification.",
+    conflict: "Cette saisie demande une vérification.",
+    "procedure-conflict": "Cette valeur demande une vérification.",
+    "binary-conflict": "Ce fichier demande une vérification.",
     "file-too-large": "Le fichier dépasse la limite de 15 Mo.",
-    "conflict-resolved": "La saisie a été arbitrée.",
-    invalid: "L’action demandée est incomplète.",
-    "not-applied": "SESIRA n’a pas pu confirmer cette action.",
+    "conflict-resolved": "Saisie mise à jour.",
+    invalid: "Il manque une information.",
+    "not-applied": "Impossible de confirmer cette action.",
   };
   return <div className={`${styles.notice} ${good ? styles.noticeGood : ""}`}>{good ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}<span>{copy[result] ?? "État inconnu."}</span></div>;
 }
