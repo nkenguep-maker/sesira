@@ -23,6 +23,7 @@ import "./product-polish.css";
 import "./product-polish-forms.css";
 import "./landing-tecnologia-v2.css";
 import "./landing-audit-polish.css";
+import "./landing-five-sections.css";
 
 const hanken = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-hanken", display: "swap" });
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });
