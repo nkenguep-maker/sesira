@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 type ReadResult<T> = { status: "OK"; data: T } | { status: "UNAVAILABLE"; reason: string };
+type StepSyncStatus = "SYNCED" | "CONFLICT" | "IGNORED";
 
 export type TerrainProcedureTemplate = {
   id: string;
@@ -23,7 +24,7 @@ export type TerrainProcedureStep = {
   wording: string;
   result: null | {
     id: string;
-    syncStatus: "SYNCED" | "CONFLICT" | "IGNORED";
+    syncStatus: StepSyncStatus;
     value: Record<string, unknown>;
     capturedAt: string;
   };
@@ -174,7 +175,7 @@ export async function getTerrainProcedureUi(
           wording: String(row.human_wording),
           result: resultRow ? {
             id: String(resultRow.id),
-            syncStatus: String(resultRow.sync_status) as TerrainProcedureStep["result"] extends infer R ? R extends { syncStatus: infer S } ? S : never : never,
+            syncStatus: String(resultRow.sync_status) as StepSyncStatus,
             value: isObject(resultRow.value_json) ? resultRow.value_json as Record<string, unknown> : {},
             capturedAt: String(resultRow.captured_at),
           } : null,
