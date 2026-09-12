@@ -101,7 +101,7 @@ export default function HomePage() {
 
       <header className="cvc-hero">
         <div className="cvc-hero-copy">
-          <span className="cvc-kicker">LE PILOTAGE SIMPLE POUR LES ENTREPRISES CVC</span>
+          <span className="cvc-kicker">VOTRE JOURNÉE CVC, SANS ANGLE MORT</span>
           <h1>5 choses à faire. Pas 50 écrans à surveiller.</h1>
           <p className="cvc-hero-lede">
             Chaque matin, SESIRA remet devant vous les cinq sujets qui comptent vraiment : devis, chantier, rapport terrain, facture et entretien.
