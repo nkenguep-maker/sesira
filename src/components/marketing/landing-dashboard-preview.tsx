@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 const PRIORITIES = [
   {
     tone: "quote",
@@ -50,6 +54,17 @@ const FIELD = [
 const NAV = ["Tableau de bord", "File de décisions", "Clients", "Devis", "Interventions", "Factures", "Obligations"] as const;
 
 export function LandingDashboardPreview() {
+  const [todayLabel, setTodayLabel] = useState("Aujourd’hui");
+
+  useEffect(() => {
+    const formatted = new Intl.DateTimeFormat("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date());
+    setTodayLabel(`Aujourd’hui · ${formatted}`);
+  }, []);
+
   return (
     <div className="landing-product-preview" aria-label="Aperçu simplifié du tableau de bord SESIRA avec cinq actions prioritaires">
       <aside className="landing-product-sidebar" aria-hidden="true">
@@ -85,7 +100,7 @@ export function LandingDashboardPreview() {
         <div className="landing-product-content">
           <div className="landing-product-heading">
             <div>
-              <span>Aujourd’hui · 11 septembre 2026</span>
+              <span>{todayLabel}</span>
               <h3>5 choses à faire.</h3>
               <p>Voici ce qui mérite votre attention maintenant.</p>
             </div>
