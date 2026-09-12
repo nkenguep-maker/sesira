@@ -56,7 +56,7 @@ const SERVICES = [
   {
     tag: "CVC",
     title: "Maintenance & obligations",
-    copy: "Rassembler contrats, équipements, fluides, attestations et documents à préparer dans le même flux de travail.",
+    copy: "Voir au même endroit les contrats à renouveler, les équipements, les fluides, les attestations et les documents à préparer.",
     href: "/demo/obligations",
     image: "Photo installation CVC / maintenance",
   },
