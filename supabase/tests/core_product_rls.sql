@@ -4304,8 +4304,119 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C47 — Invoice lifecycle assertions
+-- =========================================================================
+-- Create a parent invoice, deposit, final; record payments; test currency guard,
+-- overpayment guard, reverse.
+insert into public.invoices (id, organization_id, customer_id, amount, currency, status, invoice_kind)
+values ('c4700000-0000-4000-8000-000000000001', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', 10000, 'EUR', 'ISSUED', 'STANDARD');
+
+do $$
+declare
+  deposit_id uuid;
+  final_id uuid;
+  pay_id uuid;
+  captured text;
+begin
+  -- Deposit 30% (3000)
+  select public.prepare_deposit_invoice(
+    '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001',
+    'c4700000-0000-4000-8000-000000000001', 3000, 'EUR', 'DEP-1'
+  ) into deposit_id;
+
+  -- Currency mismatch rejected
+  begin
+    perform public.prepare_deposit_invoice(
+      '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001',
+      'c4700000-0000-4000-8000-000000000001', 500, 'USD', 'DEP-USD'
+    );
+    raise exception 'C47: currency mismatch must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C47: expected 22023 (got %)', captured; end if;
+  end;
+
+  -- Final over cap rejected (deposit 3000 + final 8000 > 10000)
+  begin
+    perform public.prepare_final_invoice(
+      '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001',
+      'c4700000-0000-4000-8000-000000000001', 8000, 'EUR', 'FIN-BAD'
+    );
+    raise exception 'C47: over-cap final must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C47: expected 22023 (got %)', captured; end if;
+  end;
+
+  -- Final fits (7000)
+  select public.prepare_final_invoice(
+    '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001',
+    'c4700000-0000-4000-8000-000000000001', 7000, 'EUR', 'FIN-OK'
+  ) into final_id;
+
+  -- Manual payment on deposit
+  select public.record_payment(
+    '91000000-0000-4000-8000-000000000001', deposit_id,
+    3000, 'EUR', now(), 'WIRE', 'MANUAL',
+    'PAY-DEP-1', null, null,
+    '91100000-0000-4000-8000-000000000001'
+  ) into pay_id;
+
+  -- Idempotent replay (same external_ref)
+  declare replay_id uuid;
+  begin
+    select public.record_payment(
+      '91000000-0000-4000-8000-000000000001', deposit_id,
+      3000, 'EUR', now(), 'WIRE', 'MANUAL',
+      'PAY-DEP-1', null, null,
+      '91100000-0000-4000-8000-000000000001'
+    ) into replay_id;
+    if replay_id <> pay_id then raise exception 'C47: replay must return same id'; end if;
+  end;
+
+  -- Currency mismatch on payment rejected
+  begin
+    perform public.record_payment(
+      '91000000-0000-4000-8000-000000000001', deposit_id,
+      100, 'USD', now(), 'WIRE', 'MANUAL', null, null, null,
+      '91100000-0000-4000-8000-000000000001'
+    );
+    raise exception 'C47: currency mismatch on payment must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C47: expected 22023 (got %)', captured; end if;
+  end;
+
+  -- Reverse (pay_id currently RECORDED — reverse should succeed)
+  if not public.reverse_payment(
+    '91000000-0000-4000-8000-000000000001', pay_id, 'test reverse'
+  ) then
+    raise exception 'C47: reverse_payment should succeed';
+  end if;
+
+  -- Row preserved
+  if not exists (
+    select 1 from public.payment_records where id = pay_id and status = 'REVERSED'
+  ) then
+    raise exception 'C47: REVERSED row must be preserved';
+  end if;
+end;
+$$;
+
+-- Cross-tenant isolation
+do $$
+declare visible integer;
+begin
+  select count(*) into visible from public.invoice_line_items where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then raise exception 'C47: tenant A must not see tenant B line items'; end if;
+  select count(*) into visible from public.payment_records where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then raise exception 'C47: tenant A must not see tenant B payments'; end if;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures, C44 transactional SMS, C45 document trust and C46 trackdechets assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures, C44 transactional SMS, C45 document trust, C46 trackdechets and C47 invoice lifecycle assertions passed' as result;
 
 rollback;

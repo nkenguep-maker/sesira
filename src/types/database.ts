@@ -1962,6 +1962,117 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_line_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          invoice_id: string
+          label: string
+          metadata: Json
+          ordinal: number
+          organization_id: string
+          quantity: number
+          total_ht: number
+          total_ttc: number
+          unit: string
+          unit_price: number
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id: string
+          label: string
+          metadata?: Json
+          ordinal: number
+          organization_id: string
+          quantity: number
+          total_ht: number
+          total_ttc: number
+          unit?: string
+          unit_price: number
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string
+          label?: string
+          metadata?: Json
+          ordinal?: number
+          organization_id?: string
+          quantity?: number
+          total_ht?: number
+          total_ttc?: number
+          unit?: string
+          unit_price?: number
+          vat_rate?: number
+        }
+        Relationships: []
+      }
+      payment_records: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by_user_id: string
+          currency: string
+          evidence_document_id: string | null
+          external_ref: string | null
+          id: string
+          invoice_id: string
+          method: string
+          note: string | null
+          organization_id: string
+          received_at: string
+          reversal_reason: string | null
+          reversed_at: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by_user_id: string
+          currency: string
+          evidence_document_id?: string | null
+          external_ref?: string | null
+          id?: string
+          invoice_id: string
+          method: string
+          note?: string | null
+          organization_id: string
+          received_at: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          source: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by_user_id?: string
+          currency?: string
+          evidence_document_id?: string | null
+          external_ref?: string | null
+          id?: string
+          invoice_id?: string
+          method?: string
+          note?: string | null
+          organization_id?: string
+          received_at?: string
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       waste_dossiers: {
         Row: {
           carrier_ref: string | null
@@ -4663,6 +4774,76 @@ export type Database = {
           target_organization_id: string
           target_submission_id: string
           target_reason: string
+        }
+        Returns: boolean
+      }
+      prepare_deposit_invoice: {
+        Args: {
+          target_organization_id: string
+          target_customer_id: string
+          target_parent_invoice_id: string | null
+          target_amount: number
+          target_currency: string
+          target_external_ref: string | null
+        }
+        Returns: string
+      }
+      prepare_final_invoice: {
+        Args: {
+          target_organization_id: string
+          target_customer_id: string
+          target_parent_invoice_id: string
+          target_amount: number
+          target_currency: string
+          target_external_ref: string | null
+        }
+        Returns: string
+      }
+      record_payment: {
+        Args: {
+          target_organization_id: string
+          target_invoice_id: string
+          target_amount: number
+          target_currency: string
+          target_received_at: string
+          target_method: string
+          target_source: string
+          target_external_ref: string | null
+          target_evidence_document_id: string | null
+          target_note: string | null
+          target_created_by_user_id: string
+        }
+        Returns: string
+      }
+      reconcile_payment: {
+        Args: {
+          target_organization_id: string
+          target_payment_id: string
+          target_external_ref: string
+          target_provider_confirmed_at: string
+        }
+        Returns: boolean
+      }
+      reverse_payment: {
+        Args: {
+          target_organization_id: string
+          target_payment_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      prepare_facturx: {
+        Args: {
+          target_organization_id: string
+          target_submission_id: string
+        }
+        Returns: string
+      }
+      mark_facturx_exported: {
+        Args: {
+          target_organization_id: string
+          target_submission_id: string
+          target_exported_at: string
         }
         Returns: boolean
       }
