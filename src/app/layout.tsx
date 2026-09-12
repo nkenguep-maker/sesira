@@ -21,6 +21,7 @@ import "./product-redesign-extras.css";
 import "./product-redesign-patches.css";
 import "./product-polish.css";
 import "./product-polish-forms.css";
+import "./landing-tecnologia-v2.css";
 
 const hanken = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-hanken", display: "swap" });
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });

@@ -1,0 +1,404 @@
+/* SESIRA landing V2 — calmer, more editorial, inspired by Tecnologia's app-development rhythm.
+   Scoped to marketing only. Loaded last so authenticated product CSS is untouched. */
+
+.cvc-shell {
+  --landing-max: 1320px;
+  background: #f4f7f7;
+}
+
+/* Navigation */
+.cvc-nav {
+  height: 70px;
+  padding-inline: max(24px, calc((100vw - var(--landing-max)) / 2));
+  background: rgba(255, 255, 255, .95);
+  border-bottom: 1px solid #dce4e4;
+  backdrop-filter: blur(18px);
+}
+.cvc-nav-links { gap: 22px; }
+.cvc-nav-links > a:not(.cvc-nav-cta) {
+  color: #56666a;
+  font-size: 12.5px;
+  font-weight: 680;
+}
+.cvc-nav-login { padding-left: 20px; }
+.cvc-nav-cta,
+.cvc-main-cta {
+  min-height: 42px;
+  border-radius: 10px;
+  padding-inline: 17px;
+  background: #0e6970;
+  font-size: 12.5px;
+  font-weight: 760;
+  box-shadow: 0 5px 16px rgba(14, 105, 112, .14);
+}
+.cvc-nav-cta:hover,
+.cvc-main-cta:hover {
+  background: #0a555b;
+  box-shadow: 0 8px 20px rgba(14, 105, 112, .18);
+}
+
+/* Hero — light, product-led, restrained */
+.cvc-hero {
+  min-height: 690px;
+  grid-template-columns: minmax(340px, .78fr) minmax(620px, 1.22fr);
+  align-items: center;
+  gap: clamp(40px, 5vw, 72px);
+  padding: 78px max(24px, calc((100vw - var(--landing-max)) / 2)) 72px;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(14, 105, 112, .09), transparent 30%),
+    linear-gradient(180deg, #f8fbfa 0%, #f4f7f7 100%);
+  color: #172124;
+  border-bottom: 1px solid #dce4e4;
+}
+.cvc-hero::after { display: none; }
+.cvc-hero-copy,
+.cvc-hero-product { z-index: 1; }
+.cvc-kicker {
+  color: #0e6970 !important;
+  font-size: 9.5px !important;
+  letter-spacing: .12em !important;
+}
+.cvc-hero h1 {
+  max-width: 590px;
+  margin: 18px 0 22px;
+  color: #102629;
+  font-size: clamp(44px, 4.2vw, 58px);
+  line-height: 1.015;
+  letter-spacing: -.048em;
+  font-weight: 690;
+}
+.cvc-hero-lede {
+  max-width: 590px;
+  color: #5f6f73;
+  font-size: clamp(15px, 1.15vw, 17px);
+  line-height: 1.62;
+}
+.cvc-actions { margin-top: 28px; gap: 10px; }
+.cvc-hero .cvc-main-cta {
+  min-height: 46px;
+  padding-inline: 19px;
+  font-size: 13px;
+}
+.cvc-ghost-cta {
+  min-height: 46px;
+  border: 1px solid #cfdada;
+  border-radius: 10px;
+  background: #fff;
+  color: #294044 !important;
+  padding-inline: 17px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.cvc-ghost-cta:hover { background: #eef5f4; border-color: #b9caca; }
+.cvc-hero-footnote {
+  margin-top: 16px;
+  color: #7e8d90;
+  font-size: 9.5px;
+}
+.cvc-hero-footnote span + span { border-left-color: #d2dddd; }
+.cvc-product-label {
+  margin: 0 3px 10px;
+  color: #6f8185;
+  font-size: 8.5px;
+}
+.cvc-product-label b { color: #87979a; }
+.cvc-hero-product { perspective: none; }
+.cvc-hero-product .landing-product-preview {
+  transform: none;
+  min-height: 555px;
+  border-color: #d5e0e0;
+  border-radius: 18px;
+  box-shadow: 0 22px 60px rgba(22, 49, 53, .13), 0 2px 8px rgba(22, 49, 53, .06);
+}
+
+/* Keep the marketing preview readable instead of shrinking a full application. */
+.landing-product-preview { grid-template-columns: 178px minmax(0, 1fr); }
+.landing-product-sidebar nav > span,
+.landing-product-sidebar-bottom > span { font-size: 12px; }
+.landing-product-sidebar nav > span { min-height: 40px; }
+.landing-product-brand strong { font-size: 12.5px; }
+.landing-product-topbar > div:first-child strong { font-size: 12.5px; }
+.landing-product-autonomy,
+.landing-product-search { font-size: 9px; }
+.landing-product-heading h3 { font-size: clamp(27px, 2.2vw, 33px); }
+.landing-product-heading > div > span { font-size: 9.5px; }
+.landing-product-heading p { font-size: 10.5px; }
+.landing-product-kpis small { font-size: 8.7px; }
+.landing-product-kpis strong { font-size: 19px; }
+.landing-product-priorities h4,
+.landing-product-field h4 { font-size: 14.5px; }
+.landing-priority-copy strong { font-size: 11px; }
+.landing-priority-copy small { font-size: 8.8px; }
+.landing-priority-action { font-size: 9px; }
+
+/* Proof strip — closer to a trust/logos strip than four giant metrics. */
+.cvc-proof-strip {
+  width: min(var(--landing-max), calc(100% - 48px));
+  margin: 28px auto 0;
+  overflow: hidden;
+  border: 1px solid #dce4e4;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 7px 24px rgba(21, 43, 46, .035);
+}
+.cvc-proof-strip article {
+  min-height: 106px;
+  padding: 22px 24px;
+}
+.cvc-proof-strip strong {
+  font-size: clamp(26px, 2.3vw, 34px);
+  letter-spacing: -.035em;
+  font-weight: 680;
+  color: #102629;
+}
+.cvc-proof-strip span {
+  max-width: 205px;
+  color: #6b7a7e;
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+/* Global marketing type scale */
+.cvc-benefits,
+.cvc-product-section,
+.cvc-solutions,
+.cvc-stories,
+.cvc-now,
+.cvc-start-section,
+.cvc-founder-short,
+.cvc-footer {
+  width: min(var(--landing-max), calc(100% - 48px));
+}
+.cvc-section-intro { max-width: 720px; }
+.cvc-section-intro.compact { max-width: 680px; }
+.cvc-section-intro h2,
+.cvc-product-section-copy h2,
+.cvc-stories-head h2,
+.cvc-control-title h2,
+.cvc-now-copy h2,
+.cvc-start-copy h2 {
+  margin-top: 11px;
+  font-size: clamp(34px, 3.25vw, 46px);
+  line-height: 1.06;
+  letter-spacing: -.042em;
+  font-weight: 680;
+}
+.cvc-section-intro p,
+.cvc-product-section-copy > p,
+.cvc-now-copy > p,
+.cvc-start-copy > p {
+  margin-top: 17px;
+  max-width: 670px;
+  color: #68777a;
+  font-size: 14.5px;
+  line-height: 1.62;
+}
+.cvc-section-intro > span,
+.cvc-product-section-copy > span,
+.cvc-stories-head > div > span,
+.cvc-control-title > span,
+.cvc-now-copy > span,
+.cvc-start-copy > span,
+.cvc-founder-short > div:last-child > span {
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: #0e6970;
+}
+
+/* Benefits — more like Tecnologia service blocks, less like giant tiles. */
+.cvc-benefits { padding: 92px 0 96px; }
+.cvc-benefit-grid {
+  margin-top: 40px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  border: 0;
+}
+.cvc-benefit-card {
+  min-height: 255px;
+  padding: 24px;
+  border: 1px solid #dce4e4;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(21, 43, 46, .025);
+}
+.cvc-benefit-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(21,43,46,.06); }
+.cvc-benefit-card h3 {
+  max-width: 500px;
+  margin: 32px 0 12px;
+  font-size: 22px;
+  line-height: 1.14;
+  letter-spacing: -.026em;
+  font-weight: 700;
+}
+.cvc-benefit-card p { max-width: 520px; font-size: 12.5px; line-height: 1.58; }
+.cvc-benefit-card > strong { padding-top: 18px; font-size: 10.5px; }
+
+/* Product section */
+.cvc-product-section {
+  padding: 88px 0 94px;
+  grid-template-columns: minmax(0, .74fr) minmax(500px, 1.26fr);
+  gap: clamp(46px, 6vw, 82px);
+}
+.cvc-product-section-copy ul { margin-top: 22px; }
+.cvc-product-section-copy li { font-size: 12.5px; line-height: 1.5; }
+.cvc-product-stage .cvc-product-body { padding: 24px; }
+.cvc-product-stage .cvc-today-list article { min-height: 80px; padding: 13px 0; }
+.cvc-product-stage .cvc-today-copy strong { font-size: 14px; }
+.cvc-product-stage .cvc-today-copy p { font-size: 10.5px; }
+
+/* Solutions */
+.cvc-solutions { padding: 90px 0 96px; }
+.cvc-solution-grid { margin-top: 38px; gap: 12px; }
+.cvc-solution-card {
+  min-height: 205px;
+  padding: 23px;
+  border-radius: 15px;
+  box-shadow: 0 3px 14px rgba(21,43,46,.025);
+}
+.cvc-solution-card h3 { margin: 38px 40px 9px 0; font-size: 21px; }
+.cvc-solution-card p { font-size: 12px; }
+.cvc-solution-card > b { width: 32px; height: 32px; right: 18px; top: 18px; }
+
+/* Scenarios */
+.cvc-stories { padding: 88px 0 94px; }
+.cvc-stories-head > div { max-width: 720px; }
+.cvc-story-grid { margin-top: 38px; gap: 12px; }
+.cvc-story-card {
+  min-height: 330px;
+  padding: 24px;
+  border-radius: 16px;
+  background: #102629;
+}
+.cvc-story-card:nth-child(2) { background: #173438; }
+.cvc-story-card:nth-child(3) { background: #1d3e41; }
+.cvc-story-card h3 {
+  margin: 42px 0 14px;
+  max-width: 320px;
+  font-size: 23px;
+  line-height: 1.12;
+}
+.cvc-story-card > p { font-size: 12px; line-height: 1.58; }
+.cvc-story-card > div strong { font-size: 11px; }
+
+/* Dark control band — still a strong break, but not an oversized billboard. */
+.cvc-control-band {
+  padding: 82px max(24px, calc((100vw - var(--landing-max)) / 2));
+  grid-template-columns: .78fr 1.22fr;
+  gap: clamp(44px, 7vw, 100px);
+  background: #102629;
+}
+.cvc-control-points article { grid-template-columns: 44px 1fr; gap: 16px; padding: 18px 0; }
+.cvc-control-points h3 { font-size: 17px; }
+.cvc-control-points p { font-size: 12.5px; }
+
+/* Timing / regulation section */
+.cvc-now {
+  padding: 88px 0;
+  grid-template-columns: .8fr 1.2fr;
+  gap: clamp(48px, 7vw, 94px);
+}
+.cvc-now-dates article { min-height: 235px; padding: 24px; }
+.cvc-now-dates strong { margin-top: 46px; font-size: 24px; }
+.cvc-now-dates p { font-size: 11.5px; }
+
+/* CTA / founder */
+.cvc-start-section {
+  margin-top: 84px;
+  margin-bottom: 72px;
+  padding: 48px;
+  gap: 54px;
+  border: 1px solid #d6e2e2;
+  border-radius: 18px;
+  background: #e9f1f0;
+}
+.cvc-start-benefits { margin-top: 22px; }
+.cvc-start-benefits span { background: rgba(255,255,255,.72); border-color: #cddada; font-size: 9.5px; }
+.cvc-start-card { padding: 28px; border-radius: 16px; background: #102629; }
+.cvc-start-card > strong { margin-top: 18px; font-size: 46px; }
+.cvc-start-card > p { margin: 10px 0 22px; font-size: 12px; }
+.cvc-start-card .cvc-main-cta { min-height: 44px; }
+.cvc-founder-short { padding: 20px 0 70px; grid-template-columns: 64px minmax(0, 720px); gap: 20px; }
+.cvc-founder-photo { width: 64px; height: 64px; }
+.cvc-founder-short p { font-size: 13.5px; line-height: 1.62; }
+.cvc-footer { min-height: 220px; padding: 42px 0 32px; }
+
+@media (max-width: 1160px) {
+  .cvc-hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-top: 66px;
+  }
+  .cvc-hero-copy { max-width: 720px; }
+  .cvc-hero-product { width: min(100%, 940px); }
+  .cvc-product-section { grid-template-columns: 1fr; }
+  .cvc-benefit-grid { grid-template-columns: repeat(2, 1fr); }
+  .cvc-control-band,
+  .cvc-now { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .cvc-nav { height: 64px; padding-inline: 16px; }
+  .cvc-nav-cta { min-height: 38px; padding-inline: 12px; font-size: 11px; }
+  .cvc-hero { padding: 48px 16px 58px; gap: 36px; }
+  .cvc-hero h1 {
+    max-width: 520px;
+    font-size: clamp(36px, 10.5vw, 44px);
+    line-height: 1.04;
+  }
+  .cvc-hero-lede { font-size: 15px; }
+  .cvc-actions { flex-direction: column; align-items: stretch; }
+  .cvc-hero .cvc-main-cta,
+  .cvc-ghost-cta { width: 100%; }
+  .cvc-product-label { font-size: 7.5px; }
+  .cvc-hero-product .landing-product-preview { min-height: 500px; }
+  .landing-product-preview { grid-template-columns: 1fr; }
+  .landing-product-sidebar { display: none; }
+  .landing-product-content { padding: 16px; }
+  .landing-product-topbar { height: 52px; padding-inline: 14px; }
+  .landing-product-search { display: none; }
+  .landing-product-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .landing-product-workspace { grid-template-columns: 1fr; }
+  .landing-product-field { display: none; }
+  .landing-priority-list article:nth-child(n+4) { display: none; }
+
+  .cvc-proof-strip,
+  .cvc-benefits,
+  .cvc-product-section,
+  .cvc-solutions,
+  .cvc-stories,
+  .cvc-now,
+  .cvc-start-section,
+  .cvc-founder-short,
+  .cvc-footer { width: min(100% - 32px, var(--landing-max)); }
+  .cvc-proof-strip { grid-template-columns: repeat(2, 1fr); margin-top: 18px; }
+  .cvc-proof-strip article { min-height: 98px; padding: 18px; }
+  .cvc-proof-strip article:nth-child(2) { border-right: 0; }
+  .cvc-benefits,
+  .cvc-solutions,
+  .cvc-stories { padding: 70px 0; }
+  .cvc-section-intro h2,
+  .cvc-product-section-copy h2,
+  .cvc-stories-head h2,
+  .cvc-control-title h2,
+  .cvc-now-copy h2,
+  .cvc-start-copy h2 { font-size: clamp(29px, 8.8vw, 35px); }
+  .cvc-section-intro p,
+  .cvc-product-section-copy > p,
+  .cvc-now-copy > p,
+  .cvc-start-copy > p { font-size: 13.5px; }
+  .cvc-benefit-grid,
+  .cvc-solution-grid,
+  .cvc-story-grid { grid-template-columns: 1fr; }
+  .cvc-benefit-card { min-height: 225px; }
+  .cvc-benefit-card h3 { margin-top: 26px; font-size: 20px; }
+  .cvc-product-section { padding: 70px 0; gap: 40px; }
+  .cvc-story-card { min-height: 300px; }
+  .cvc-control-band { padding: 68px 16px; }
+  .cvc-now { padding: 70px 0; }
+  .cvc-now-dates { grid-template-columns: 1fr; }
+  .cvc-now-dates article { min-height: 190px; }
+  .cvc-start-section { margin-top: 64px; margin-bottom: 58px; padding: 26px 20px; }
+  .cvc-start-card > strong { font-size: 40px; }
+  .cvc-founder-short { grid-template-columns: 54px 1fr; }
+  .cvc-founder-photo { width: 54px; height: 54px; }
+}
