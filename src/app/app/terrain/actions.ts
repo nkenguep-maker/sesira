@@ -166,9 +166,10 @@ export async function uploadBinaryEvidenceAction(formData: FormData) {
   if (!viewer) redirect("/login");
   const interventionId = String(formData.get("interventionId") ?? "");
   const runId = String(formData.get("runId") ?? "");
+  const stepId = String(formData.get("stepId") ?? "");
   const kind = String(formData.get("kind") ?? "");
   const file = formData.get("file");
-  if (!interventionId || !runId || !BINARY_KINDS.has(kind) || !(file instanceof File) || file.size <= 0) {
+  if (!interventionId || !runId || !stepId || !BINARY_KINDS.has(kind) || !(file instanceof File) || file.size <= 0) {
     redirect(buildTerrainUrl(formData, "invalid"));
   }
 
@@ -187,7 +188,7 @@ export async function uploadBinaryEvidenceAction(formData: FormData) {
     target_captured_at: capturedAt.toISOString(),
     target_uploaded_by_user_id: viewer.userId,
     target_offline_client_id: offlineClientId,
-    target_payload_snapshot: { source: "sesira-terrain-ui" },
+    target_payload_snapshot: { source: "sesira-terrain-ui", step_id: stepId },
   });
   const reserveRow = Array.isArray(reserved.data) ? reserved.data[0] as Record<string, unknown> | undefined : undefined;
   if (reserved.error || !reserveRow) redirect(buildTerrainUrl(formData, "not-applied"));
@@ -229,6 +230,20 @@ export async function uploadBinaryEvidenceAction(formData: FormData) {
     });
     if (signature.error) redirect(buildTerrainUrl(formData, "not-applied"));
   }
+
+  const stepResult = await supabase.rpc("submit_step_result", {
+    target_organization_id: viewer.organization.id,
+    target_run_id: runId,
+    target_step_id: stepId,
+    target_value_json: { artifact_id: artifactId, kind },
+    target_captured_at: capturedAt.toISOString(),
+    target_actor_user_id: viewer.userId,
+    target_offline_client_id: `web-binary-step:${runId}:${stepId}:${sha256}`.slice(0, 100),
+    target_device_ref: "web-terrain",
+  });
+  const stepRow = Array.isArray(stepResult.data) ? stepResult.data[0] as Record<string, unknown> | undefined : undefined;
+  if (stepResult.error) redirect(buildTerrainUrl(formData, "not-applied"));
+  if (stepRow?.sync_status === "CONFLICT") redirect(buildTerrainUrl(formData, "procedure-conflict"));
 
   revalidatePath("/app/terrain");
   redirect(buildTerrainUrl(formData, kind === "PHOTO" ? "photo-saved" : "signature-saved"));
