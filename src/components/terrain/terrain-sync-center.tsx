@@ -25,11 +25,13 @@ export function TerrainSyncCenter({ compact = false }: { compact?: boolean }) {
     window.addEventListener("online", read);
     window.addEventListener("offline", read);
     window.addEventListener("storage", read);
+    window.addEventListener("sesira:field-sync-complete", read);
     return () => {
       window.clearInterval(timer);
       window.removeEventListener("online", read);
       window.removeEventListener("offline", read);
       window.removeEventListener("storage", read);
+      window.removeEventListener("sesira:field-sync-complete", read);
     };
   }, []);
 
@@ -58,8 +60,13 @@ export function TerrainSyncCenter({ compact = false }: { compact?: boolean }) {
       </div>
       <span>{copy}</span>
       {pending.length ? (
-        <button className={styles.syncButton} type="button" onClick={() => window.location.reload()}>
-          <RotateCw size={15} /> Réessayer maintenant
+        <button
+          className={styles.syncButton}
+          type="button"
+          disabled={!online}
+          onClick={() => window.dispatchEvent(new Event("sesira:field-sync"))}
+        >
+          <RotateCw size={15} /> {online ? "Réessayer maintenant" : "En attente du réseau"}
         </button>
       ) : null}
       <p className={styles.helper}>
