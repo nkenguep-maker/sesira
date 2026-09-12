@@ -4777,6 +4777,67 @@ export type Database = {
         }
         Returns: boolean
       }
+      open_renewal_case: {
+        Args: {
+          target_organization_id: string
+          target_contract_id: string
+          target_cancellation_deadline: string | null
+        }
+        Returns: string
+      }
+      propose_renewal_amount: {
+        Args: {
+          target_organization_id: string
+          target_case_id: string
+          target_amount: number
+          target_currency: string
+          target_formula_snapshot: Json
+        }
+        Returns: boolean
+      }
+      approve_renewal_case: {
+        Args: {
+          target_organization_id: string
+          target_case_id: string
+          target_approver_user_id: string
+        }
+        Returns: boolean
+      }
+      send_renewal_proposal: {
+        Args: {
+          target_organization_id: string
+          target_case_id: string
+          target_sent_evidence_id: string
+          target_sent_at: string
+        }
+        Returns: boolean
+      }
+      record_client_response: {
+        Args: {
+          target_organization_id: string
+          target_case_id: string
+          target_response: string
+          target_source: string
+          target_at: string
+        }
+        Returns: boolean
+      }
+      mark_renewal_effective: {
+        Args: {
+          target_organization_id: string
+          target_case_id: string
+          target_effective_at: string
+        }
+        Returns: boolean
+      }
+      cancel_renewal_case: {
+        Args: {
+          target_organization_id: string
+          target_case_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
       prepare_deposit_invoice: {
         Args: {
           target_organization_id: string

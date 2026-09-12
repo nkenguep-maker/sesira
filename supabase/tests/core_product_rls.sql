@@ -4415,8 +4415,111 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C48 — Contract renewals assertions
+-- =========================================================================
+insert into public.maintenance_contracts (id, organization_id, customer_id, title, cadence_days, amount, currency, status)
+values ('c4800000-0000-4000-8000-000000000001', '91000000-0000-4000-8000-000000000001', '91300000-0000-4000-8000-000000000001', 'Contrat test', 365, 5000, 'EUR', 'ACTIVE');
+
+do $$
+declare
+  case_id uuid;
+  captured text;
+begin
+  select public.open_renewal_case(
+    '91000000-0000-4000-8000-000000000001',
+    'c4800000-0000-4000-8000-000000000001',
+    now() - interval '1 hour'  -- already passed, so mark_effective can proceed later
+  ) into case_id;
+  if case_id is null then raise exception 'C48: open_renewal_case id required'; end if;
+
+  -- Propose amount → REVIEW_REQUIRED
+  if not public.propose_renewal_amount(
+    '91000000-0000-4000-8000-000000000001', case_id,
+    5500, 'EUR', '{"formula":"CPI+2%","source":"INSEE"}'::jsonb
+  ) then raise exception 'C48: propose_renewal_amount should succeed'; end if;
+
+  -- Approve → APPROVED → auto READY_TO_SEND
+  if not public.approve_renewal_case(
+    '91000000-0000-4000-8000-000000000001', case_id,
+    '91100000-0000-4000-8000-000000000001'
+  ) then raise exception 'C48: approve_renewal_case should succeed'; end if;
+
+  -- Attempt EFFECTIVE now (should fail — status is READY_TO_SEND, not CANCELLATION_WINDOW,
+  -- and no client response yet)
+  begin
+    perform public.mark_renewal_effective(
+      '91000000-0000-4000-8000-000000000001', case_id, now()
+    );
+    raise exception 'C48: mark_renewal_effective must fail without client response';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C48: expected 22023 (got %)', captured; end if;
+  end;
+
+  -- Formula snapshot immutable
+  begin
+    update public.renewal_cases
+      set pricing_formula_snapshot = '{"tampered":true}'::jsonb
+    where id = case_id;
+    raise exception 'C48: formula snapshot must be immutable';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C48: expected 22023 immutable (got %)', captured; end if;
+  end;
+
+  -- Cancel
+  if not public.cancel_renewal_case(
+    '91000000-0000-4000-8000-000000000001', case_id, 'test cancel'
+  ) then raise exception 'C48: cancel should succeed'; end if;
+
+  -- Terminal immutable
+  begin
+    update public.renewal_cases
+      set status = 'DRAFT'
+    where id = case_id;
+    raise exception 'C48: terminal CANCELLED must be immutable';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C48: expected 22023 terminal (got %)', captured; end if;
+  end;
+end;
+$$;
+
+-- Only one active renewal case per contract
+do $$
+declare
+  first_id uuid;
+  captured text;
+begin
+  select public.open_renewal_case(
+    '91000000-0000-4000-8000-000000000001',
+    'c4800000-0000-4000-8000-000000000001', null
+  ) into first_id;
+  begin
+    perform public.open_renewal_case(
+      '91000000-0000-4000-8000-000000000001',
+      'c4800000-0000-4000-8000-000000000001', null
+    );
+    raise exception 'C48: second active renewal case must be rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '23505' then raise exception 'C48: expected 23505 unique (got %)', captured; end if;
+  end;
+end;
+$$;
+
+-- Cross-tenant
+do $$
+declare visible integer;
+begin
+  select count(*) into visible from public.renewal_cases where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then raise exception 'C48: tenant A must not see tenant B renewal_cases'; end if;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures, C44 transactional SMS, C45 document trust, C46 trackdechets and C47 invoice lifecycle assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures, C44 transactional SMS, C45 document trust, C46 trackdechets, C47 invoice lifecycle and C48 contract renewals assertions passed' as result;
 
 rollback;
