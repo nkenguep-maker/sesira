@@ -3987,8 +3987,107 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C44 — Transactional SMS assertions
+-- =========================================================================
+insert into public.sms_templates (id, organization_id, key, version, label, body_template, allowed_variables, transactional, rate_limit_per_day) values
+  ('c4400000-0000-4000-8000-000000000001', '91000000-0000-4000-8000-000000000001', 'appointment-reminder', 1, 'J-1 reminder', 'Rappel: rendez-vous demain', '{}', true, 2);
+
+-- SHADOW → DRAFT, replay same key → same row, AUTOMATIC → QUEUED, opt-out → OPTED_OUT, rate-limit → CANCELLED
+do $$
+declare
+  r record;
+  first_id uuid;
+begin
+  select message_id, status, created into r
+  from public.record_sms_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'sms-idem-1', 'appointment-reminder', 1,
+    '+33600000001', 'Rappel: RDV demain 10h', '{}'::jsonb, 'SHADOW'
+  );
+  if r.status <> 'DRAFT' or not r.created then
+    raise exception 'C44: SHADOW should create DRAFT (got status=% created=%)', r.status, r.created;
+  end if;
+  first_id := r.message_id;
+
+  -- Replay same idempotency_key → same id, created=false
+  select message_id, status, created into r
+  from public.record_sms_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'sms-idem-1', 'appointment-reminder', 1,
+    '+33600000001', 'Rappel: RDV demain 10h', '{}'::jsonb, 'SHADOW'
+  );
+  if r.created or r.message_id <> first_id then
+    raise exception 'C44: replay must return existing id, created=false';
+  end if;
+
+  -- AUTOMATIC → QUEUED
+  select message_id, status, created into r
+  from public.record_sms_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'sms-idem-2', 'appointment-reminder', 1,
+    '+33600000002', 'Rappel: RDV demain 14h', '{}'::jsonb, 'AUTOMATIC'
+  );
+  if r.status <> 'QUEUED' then
+    raise exception 'C44: AUTOMATIC first send should QUEUE (got %)', r.status;
+  end if;
+
+  -- Rate limit (per template per day = 2, we already used 1 shadow + 1 automatic = 2) → third AUTOMATIC → CANCELLED
+  select message_id, status, created into r
+  from public.record_sms_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'sms-idem-3', 'appointment-reminder', 1,
+    '+33600000003', 'Rappel: RDV demain 16h', '{}'::jsonb, 'AUTOMATIC'
+  );
+  if r.status <> 'CANCELLED' then
+    raise exception 'C44: rate limit should CANCEL third send in same day (got %)', r.status;
+  end if;
+
+  -- Opt-out
+  perform public.record_sms_opt_out(
+    '91000000-0000-4000-8000-000000000001', '+33600000009', 'MANUAL', 'test'
+  );
+  select message_id, status, created into r
+  from public.record_sms_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'sms-idem-opt', 'appointment-reminder', 1,
+    '+33600000009', 'Rappel: RDV', '{}'::jsonb, 'AUTOMATIC'
+  );
+  if r.status <> 'OPTED_OUT' then
+    raise exception 'C44: opted-out phone must return OPTED_OUT (got %)', r.status;
+  end if;
+
+  -- APPROVAL → WAITING_FOR_APPROVAL, then approve → QUEUED
+  select message_id, status, created into r
+  from public.record_sms_intent(
+    '91000000-0000-4000-8000-000000000001',
+    'sms-idem-appr', 'appointment-reminder', 1,
+    '+33600000005', 'Rappel', '{}'::jsonb, 'APPROVAL'
+  );
+  if r.status <> 'WAITING_FOR_APPROVAL' then
+    raise exception 'C44: APPROVAL should return WAITING_FOR_APPROVAL (got %)', r.status;
+  end if;
+  if not public.approve_sms(
+    '91000000-0000-4000-8000-000000000001', r.message_id, '91100000-0000-4000-8000-000000000001'
+  ) then
+    raise exception 'C44: approve_sms should return true on WAITING_FOR_APPROVAL row';
+  end if;
+end;
+$$;
+
+-- Cross-tenant isolation
+do $$
+declare visible integer;
+begin
+  select count(*) into visible from public.sms_templates where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then raise exception 'C44: tenant A must not see tenant B sms_templates'; end if;
+  select count(*) into visible from public.sms_opt_outs where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then raise exception 'C44: tenant A must not see tenant B sms_opt_outs'; end if;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry and C43 guided procedures assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures and C44 transactional SMS assertions passed' as result;
 
 rollback;

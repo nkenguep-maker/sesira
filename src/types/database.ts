@@ -892,68 +892,77 @@ export type Database = {
       outbound_messages: {
         Row: {
           attempt_count: number
-          body_hash: string
+          body_hash: string | null
+          body_text_hash: string | null
           channel: string
           created_at: string
           error_class: string | null
           error_message: string | null
           failed_at: string | null
-          from_email: string
+          from_email: string | null
           id: string
           idempotency_key: string
           integration_id: string | null
+          metadata: Json | null
           organization_id: string
           provider: string
           provider_message_id: string | null
           reply_to: string | null
           sent_at: string | null
           status: string
-          subject: string
-          to_email: string
+          subject: string | null
+          to_email: string | null
+          to_phone: string | null
           updated_at: string
         }
         Insert: {
           attempt_count?: number
-          body_hash: string
+          body_hash?: string | null
+          body_text_hash?: string | null
           channel?: string
           created_at?: string
           error_class?: string | null
           error_message?: string | null
           failed_at?: string | null
-          from_email: string
+          from_email?: string | null
           id?: string
           idempotency_key: string
           integration_id?: string | null
+          metadata?: Json | null
           organization_id: string
           provider: string
           provider_message_id?: string | null
           reply_to?: string | null
           sent_at?: string | null
           status?: string
-          subject: string
-          to_email: string
+          subject?: string | null
+          to_email?: string | null
+          to_phone?: string | null
           updated_at?: string
         }
         Update: {
           attempt_count?: number
-          body_hash?: string
+          body_hash?: string | null
+          body_text_hash?: string | null
           channel?: string
           created_at?: string
           error_class?: string | null
           error_message?: string | null
           failed_at?: string | null
-          from_email?: string
+          from_email?: string | null
           id?: string
           idempotency_key?: string
           integration_id?: string | null
+          metadata?: Json | null
           organization_id?: string
           provider?: string
           provider_message_id?: string | null
           reply_to?: string | null
           sent_at?: string | null
           status?: string
-          subject?: string
-          to_email?: string
+          subject?: string | null
+          to_email?: string | null
+          to_phone?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1950,6 +1959,84 @@ export type Database = {
           step_id?: string
           sync_status?: string
           value_json?: Json
+        }
+        Relationships: []
+      }
+      sms_templates: {
+        Row: {
+          allowed_variables: string[]
+          body_template: string
+          created_at: string
+          id: string
+          key: string
+          label: string
+          organization_id: string
+          quiet_hours_json: Json | null
+          rate_limit_per_day: number
+          timezone: string
+          transactional: boolean
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          allowed_variables?: string[]
+          body_template: string
+          created_at?: string
+          id?: string
+          key: string
+          label: string
+          organization_id: string
+          quiet_hours_json?: Json | null
+          rate_limit_per_day?: number
+          timezone?: string
+          transactional?: boolean
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          allowed_variables?: string[]
+          body_template?: string
+          created_at?: string
+          id?: string
+          key?: string
+          label?: string
+          organization_id?: string
+          quiet_hours_json?: Json | null
+          rate_limit_per_day?: number
+          timezone?: string
+          transactional?: boolean
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      sms_opt_outs: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          opted_out_at: string
+          organization_id: string
+          phone_e164: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          opted_out_at?: string
+          organization_id: string
+          phone_e164: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          opted_out_at?: string
+          organization_id?: string
+          phone_e164?: string
+          source?: string
         }
         Relationships: []
       }
@@ -4085,6 +4172,67 @@ export type Database = {
           target_note: string | null
         }
         Returns: boolean
+      }
+      record_sms_intent: {
+        Args: {
+          target_organization_id: string
+          target_idempotency_key: string
+          target_template_key: string
+          target_template_version: number
+          target_to_phone: string
+          target_body_text: string
+          target_variables_json: Json
+          target_execution_mode: string
+        }
+        Returns: {
+          message_id: string
+          status: string
+          created: boolean
+        }[]
+      }
+      approve_sms: {
+        Args: {
+          target_organization_id: string
+          target_message_id: string
+          target_approver_user_id: string
+        }
+        Returns: boolean
+      }
+      mark_sms_sent: {
+        Args: {
+          target_organization_id: string
+          target_message_id: string
+          target_integration_id: string
+          target_provider_message_id: string
+          target_sent_at: string
+        }
+        Returns: boolean
+      }
+      mark_sms_delivered: {
+        Args: {
+          target_organization_id: string
+          target_message_id: string
+          target_delivered_at: string
+        }
+        Returns: boolean
+      }
+      mark_sms_undeliverable: {
+        Args: {
+          target_organization_id: string
+          target_message_id: string
+          target_error_class: string
+          target_error_message: string
+        }
+        Returns: boolean
+      }
+      record_sms_opt_out: {
+        Args: {
+          target_organization_id: string
+          target_phone_e164: string
+          target_source: string
+          target_note: string | null
+        }
+        Returns: string
       }
     }
     Enums: {

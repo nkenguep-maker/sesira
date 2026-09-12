@@ -89,8 +89,8 @@ export async function getQuoteTimeline(
       id: row.id,
       at: row.sent_at ?? row.failed_at ?? row.created_at,
       status: row.status,
-      subject: row.subject,
-      toEmail: row.to_email,
+      subject: row.subject ?? "",
+      toEmail: row.to_email ?? "",
       providerMessageId: row.provider_message_id,
       errorClass: row.error_class,
     });
