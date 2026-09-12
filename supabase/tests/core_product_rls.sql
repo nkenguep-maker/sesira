@@ -4518,8 +4518,81 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C49 — Integration gate + dashboard snapshot assertions
+-- =========================================================================
+do $$
+declare
+  snapshot jsonb;
+  decisions_len integer;
+  captured text;
+begin
+  -- Snapshot returns a well-shaped JSON
+  select public.get_dashboard_snapshot(
+    '91000000-0000-4000-8000-000000000001', 'admin', 'Europe/Paris'
+  ) into snapshot;
+  if snapshot is null then raise exception 'C49: snapshot must not be null'; end if;
+  if not (snapshot ? 'status_bar' and snapshot ? 'decisions' and snapshot ? 'money'
+          and snapshot ? 'field_today' and snapshot ? 'regulatory'
+          and snapshot ? 'provider_states') then
+    raise exception 'C49: snapshot missing required sections';
+  end if;
+
+  -- decisions is an array of at most 7
+  decisions_len := jsonb_array_length(snapshot->'decisions');
+  if decisions_len > 7 then
+    raise exception 'C49: decisions must be capped at 7 (got %)', decisions_len;
+  end if;
+
+  -- Invalid role rejected
+  begin
+    perform public.get_dashboard_snapshot(
+      '91000000-0000-4000-8000-000000000001', 'root', 'Europe/Paris'
+    );
+    raise exception 'C49: invalid role must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C49: expected 22023 (got %)', captured; end if;
+  end;
+
+  -- Empty timezone rejected
+  begin
+    perform public.get_dashboard_snapshot(
+      '91000000-0000-4000-8000-000000000001', 'admin', ''
+    );
+    raise exception 'C49: empty timezone must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C49: expected 22023 (got %)', captured; end if;
+  end;
+
+  -- Cross-tenant call rejected
+  begin
+    perform public.get_dashboard_snapshot(
+      '92000000-0000-4000-8000-000000000002', 'admin', 'Europe/Paris'
+    );
+    raise exception 'C49: cross-tenant call must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then raise exception 'C49: expected 42501 cross-tenant (got %)', captured; end if;
+  end;
+
+  -- export_organization_snapshot includes post-C40 counts
+  select public.export_organization_snapshot('91000000-0000-4000-8000-000000000001') into snapshot;
+  if not (snapshot->'counts' ? 'field_vehicles') then
+    raise exception 'C49: export must include field_vehicles count';
+  end if;
+  if not (snapshot->'counts' ? 'renewal_cases') then
+    raise exception 'C49: export must include renewal_cases count';
+  end if;
+  if not (snapshot->'counts' ? 'payment_records') then
+    raise exception 'C49: export must include payment_records count';
+  end if;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures, C44 transactional SMS, C45 document trust, C46 trackdechets, C47 invoice lifecycle and C48 contract renewals assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures, C44 transactional SMS, C45 document trust, C46 trackdechets, C47 invoice lifecycle, C48 contract renewals and C49 integration gate assertions passed' as result;
 
 rollback;

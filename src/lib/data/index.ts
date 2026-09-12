@@ -73,3 +73,6 @@ export type {
   FleetEstimateStatus, FleetProviderKind, LatestVehiclePositionRow, DispatchEtaSnapshot,
 } from "./fleet";
 export { getLatestVehiclePositions, getDispatchEtaSnapshot } from "./fleet";
+
+export type { DashboardRole, DashboardSnapshot } from "./dashboard-snapshot";
+export { getDashboardSnapshot } from "./dashboard-snapshot";

@@ -4838,6 +4838,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_dashboard_snapshot: {
+        Args: {
+          target_organization_id: string
+          target_role: string
+          target_timezone: string
+        }
+        Returns: Json
+      }
       prepare_deposit_invoice: {
         Args: {
           target_organization_id: string
