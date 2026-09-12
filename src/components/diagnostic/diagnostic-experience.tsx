@@ -139,8 +139,8 @@ export function DiagnosticExperience() {
 
         <article className="roi-question">
           <div className="roi-question-head">
-            <span>04 · CHANTIERS</span>
-            <h2>Combien de chantiers signés sont aujourd&apos;hui sans date au planning&nbsp;?</h2>
+            <span>04 · PLANNING</span>
+            <h2>Combien d&apos;affaires signées sont aujourd&apos;hui sans date au planning&nbsp;?</h2>
           </div>
           <NumberField
             label="Aujourd'hui"
@@ -149,7 +149,7 @@ export function DiagnosticExperience() {
               setUnscheduledJobs(value);
               setSubmitted(false);
             }}
-            suffix="chantiers"
+            suffix="dossiers"
             placeholder="2"
             helper="Laissez vide si vous ne connaissez pas le chiffre."
           />
@@ -168,7 +168,7 @@ export function DiagnosticExperience() {
               setSubmitted(false);
             }}
             suffix="€"
-            placeholder="12400"
+            placeholder="21800"
             helper="Facultatif. Entrez le montant que vous voyez réellement aujourd'hui."
           />
         </article>
@@ -204,7 +204,7 @@ export function DiagnosticExperience() {
               detail={result.quoteValue === null ? "renseignez le montant moyen pour l'afficher" : "par an, sur vos chiffres"}
             />
             <ResultCard
-              label="Chantiers signés sans date"
+              label="Affaires signées sans date"
               value={result.unscheduled === null ? "Non renseigné" : formatNumber(result.unscheduled)}
               detail="aujourd'hui"
             />
@@ -222,12 +222,12 @@ export function DiagnosticExperience() {
 
           <div className="roi-next-step">
             <div>
-              <span className="roi-kicker">SUR VOS VRAIS DEVIS</span>
+              <span className="roi-kicker">SUR VOS VRAIS DOSSIERS</span>
               <h3>Vous voulez mesurer ça pendant 90 jours&nbsp;?</h3>
-              <p>SESIRA observe vos demandes et vos devis. Il garde aussi les relances datées. Rien n&apos;est envoyé par SESIRA pendant le constat.</p>
+              <p>SESIRA observe les demandes, devis et dossiers à planifier que vous lui donnez ou connectez. Selon les données disponibles, il garde aussi les factures échues et échéances visibles. Aucune action externe pendant le constat.</p>
             </div>
             <div className="roi-offer-card">
-              <strong>590 €</strong>
+              <strong>290 €</strong>
               <p>forfait unique · 90 jours · sans engagement</p>
               <small>Déduits de l&apos;installation si vous continuez.</small>
               <a className="button primary" href="mailto:paul@sesira.fr?subject=Constat%2090%20jours%20SESIRA">Demander mon constat</a>
@@ -236,7 +236,7 @@ export function DiagnosticExperience() {
 
           <div className="roi-secondary-actions">
             <button className="button ghost" type="button" onClick={() => setSubmitted(false)}>Modifier mes chiffres</button>
-            <Link href="/#aujourdhui">Voir SESIRA Aujourd&apos;hui</Link>
+            <Link href="/demo">Voir SESIRA en action</Link>
           </div>
         </section>
       ) : null}
