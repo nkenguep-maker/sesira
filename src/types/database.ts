@@ -1962,6 +1962,117 @@ export type Database = {
         }
         Relationships: []
       }
+      waste_dossiers: {
+        Row: {
+          carrier_ref: string | null
+          created_at: string
+          customer_id: string | null
+          destination_ref: string | null
+          id: string
+          intervention_id: string | null
+          metadata: Json
+          organization_id: string
+          producer_ref: string | null
+          quantity: number
+          site_id: string | null
+          status: string
+          unit: string
+          updated_at: string
+          waste_category: string
+          waste_code: string | null
+        }
+        Insert: {
+          carrier_ref?: string | null
+          created_at?: string
+          customer_id?: string | null
+          destination_ref?: string | null
+          id?: string
+          intervention_id?: string | null
+          metadata?: Json
+          organization_id: string
+          producer_ref?: string | null
+          quantity: number
+          site_id?: string | null
+          status?: string
+          unit: string
+          updated_at?: string
+          waste_category: string
+          waste_code?: string | null
+        }
+        Update: {
+          carrier_ref?: string | null
+          created_at?: string
+          customer_id?: string | null
+          destination_ref?: string | null
+          id?: string
+          intervention_id?: string | null
+          metadata?: Json
+          organization_id?: string
+          producer_ref?: string | null
+          quantity?: number
+          site_id?: string | null
+          status?: string
+          unit?: string
+          updated_at?: string
+          waste_category?: string
+          waste_code?: string | null
+        }
+        Relationships: []
+      }
+      trackdechets_submissions: {
+        Row: {
+          acknowledged_at: string | null
+          created_at: string
+          dossier_external_id: string | null
+          external_ref: string | null
+          id: string
+          idempotency_key: string | null
+          organization_id: string
+          payload_snapshot: Json
+          provider_id: string | null
+          rejection_reason: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          validation_gaps: string[]
+          waste_dossier_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          created_at?: string
+          dossier_external_id?: string | null
+          external_ref?: string | null
+          id?: string
+          idempotency_key?: string | null
+          organization_id: string
+          payload_snapshot?: Json
+          provider_id?: string | null
+          rejection_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          validation_gaps?: string[]
+          waste_dossier_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          created_at?: string
+          dossier_external_id?: string | null
+          external_ref?: string | null
+          id?: string
+          idempotency_key?: string | null
+          organization_id?: string
+          payload_snapshot?: Json
+          provider_id?: string | null
+          rejection_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          validation_gaps?: string[]
+          waste_dossier_id?: string
+        }
+        Relationships: []
+      }
       document_versions: {
         Row: {
           created_at: string
@@ -4481,6 +4592,76 @@ export type Database = {
         Args: {
           target_organization_id: string
           target_request_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      create_waste_dossier: {
+        Args: {
+          target_organization_id: string
+          target_intervention_id: string | null
+          target_customer_id: string | null
+          target_site_id: string | null
+          target_waste_category: string
+          target_waste_code: string | null
+          target_quantity: number
+          target_unit: string
+          target_producer_ref: string | null
+          target_carrier_ref: string | null
+          target_destination_ref: string | null
+        }
+        Returns: string
+      }
+      prepare_trackdechets_submission: {
+        Args: {
+          target_organization_id: string
+          target_waste_dossier_id: string
+          target_provider_id: string | null
+          target_idempotency_key: string
+          target_payload_snapshot: Json
+        }
+        Returns: {
+          submission_id: string
+          status: string
+          gaps: string[]
+          created: boolean
+        }[]
+      }
+      mark_trackdechets_provider_pending: {
+        Args: {
+          target_organization_id: string
+          target_submission_id: string
+        }
+        Returns: boolean
+      }
+      mark_trackdechets_submitted: {
+        Args: {
+          target_organization_id: string
+          target_submission_id: string
+          target_external_ref: string
+        }
+        Returns: boolean
+      }
+      mark_trackdechets_acknowledged: {
+        Args: {
+          target_organization_id: string
+          target_submission_id: string
+          target_provider_ref: string
+        }
+        Returns: boolean
+      }
+      mark_trackdechets_rejected: {
+        Args: {
+          target_organization_id: string
+          target_submission_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      cancel_trackdechets_submission: {
+        Args: {
+          target_organization_id: string
+          target_submission_id: string
           target_reason: string
         }
         Returns: boolean

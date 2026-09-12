@@ -4188,8 +4188,124 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C46 — Trackdéchets assertions
+-- =========================================================================
+do $$
+declare
+  dossier_id uuid;
+  sub_r record;
+  captured text;
+begin
+  -- Create dossier missing waste_code, producer_ref, destination_ref → gaps
+  select public.create_waste_dossier(
+    '91000000-0000-4000-8000-000000000001',
+    null, null, null,
+    'Fluide R134A', null,
+    2.5, 'kg', null, null, null
+  ) into dossier_id;
+  if dossier_id is null then raise exception 'C46: dossier id required'; end if;
+
+  select submission_id, status, gaps, created into sub_r
+  from public.prepare_trackdechets_submission(
+    '91000000-0000-4000-8000-000000000001', dossier_id,
+    null, 'td-idem-1', '{"note":"first"}'::jsonb
+  );
+  if sub_r.status <> 'PREPARING' then
+    raise exception 'C46: prepare with gaps should stay PREPARING (got %)', sub_r.status;
+  end if;
+  if array_length(sub_r.gaps, 1) < 3 then
+    raise exception 'C46: expected >=3 gaps (got %)', sub_r.gaps;
+  end if;
+
+  -- Idempotent replay
+  declare
+    r2 record;
+  begin
+    select submission_id, status, gaps, created into r2
+    from public.prepare_trackdechets_submission(
+      '91000000-0000-4000-8000-000000000001', dossier_id,
+      null, 'td-idem-1', '{"note":"replay"}'::jsonb
+    );
+    if r2.created then
+      raise exception 'C46: replay must not create';
+    end if;
+  end;
+
+  -- Fill gaps + re-prepare (new key → new submission that reaches READY)
+  update public.waste_dossiers
+    set waste_code = '140601', producer_ref = 'PROD-1', destination_ref = 'DEST-1'
+  where id = dossier_id;
+
+  declare
+    p_id uuid;
+  begin
+    select id into p_id from public.trust_providers where provider_kind = 'TEST';
+    select submission_id, status, gaps, created into sub_r
+    from public.prepare_trackdechets_submission(
+      '91000000-0000-4000-8000-000000000001', dossier_id,
+      p_id, 'td-idem-2', '{}'::jsonb
+    );
+    if sub_r.status <> 'READY' then
+      raise exception 'C46: with all fields + provider expected READY (got %)', sub_r.status;
+    end if;
+  end;
+
+  -- PROVIDER_PENDING transition
+  if not public.mark_trackdechets_provider_pending(
+    '91000000-0000-4000-8000-000000000001', sub_r.submission_id
+  ) then
+    raise exception 'C46: mark_provider_pending should succeed';
+  end if;
+
+  -- Illegal direct UPDATE PROVIDER_PENDING → ACKNOWLEDGED blocked
+  begin
+    update public.trackdechets_submissions
+      set status = 'ACKNOWLEDGED'
+    where id = sub_r.submission_id;
+    raise exception 'C46: illegal transition must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C46: expected 22023 on illegal transition (got %)', captured;
+    end if;
+  end;
+
+  -- Cancel from PROVIDER_PENDING
+  if not public.cancel_trackdechets_submission(
+    '91000000-0000-4000-8000-000000000001', sub_r.submission_id, 'operator cancel'
+  ) then
+    raise exception 'C46: cancel_trackdechets_submission should succeed';
+  end if;
+
+  -- Terminal CANCELLED immutable
+  begin
+    update public.trackdechets_submissions
+      set status = 'READY'
+    where id = sub_r.submission_id;
+    raise exception 'C46: terminal CANCELLED must be immutable';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C46: expected 22023 terminal immutable (got %)', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Cross-tenant isolation
+do $$
+declare visible integer;
+begin
+  select count(*) into visible from public.waste_dossiers where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then raise exception 'C46: tenant A must not see tenant B waste_dossiers'; end if;
+  select count(*) into visible from public.trackdechets_submissions where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then raise exception 'C46: tenant A must not see tenant B submissions'; end if;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures, C44 transactional SMS and C45 document trust assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures, C44 transactional SMS, C45 document trust and C46 trackdechets assertions passed' as result;
 
 rollback;
