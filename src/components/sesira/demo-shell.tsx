@@ -45,6 +45,12 @@ const PILOTING: readonly DemoNavItem[] = [
 
 export function DemoShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+
+  // Terrain is a separate technician product surface. It must never inherit
+  // the owner/office demo shell, even though its public demo URL lives under
+  // /demo for convenience.
+  if (pathname.startsWith("/demo/terrain")) return <>{children}</>;
+
   const items = [...PRIMARY, ...PILOTING];
   const active = items.find((item) => isActive(pathname, item));
 
