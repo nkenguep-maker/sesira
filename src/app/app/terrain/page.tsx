@@ -4,7 +4,6 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronRight,
-  ClipboardList,
   Clock3,
   FileText,
   MapPin,
@@ -17,16 +16,19 @@ import {
 } from "lucide-react";
 
 import { OfflineFieldCapture } from "@/components/terrain/offline-field-capture";
+import { TerrainProcedurePanel } from "@/components/terrain/terrain-procedure-panel";
 import { TerrainSyncCenter } from "@/components/terrain/terrain-sync-center";
 import styles from "@/components/terrain/terrain-mobile.module.css";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { getOrganizationSettings } from "@/lib/data";
 import { getTechnicianWorkspace, type TechnicianInterventionRow } from "@/lib/data/c40-ui";
+import { getTerrainProcedureUi } from "@/lib/data/terrain-procedure-ui";
 
 import { arriveAtInterventionAction, resolveFieldConflictAction, startInterventionAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 type SearchParams = Promise<{ result?: string; date?: string; focus?: string }>;
+type ProcedureUiResult = Awaited<ReturnType<typeof getTerrainProcedureUi>>;
 
 export default async function FieldPage({ searchParams }: { searchParams: SearchParams }) {
   const [viewer, params] = await Promise.all([getViewerContext(), searchParams]);
@@ -44,7 +46,7 @@ export default async function FieldPage({ searchParams }: { searchParams: Search
           <header className={styles.topbar}><div className={styles.brand}><strong>SESIRA Terrain</strong><span>{viewer.organization.name}</span></div></header>
           <section className={styles.empty}><AlertTriangle size={26} /><strong>Journée indisponible</strong><p>SESIRA ne peut pas lire vos interventions terrain pour le moment. Aucun état n’est remplacé par une donnée inventée.</p></section>
         </div>
-        <BottomNav />
+        <BottomNav date={date} interventionId={null} />
       </main>
     );
   }
@@ -54,7 +56,9 @@ export default async function FieldPage({ searchParams }: { searchParams: Search
   const conflicts = workspace.data.conflicts.filter((item) => interventionIds.has(item.interventionId));
   const nextIntervention = interventions.find((row) => !["COMPLETED", "CANCELLED"].includes(row.status));
   const focused = interventions.find((row) => row.interventionId === params.focus) ?? null;
+  const procedureUi = focused ? await getTerrainProcedureUi(viewer.organization.id, focused.interventionId) : null;
   const completedCount = interventions.filter((row) => row.status === "COMPLETED").length;
+  const navInterventionId = focused?.interventionId ?? nextIntervention?.interventionId ?? null;
 
   return (
     <main className={styles.page}>
@@ -85,7 +89,7 @@ export default async function FieldPage({ searchParams }: { searchParams: Search
         <ResultNotice result={params.result} />
 
         {focused ? (
-          <FocusedIntervention row={focused} date={date} />
+          <FocusedIntervention row={focused} date={date} procedureUi={procedureUi} />
         ) : nextIntervention ? (
           <section className={styles.section} aria-labelledby="next-title">
             <div className={styles.sectionHeading}><div><span>À suivre</span><h2 id="next-title">Prochaine intervention</h2></div></div>
@@ -136,6 +140,8 @@ export default async function FieldPage({ searchParams }: { searchParams: Search
                   </div>
                   <form action={resolveFieldConflictAction} className={styles.conflictActions}>
                     <input type="hidden" name="artifactId" value={item.artifactId} />
+                    <input type="hidden" name="date" value={date} />
+                    <input type="hidden" name="focus" value={item.interventionId} />
                     <button className={styles.secondaryAction} name="resolution" value="IGNORED" type="submit"><RotateCcw size={16} /> Ignorer</button>
                     <button className={styles.primaryAction} name="resolution" value="SYNCED" type="submit"><CheckCircle2 size={16} /> Conserver</button>
                   </form>
@@ -154,7 +160,7 @@ export default async function FieldPage({ searchParams }: { searchParams: Search
         </aside>
       </div>
 
-      <BottomNav />
+      <BottomNav date={date} interventionId={navInterventionId} />
     </main>
   );
 }
@@ -179,7 +185,7 @@ function NextInterventionCard({ row, date }: { row: TechnicianInterventionRow; d
   );
 }
 
-function FocusedIntervention({ row, date }: { row: TechnicianInterventionRow; date: string }) {
+function FocusedIntervention({ row, date, procedureUi }: { row: TechnicianInterventionRow; date: string; procedureUi: ProcedureUiResult | null }) {
   const terminal = ["COMPLETED", "CANCELLED"].includes(row.status);
   const mapHref = row.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(row.address)}` : null;
 
@@ -215,6 +221,8 @@ function FocusedIntervention({ row, date }: { row: TechnicianInterventionRow; da
           <div className={styles.focusActions}>
             <form action={arriveAtInterventionAction}>
               <input type="hidden" name="interventionId" value={row.interventionId} />
+              <input type="hidden" name="focus" value={row.interventionId} />
+              <input type="hidden" name="date" value={date} />
               <button className={styles.primaryAction} type="submit"><MapPin size={17} /> J’y suis</button>
             </form>
           </div>
@@ -225,39 +233,44 @@ function FocusedIntervention({ row, date }: { row: TechnicianInterventionRow; da
             <div className={styles.infoRow}><span className={styles.infoIcon}><CheckCircle2 size={16} /></span><div><small>Arrivée</small><strong>{formatTime(row.arrivedAt)}</strong></div></div>
             <form action={startInterventionAction}>
               <input type="hidden" name="interventionId" value={row.interventionId} />
+              <input type="hidden" name="focus" value={row.interventionId} />
+              <input type="hidden" name="date" value={date} />
               <button className={styles.primaryAction} type="submit"><Wrench size={17} /> Commencer</button>
             </form>
           </div>
         ) : null}
       </article>
 
-      {row.startedAt && !terminal ? <OfflineFieldCapture interventionId={row.interventionId} /> : null}
-
-      {row.startedAt && !terminal ? (
-        <section className={styles.capture} aria-labelledby="field-flow-title">
-          <div className={styles.captureHeader}>
-            <div><span className={styles.kicker}>Déroulé</span><h3 id="field-flow-title">Intervention en cours</h3><p>Le compte rendu se construit avec les observations enregistrées pendant le travail.</p></div>
-          </div>
-          <div className={styles.dayList}>
-            <div className={styles.dayCard}><span className={styles.dayTime}><ClipboardList size={17} /></span><div className={styles.dayCopy}><strong>Observations et mesures</strong><span>Ajoutez uniquement ce qui est réellement constaté.</span></div><CheckCircle2 size={17} className={styles.chevron} /></div>
-            <div className={styles.dayCard}><span className={styles.dayTime}><FileText size={17} /></span><div className={styles.dayCopy}><strong>Compte rendu</strong><span>Préparé à partir des saisies terrain, sans inventer de donnée manquante.</span></div><ChevronRight size={18} className={styles.chevron} /></div>
-          </div>
-        </section>
+      {row.startedAt && !terminal && procedureUi?.status === "OK" ? (
+        <TerrainProcedurePanel
+          date={date}
+          interventionId={row.interventionId}
+          templates={procedureUi.data.templates}
+          run={procedureUi.data.run}
+          equipment={procedureUi.data.equipment}
+          regulatoryExport={procedureUi.data.regulatoryExport}
+          binaries={procedureUi.data.binaries}
+        />
       ) : null}
 
+      {row.startedAt && !terminal ? <OfflineFieldCapture interventionId={row.interventionId} /> : null}
+
       {row.status === "COMPLETED" ? (
-        <div className={styles.notice + " " + styles.noticeGood}><CheckCircle2 size={18} /><div><strong>Intervention terminée</strong><div>Le dossier reste consultable. Rien n’est remonté au bureau sauf exception ou décision nécessaire.</div></div></div>
+        <div className={`${styles.notice} ${styles.noticeGood}`}><CheckCircle2 size={18} /><div><strong>Intervention terminée</strong><div>Le dossier reste consultable. Rien n’est remonté au bureau sauf exception ou décision nécessaire.</div></div></div>
       ) : null}
     </section>
   );
 }
 
-function BottomNav() {
+function BottomNav({ date, interventionId }: { date: string; interventionId: string | null }) {
+  const interventionHref = interventionId
+    ? `/app/terrain?date=${encodeURIComponent(date)}&focus=${encodeURIComponent(interventionId)}#intervention`
+    : `/app/terrain?date=${encodeURIComponent(date)}#aujourdhui`;
   return (
     <nav className={styles.bottomNav} aria-label="Navigation terrain">
-      <Link href="/app/terrain#aujourdhui" data-active="true"><CalendarDays size={18} /><span>Aujourd’hui</span></Link>
-      <Link href="/app/terrain#intervention"><Wrench size={18} /><span>Intervention</span></Link>
-      <Link href="/app/terrain#envois"><FileText size={18} /><span>Envois</span></Link>
+      <Link href={`/app/terrain?date=${encodeURIComponent(date)}#aujourdhui`} data-active="true"><CalendarDays size={18} /><span>Aujourd’hui</span></Link>
+      <Link href={interventionHref}><Wrench size={18} /><span>Intervention</span></Link>
+      <Link href={`/app/terrain?date=${encodeURIComponent(date)}#envois`}><FileText size={18} /><span>Envois</span></Link>
       <Link href="/app/parametres"><Settings size={18} /><span>Moi</span></Link>
     </nav>
   );
@@ -265,12 +278,32 @@ function BottomNav() {
 
 function ResultNotice({ result }: { result?: string }) {
   if (!result) return null;
-  const good = ["arrived", "started", "conflict-resolved", "note-saved"].includes(result);
+  const good = [
+    "arrived",
+    "started",
+    "conflict-resolved",
+    "note-saved",
+    "procedure-started",
+    "step-saved",
+    "photo-saved",
+    "signature-saved",
+    "procedure-ready",
+    "procedure-completed",
+  ].includes(result);
   const copy: Record<string, string> = {
     arrived: "Arrivée enregistrée.",
     started: "Intervention démarrée.",
     "note-saved": "Saisie enregistrée.",
+    "procedure-started": "Procédure démarrée.",
+    "step-saved": "Étape enregistrée.",
+    "photo-saved": "Photo enregistrée et liée à l’étape.",
+    "signature-saved": "Émargement enregistré et lié à l’étape.",
+    "procedure-ready": "Procédure prête pour la relecture.",
+    "procedure-completed": "Procédure terminée.",
     conflict: "La saisie est conservée et demande une vérification.",
+    "procedure-conflict": "La valeur est conservée mais demande une vérification.",
+    "binary-conflict": "Le fichier est conservé mais son intégrité demande une vérification.",
+    "file-too-large": "Le fichier dépasse la limite de 15 Mo.",
     "conflict-resolved": "La saisie a été arbitrée.",
     invalid: "L’action demandée est incomplète.",
     "not-applied": "SESIRA n’a pas pu confirmer cette action.",
