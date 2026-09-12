@@ -4,6 +4,7 @@ import {
   attentionFromSourceKey,
   dispatchAssignmentKey,
   externalEffectKey,
+  fleetPingKey,
   productCreationKey,
   providerDeliveryKey,
   quoteFollowupDecisionKey,
@@ -186,5 +187,24 @@ describe("dispatchAssignmentKey", () => {
     expect(() =>
       dispatchAssignmentKey(INT_ID, TECH_ID, "not-a-timestamp"),
     ).toThrow();
+  });
+});
+
+describe("fleetPingKey", () => {
+  const VEHICLE_ID = "cccccccc-1111-4222-8333-444444444444";
+
+  it("formats as fleet_ping:{vehicle}:{offline_client_id}", () => {
+    expect(fleetPingKey(VEHICLE_ID, "cap-abc-123")).toBe(
+      `fleet_ping:${VEHICLE_ID}:cap-abc-123`,
+    );
+  });
+
+  it("rejects non-uuid vehicle", () => {
+    expect(() => fleetPingKey("nope", "cap-1")).toThrow();
+  });
+
+  it("rejects empty or oversized offline id", () => {
+    expect(() => fleetPingKey(VEHICLE_ID, "")).toThrow();
+    expect(() => fleetPingKey(VEHICLE_ID, "x".repeat(101))).toThrow();
   });
 });

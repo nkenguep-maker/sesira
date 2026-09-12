@@ -68,3 +68,8 @@ export type {
   DispatchStatus, DispatchConflictKind, TeamDispatchDayRow, DispatchConflictRow,
 } from "./dispatch";
 export { getTeamDispatchDay, getDispatchConflicts } from "./dispatch";
+
+export type {
+  FleetEstimateStatus, FleetProviderKind, LatestVehiclePositionRow, DispatchEtaSnapshot,
+} from "./fleet";
+export { getLatestVehiclePositions, getDispatchEtaSnapshot } from "./fleet";

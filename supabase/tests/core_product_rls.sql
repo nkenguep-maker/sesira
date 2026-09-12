@@ -3504,8 +3504,258 @@ begin
 end;
 $$;
 
+-- =========================================================================
+-- C42 — Fleet telemetry core assertions
+-- =========================================================================
+-- Depends on C41 fixtures (field_vehicles + intervention_dispatch_assignments
+-- already inserted for tenant A).
+
+-- Policy required before any ping is accepted
+do $$
+declare
+  captured text;
+begin
+  begin
+    perform public.record_fleet_location_ping(
+      '91000000-0000-4000-8000-000000000001',
+      'c1100000-0000-4000-8000-000000000001',
+      '91100000-0000-4000-8000-000000000001',
+      null,
+      '2026-10-06T09:00:00Z'::timestamptz,
+      48.858, 2.294, 5.0, 30.0, 90.0,
+      'MOBILE_APP', null, null, 'cap-1'
+    );
+    raise exception 'C42: ping without policy should be rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'C42: expected 42501 without policy (got %)', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Configure policy (enabled + session_based + short freshness for test)
+do $$
+begin
+  perform public.configure_fleet_tracking_policy(
+    '91000000-0000-4000-8000-000000000001',
+    true,
+    'Coordination technicien / preuve intervention',
+    30,
+    null::jsonb,
+    true,
+    120
+  );
+end;
+$$;
+
+-- Record ping create + idempotent replay
+do $$
+declare
+  ping_r record;
+  ping_id uuid;
+begin
+  select ping_id, created into ping_r
+  from public.record_fleet_location_ping(
+    '91000000-0000-4000-8000-000000000001',
+    'c1100000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001',
+    null,
+    '2026-10-06T09:00:00Z'::timestamptz,
+    48.858, 2.294, 5.0, 30.0, 90.0,
+    'MOBILE_APP', null, null, 'cap-1'
+  );
+  if not ping_r.created then
+    raise exception 'C42: first ping should be created=true';
+  end if;
+  ping_id := ping_r.ping_id;
+
+  select ping_id, created into ping_r
+  from public.record_fleet_location_ping(
+    '91000000-0000-4000-8000-000000000001',
+    'c1100000-0000-4000-8000-000000000001',
+    '91100000-0000-4000-8000-000000000001',
+    null,
+    '2026-10-06T09:00:05Z'::timestamptz,
+    48.858, 2.294, 5.0, 31.0, 90.0,
+    'MOBILE_APP', null, null, 'cap-1'
+  );
+  if ping_r.created or ping_r.ping_id <> ping_id then
+    raise exception 'C42: replay with same offline_client_id must return same id, created=false';
+  end if;
+end;
+$$;
+
+-- Tech spoofing rejected under authenticated role (caller is not the target user)
+do $$
+declare
+  captured text;
+begin
+  begin
+    perform public.record_fleet_location_ping(
+      '91000000-0000-4000-8000-000000000001',
+      'c1100000-0000-4000-8000-000000000001',
+      '91100000-0000-4000-8000-0000000000c2',
+      null,
+      '2026-10-06T09:00:10Z'::timestamptz,
+      48.858, 2.294, null, null, null,
+      'MOBILE_APP', null, null, 'cap-spoof'
+    );
+    raise exception 'C42: tech spoofing must be rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then
+      raise exception 'C42: expected 42501 on tech spoof (got %)', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- Route estimate: READY requires distance+duration; UNAVAILABLE must NOT carry them
+do $$
+declare
+  assignment_id uuid;
+  estimate_id uuid;
+  captured text;
+begin
+  select id into assignment_id
+  from public.intervention_dispatch_assignments
+  where organization_id = '91000000-0000-4000-8000-000000000001'
+    and intervention_id = 'c1200000-0000-4000-8000-000000000001'
+  limit 1;
+
+  -- READY valid
+  select public.record_fleet_route_estimate(
+    '91000000-0000-4000-8000-000000000001', assignment_id,
+    'READY', 'TEST', null, 12500.5, 900, null
+  ) into estimate_id;
+  if estimate_id is null then
+    raise exception 'C42: READY estimate should return id';
+  end if;
+
+  -- READY missing distance rejected
+  begin
+    perform public.record_fleet_route_estimate(
+      '91000000-0000-4000-8000-000000000001', assignment_id,
+      'READY', 'TEST', null, null, 900, null
+    );
+    raise exception 'C42: READY without distance should be rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C42: expected 22023 on READY missing distance (got %)', captured;
+    end if;
+  end;
+
+  -- UNAVAILABLE with distance rejected
+  begin
+    perform public.record_fleet_route_estimate(
+      '91000000-0000-4000-8000-000000000001', assignment_id,
+      'UNAVAILABLE', 'PENDING_PRODUCTION', null, 100, 60, null
+    );
+    raise exception 'C42: UNAVAILABLE with distance should be rejected';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C42: expected 22023 on UNAVAILABLE with values (got %)', captured;
+    end if;
+  end;
+
+  -- UNAVAILABLE clean OK
+  select public.record_fleet_route_estimate(
+    '91000000-0000-4000-8000-000000000001', assignment_id,
+    'UNAVAILABLE', 'PENDING_PRODUCTION', null, null, null, 'no provider'
+  ) into estimate_id;
+
+  -- Latest estimate snapshot returns the UNAVAILABLE one (most recent)
+  if (
+    select status from public.dispatch_eta_snapshot(
+      '91000000-0000-4000-8000-000000000001', assignment_id
+    ) limit 1
+  ) <> 'UNAVAILABLE' then
+    raise exception 'C42: dispatch_eta_snapshot must return the latest UNAVAILABLE row';
+  end if;
+
+  -- Route estimate rows are immutable
+  begin
+    update public.fleet_route_estimates
+      set status = 'STALE'
+    where id = estimate_id;
+    raise exception 'C42: fleet_route_estimates must be immutable';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then
+      raise exception 'C42: expected 22023 on estimate UPDATE (got %)', captured;
+    end if;
+  end;
+end;
+$$;
+
+-- latest_vehicle_positions includes vehicles with no ping (nulls + is_fresh=false)
+do $$
+declare
+  positions_with_ping integer;
+  positions_no_ping integer;
+begin
+  select count(*) into positions_with_ping
+  from public.latest_vehicle_positions('91000000-0000-4000-8000-000000000001')
+  where latest_ping_id is not null;
+  if positions_with_ping = 0 then
+    raise exception 'C42: expected at least one vehicle with a ping';
+  end if;
+
+  select count(*) into positions_no_ping
+  from public.latest_vehicle_positions('91000000-0000-4000-8000-000000000001')
+  where latest_ping_id is null and is_fresh = false;
+  if positions_no_ping = 0 then
+    raise exception 'C42: expected at least one vehicle with no ping (is_fresh=false)';
+  end if;
+end;
+$$;
+
+-- Cross-tenant: tenant A cannot see tenant B fleet rows
+do $$
+declare
+  visible integer;
+begin
+  select count(*) into visible from public.fleet_tracking_policies
+    where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then
+    raise exception 'C42: tenant A must not see tenant B policies (got %)', visible;
+  end if;
+  select count(*) into visible from public.fleet_location_pings
+    where organization_id = '92000000-0000-4000-8000-000000000002';
+  if visible <> 0 then
+    raise exception 'C42: tenant A must not see tenant B pings (got %)', visible;
+  end if;
+end;
+$$;
+
+-- Purge decrements when a ping is older than retention_days
+do $$
+declare
+  purged integer;
+begin
+  insert into public.fleet_location_pings (
+    organization_id, vehicle_id, captured_at, received_at,
+    latitude, longitude, source
+  ) values (
+    '91000000-0000-4000-8000-000000000001',
+    'c1100000-0000-4000-8000-000000000001',
+    now() - interval '60 days',
+    now() - interval '60 days',
+    48.858, 2.294, 'MOBILE_APP'
+  );
+  select public.purge_expired_fleet_pings('91000000-0000-4000-8000-000000000001') into purged;
+  if purged < 1 then
+    raise exception 'C42: purge_expired_fleet_pings should have deleted >=1 old ping (got %)', purged;
+  end if;
+end;
+$$;
+
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation and C41 dispatch planning assertions passed' as result;
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning and C42 fleet telemetry assertions passed' as result;
 
 rollback;

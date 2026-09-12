@@ -1623,6 +1623,171 @@ export type Database = {
           },
         ]
       }
+      fleet_tracking_policies: {
+        Row: {
+          allowed_hours_json: Json | null
+          created_at: string
+          enabled: boolean
+          freshness_seconds: number
+          id: string
+          organization_id: string
+          purpose: string
+          retention_days: number
+          session_based: boolean
+          updated_at: string
+        }
+        Insert: {
+          allowed_hours_json?: Json | null
+          created_at?: string
+          enabled?: boolean
+          freshness_seconds?: number
+          id?: string
+          organization_id: string
+          purpose: string
+          retention_days?: number
+          session_based?: boolean
+          updated_at?: string
+        }
+        Update: {
+          allowed_hours_json?: Json | null
+          created_at?: string
+          enabled?: boolean
+          freshness_seconds?: number
+          id?: string
+          organization_id?: string
+          purpose?: string
+          retention_days?: number
+          session_based?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_tracking_policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fleet_location_pings: {
+        Row: {
+          accuracy_m: number | null
+          captured_at: string
+          created_at: string
+          device_ref: string | null
+          dispatch_assignment_id: string | null
+          heading: number | null
+          id: string
+          latitude: number
+          longitude: number
+          offline_client_id: string | null
+          organization_id: string
+          provider_ref: string | null
+          received_at: string
+          source: string
+          speed_kph: number | null
+          technician_user_id: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          accuracy_m?: number | null
+          captured_at: string
+          created_at?: string
+          device_ref?: string | null
+          dispatch_assignment_id?: string | null
+          heading?: number | null
+          id?: string
+          latitude: number
+          longitude: number
+          offline_client_id?: string | null
+          organization_id: string
+          provider_ref?: string | null
+          received_at?: string
+          source?: string
+          speed_kph?: number | null
+          technician_user_id?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          accuracy_m?: number | null
+          captured_at?: string
+          created_at?: string
+          device_ref?: string | null
+          dispatch_assignment_id?: string | null
+          heading?: number | null
+          id?: string
+          latitude?: number
+          longitude?: number
+          offline_client_id?: string | null
+          organization_id?: string
+          provider_ref?: string | null
+          received_at?: string
+          source?: string
+          speed_kph?: number | null
+          technician_user_id?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_location_pings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fleet_route_estimates: {
+        Row: {
+          calculated_at: string
+          created_at: string
+          dispatch_assignment_id: string
+          distance_m: number | null
+          duration_seconds: number | null
+          failure_reason: string | null
+          id: string
+          organization_id: string
+          provider_kind: string
+          provider_ref: string | null
+          status: string
+        }
+        Insert: {
+          calculated_at?: string
+          created_at?: string
+          dispatch_assignment_id: string
+          distance_m?: number | null
+          duration_seconds?: number | null
+          failure_reason?: string | null
+          id?: string
+          organization_id: string
+          provider_kind: string
+          provider_ref?: string | null
+          status: string
+        }
+        Update: {
+          calculated_at?: string
+          created_at?: string
+          dispatch_assignment_id?: string
+          distance_m?: number | null
+          duration_seconds?: number | null
+          failure_reason?: string | null
+          id?: string
+          organization_id?: string
+          provider_kind?: string
+          provider_ref?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_route_estimates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -3494,6 +3659,98 @@ export type Database = {
         }[]
       }
       scan_dispatch_attentions: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: number
+      }
+      configure_fleet_tracking_policy: {
+        Args: {
+          target_organization_id: string
+          target_enabled: boolean
+          target_purpose: string
+          target_retention_days: number
+          target_allowed_hours: Json | null
+          target_session_based: boolean
+          target_freshness_seconds: number
+        }
+        Returns: string
+      }
+      record_fleet_location_ping: {
+        Args: {
+          target_organization_id: string
+          target_vehicle_id: string
+          target_technician_user_id: string | null
+          target_dispatch_assignment_id: string | null
+          target_captured_at: string
+          target_latitude: number
+          target_longitude: number
+          target_accuracy_m: number | null
+          target_speed_kph: number | null
+          target_heading: number | null
+          target_source: string
+          target_provider_ref: string | null
+          target_device_ref: string | null
+          target_offline_client_id: string | null
+        }
+        Returns: {
+          ping_id: string
+          created: boolean
+        }[]
+      }
+      record_fleet_route_estimate: {
+        Args: {
+          target_organization_id: string
+          target_dispatch_assignment_id: string
+          target_status: string
+          target_provider_kind: string
+          target_provider_ref: string | null
+          target_distance_m: number | null
+          target_duration_seconds: number | null
+          target_failure_reason: string | null
+        }
+        Returns: string
+      }
+      latest_vehicle_positions: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          vehicle_id: string
+          vehicle_label: string
+          latest_ping_id: string | null
+          captured_at: string | null
+          received_at: string | null
+          latitude: number | null
+          longitude: number | null
+          speed_kph: number | null
+          heading: number | null
+          age_seconds: number | null
+          is_fresh: boolean
+        }[]
+      }
+      dispatch_eta_snapshot: {
+        Args: {
+          target_organization_id: string
+          target_dispatch_assignment_id: string
+        }
+        Returns: {
+          estimate_id: string
+          status: string
+          provider_kind: string
+          distance_m: number | null
+          duration_seconds: number | null
+          calculated_at: string
+          failure_reason: string | null
+        }[]
+      }
+      purge_expired_fleet_pings: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: number
+      }
+      scan_fleet_telemetry_attentions: {
         Args: {
           target_organization_id: string
         }

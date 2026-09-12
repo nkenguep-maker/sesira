@@ -280,6 +280,21 @@ export function dispatchAssignmentKey(
 }
 
 /**
+ * Fleet ping identity. Used by C42 `record_fleet_location_ping` so a
+ * retried offline sync of the same capture does not create a duplicate
+ * ping. The device-generated `offlineClientId` is authoritative; this
+ * builder simply namespaces it under the vehicle for the DB unique
+ * constraint (organization_id, vehicle_id, offline_client_id).
+ *
+ * Format: `fleet_ping:{vehicle_id}:{offline_client_id}`
+ */
+export function fleetPingKey(vehicleId: string, offlineClientId: string): string {
+  assertUuid("vehicleId", vehicleId);
+  assertNonEmpty("offlineClientId", offlineClientId, 100);
+  return `fleet_ping:${vehicleId}:${offlineClientId}`;
+}
+
+/**
  * Types of identifiers a key builder MAY accept. Used by the store
  * layer to keep the surface area explicit — a call site that mixes
  * a mutable value into a key trips a type error.
