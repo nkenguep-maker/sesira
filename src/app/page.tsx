@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -10,25 +11,28 @@ export const metadata: Metadata = {
   title: "SESIRA | Le suivi opérationnel des entreprises CVC",
   description:
     "SESIRA suit vos devis, interventions, factures, contrats et obligations CVC pour faire remonter chaque jour les décisions qui comptent.",
+  openGraph: {
+    title: "SESIRA | 5 choses à faire. Pas 50 écrans à surveiller.",
+    description:
+      "Le suivi opérationnel des entreprises CVC : devis, planning, terrain, factures et obligations dans une même continuité.",
+    type: "website",
+  },
 };
 
-type PlaceholderProps = {
+type PhotoProps = {
+  image: "team" | "planning";
   label: string;
-  title: string;
-  detail: string;
   className?: string;
+  position?: string;
 };
 
-function ImagePlaceholder({ label, title, detail, className = "" }: PlaceholderProps) {
-  return (
-    <div className={`${styles.imagePlaceholder} ${className}`} role="img" aria-label={`${title} — emplacement image`}>
-      <div className={styles.placeholderContent}>
-        <span>{label}</span>
-        <strong>{title}</strong>
-        <small>{detail}</small>
-      </div>
-    </div>
-  );
+function LandingPhoto({ image, label, className = "", position = "center" }: PhotoProps) {
+  const style = {
+    backgroundImage: `url(/api/landing-image/${image})`,
+    backgroundPosition: position,
+  } satisfies CSSProperties;
+
+  return <div className={`landing-native-photo ${className}`} style={style} role="img" aria-label={label} />;
 }
 
 const SERVICES = [
@@ -37,28 +41,44 @@ const SERVICES = [
     title: "Devis & relances",
     copy: "Repérer les devis sans réponse, préparer la prochaine relance et remettre le bon dossier devant la bonne personne.",
     href: "/demo/devis",
-    image: "Photo dirigeant CVC / devis client",
+    tone: "warm",
+    icon: "D",
+    metric: "7",
+    unit: "devis à suivre",
+    note: "2 sans réponse depuis plus de 7 jours",
   },
   {
     tag: "OPÉRATIONS",
     title: "Interventions",
     copy: "Faire le lien entre ce qui a été vendu, ce qui doit être planifié et ce qui s’est réellement passé sur le terrain.",
     href: "/demo/interventions",
-    image: "Photo technicien CVC sur site",
+    tone: "teal",
+    icon: "T",
+    metric: "5",
+    unit: "interventions aujourd’hui",
+    note: "1 rapport attend encore une validation",
   },
   {
     tag: "TRÉSORERIE",
     title: "Factures",
     copy: "Reprendre les échéances, promesses de paiement et litiges sans transformer le suivi en tableur de plus.",
     href: "/demo/factures",
-    image: "Photo bureau / suivi facturation",
+    tone: "ink",
+    icon: "€",
+    metric: "21,8 k€",
+    unit: "échus",
+    note: "2 échéances demandent une décision",
   },
   {
     tag: "CVC",
     title: "Maintenance & obligations",
     copy: "Voir au même endroit les contrats à renouveler, les équipements, les fluides, les attestations et les documents à préparer.",
     href: "/demo/obligations",
-    image: "Photo installation CVC / maintenance",
+    tone: "soft",
+    icon: "M",
+    metric: "3",
+    unit: "échéances < 60 j",
+    note: "contrats et dossiers à préparer",
   },
 ] as const;
 
@@ -85,26 +105,38 @@ const STEPS = [
   },
 ] as const;
 
-const PROJECTS = [
+const SCENARIOS = [
   {
-    tag: "SCÉNARIO · DEVIS",
-    title: "18 450 € envoyés. Sept jours de silence.",
-    image: "Photo commerciale / client CVC",
+    tag: "DEVIS",
+    value: "18 450 €",
+    title: "Sept jours de silence après envoi",
+    context: "Aucune réponse enregistrée, aucune relance faite.",
+    action: "Remettre le devis dans la file",
+    tone: "warm",
   },
   {
-    tag: "SCÉNARIO · TERRAIN",
-    title: "22 400 € gagnés. Aucun chantier planifié.",
-    image: "Photo chantier / équipe terrain",
+    tag: "TERRAIN",
+    value: "22 400 €",
+    title: "Vente gagnée, aucun chantier planifié",
+    context: "Le client a signé mais aucune date n’est encore posée.",
+    action: "Faire décider le planning",
+    tone: "teal",
   },
   {
-    tag: "SCÉNARIO · FACTURE",
-    title: "12 400 € échus. Une promesse dépassée.",
-    image: "Photo administratif / trésorerie",
+    tag: "FACTURE",
+    value: "12 400 €",
+    title: "Échéance dépassée après une promesse",
+    context: "Le suivi ne doit pas repartir de zéro après le premier rappel.",
+    action: "Reprendre avec tout le contexte",
+    tone: "ink",
   },
   {
-    tag: "SCÉNARIO · ENTRETIEN",
-    title: "Un contrat approche de l’échéance sans préparation.",
-    image: "Photo maintenance préventive CVC",
+    tag: "ENTRETIEN",
+    value: "26 jours",
+    title: "Contrat proche de l’échéance",
+    context: "Renouvellement, équipement et pièces du dossier doivent être préparés.",
+    action: "Préparer avant l’urgence",
+    tone: "soft",
   },
 ] as const;
 
@@ -131,22 +163,12 @@ const FEATURES = [
   },
 ] as const;
 
-const RESOURCES = [
-  {
-    tag: "GUIDE",
-    title: "Les 5 angles morts qui coûtent le plus cher à une PME CVC",
-    image: "Visuel éditorial / dirigeant CVC",
-  },
-  {
-    tag: "MÉTHODE",
-    title: "Passer de devis signés à des chantiers réellement planifiés",
-    image: "Visuel éditorial / planning terrain",
-  },
-  {
-    tag: "TRÉSORERIE",
-    title: "Reprendre une facture en retard sans perdre le contexte client",
-    image: "Visuel éditorial / finance PME",
-  },
+const HANDOFFS = [
+  { no: "01", label: "Devis", risk: "sans réponse" },
+  { no: "02", label: "Planning", risk: "sans date" },
+  { no: "03", label: "Terrain", risk: "sans rapport" },
+  { no: "04", label: "Facture", risk: "sans suivi" },
+  { no: "05", label: "Entretien", risk: "sans préparation" },
 ] as const;
 
 export default function HomePage() {
@@ -184,11 +206,10 @@ export default function HomePage() {
         </div>
 
         <div className={styles.heroVisual}>
-          <ImagePlaceholder
+          <LandingPhoto
+            image="team"
             className={styles.heroImage}
-            label="IMAGE HERO · PLACEHOLDER"
-            title="Dirigeant et technicien CVC devant une installation"
-            detail="Remplacer par une photo premium, réelle, française, avec espace négatif suffisant pour la composition."
+            label="Équipe CVC en environnement technique"
           />
           <Link href="/demo" className={styles.playCard}>
             <span className={styles.playIcon} aria-hidden="true">▶</span>
@@ -204,17 +225,17 @@ export default function HomePage() {
 
       <section className={styles.quickProof} aria-label="Repères SESIRA">
         <article><strong>5 max.</strong><span>décisions mises en avant le matin</span></article>
-        <article><strong>90 jours</strong><span>d’observation avant de vous demander de changer</span></article>
-        <article><strong>3 zones</strong><span>vendre, exécuter, encaisser</span></article>
+        <article><strong>90 jours</strong><span>pour mesurer les dossiers qui ne sont pas repris</span></article>
+        <article><strong>4 zones</strong><span>vendre, exécuter, encaisser, préparer</span></article>
         <article><strong>0 action</strong><span>externe sans règle explicite</span></article>
       </section>
 
       <section className={styles.about} aria-labelledby="about-title">
         <div className={styles.aboutCopy}>
           <span className={styles.sectionEyebrow}>POURQUOI SESIRA</span>
-          <h2 id="about-title">Le problème n’est pas votre logiciel. C’est ce qui tombe entre deux logiciels.</h2>
+          <h2 id="about-title">Le problème n’est pas votre logiciel. C’est ce qui tombe entre deux étapes.</h2>
           <p>
-            Une PME CVC travaille déjà avec des mails, devis, agendas, factures et dossiers réglementaires. SESIRA ne remplace pas tout : il relie les moments où un dossier devrait avancer mais n’avance plus.
+            Une PME CVC travaille déjà avec des mails, devis, agendas, factures et dossiers réglementaires. SESIRA relie les moments où un dossier devrait avancer mais n’avance plus.
           </p>
           <div className={styles.aboutList}>
             <div><b>✓</b><span>Le devis reste visible jusqu’à réponse ou décision.</span></div>
@@ -223,10 +244,21 @@ export default function HomePage() {
           </div>
           <Link href="/demo" className={styles.textLink}>Explorer le produit <span aria-hidden="true">→</span></Link>
         </div>
-        <div className={styles.aboutMedia}>
-          <ImagePlaceholder className={styles.tall} label="IMAGE 01 · PLACEHOLDER" title="Technicien CVC en intervention" detail="Portrait vertical / environnement réel / uniforme neutre." />
-          <ImagePlaceholder className={styles.smallTop} label="IMAGE 02 · PLACEHOLDER" title="Dirigeant PME CVC au bureau" detail="Photo naturelle, devis ou planning visible en arrière-plan." />
-          <ImagePlaceholder className={styles.smallBottom} label="IMAGE 03 · PLACEHOLDER" title="Installation technique" detail="Groupe froid, PAC, CTA ou chaufferie moderne." />
+        <div className="landing-handoff-map" aria-label="Les cinq passages de relais suivis par SESIRA">
+          <div className="landing-handoff-map__head">
+            <span>LE DOSSIER AVANCE</span>
+            <strong>SESIRA surveille les passages de relais.</strong>
+          </div>
+          <div className="landing-handoff-map__flow">
+            {HANDOFFS.map((item, index) => (
+              <div className="landing-handoff-step" key={item.no}>
+                <div className="landing-handoff-step__top"><span>{item.no}</span>{index < HANDOFFS.length - 1 ? <i aria-hidden="true">→</i> : null}</div>
+                <strong>{item.label}</strong>
+                <small>{item.risk}</small>
+              </div>
+            ))}
+          </div>
+          <div className="landing-handoff-map__footer"><span>Quand une étape s’arrête, le dossier revient dans la file avec son contexte.</span><b>Pas de trou entre les outils.</b></div>
         </div>
       </section>
 
@@ -235,14 +267,18 @@ export default function HomePage() {
           <div className={styles.sectionHeader}>
             <span className={styles.sectionEyebrow}>CE QUE SESIRA SUIT</span>
             <h2 id="services-title">Un même fil, du premier devis au dernier euro encaissé.</h2>
-            <p>Chaque zone répond à une question très simple : qu’est-ce qui doit avancer maintenant, et qui doit décider ?</p>
+            <p>Chaque zone répond à une question simple : qu’est-ce qui doit avancer maintenant, et qui doit décider ?</p>
           </div>
           <Link href="/demo" className={styles.textLink}>Voir toute la démo <span aria-hidden="true">→</span></Link>
         </div>
         <div className={styles.serviceGrid}>
-          {SERVICES.map((service, index) => (
+          {SERVICES.map((service) => (
             <Link href={service.href} className={styles.serviceCard} key={service.title}>
-              <ImagePlaceholder className={styles.serviceImage} label={`IMAGE 0${index + 4} · PLACEHOLDER`} title={service.image} detail="Ratio paysage, traitement photo cohérent avec le reste du site." />
+              <div className={`landing-service-signal-native ${service.tone}`} aria-label={`${service.metric} ${service.unit}. ${service.note}. Données fictives.`}>
+                <div className="landing-service-signal-native__top"><span>{service.icon}</span><small>DONNÉES FICTIVES</small></div>
+                <div className="landing-service-signal-native__metric"><strong>{service.metric}</strong><span>{service.unit}</span></div>
+                <div className="landing-service-signal-native__foot"><span>{service.note}</span><i aria-hidden="true"><b /><b /><b /></i></div>
+              </div>
               <div className={styles.serviceBody}>
                 <span>{service.tag}</span>
                 <h3>{service.title}</h3>
@@ -255,7 +291,7 @@ export default function HomePage() {
       </section>
 
       <section id="fonctionnement" className={styles.process} aria-labelledby="process-title">
-        <ImagePlaceholder className={styles.processImage} label="IMAGE 08 · PLACEHOLDER" title="Équipe CVC au travail, photo large" detail="Image principale de la section fonctionnement. Privilégier interaction humaine + contexte technique." />
+        <LandingPhoto image="planning" className={styles.processImage} label="Responsable d’exploitation CVC organisant le planning terrain" />
         <div className={styles.processCopy}>
           <span className={styles.sectionEyebrow}>COMMENT ÇA MARCHE</span>
           <h2 id="process-title">SESIRA observe, remet le contexte, puis vous laisse décider.</h2>
@@ -292,13 +328,16 @@ export default function HomePage() {
         <div className={styles.sectionHeader}>
           <span className={styles.sectionEyebrow}>CAS D’USAGE · DONNÉES FICTIVES</span>
           <h2 id="projects-title">Les petits écarts qui finissent par coûter cher.</h2>
-          <p>Chaque scénario correspond à un moment concret où le dossier devrait avancer mais reste bloqué entre deux actions.</p>
+          <p>Quatre situations concrètes où le dossier devrait avancer mais reste bloqué entre deux actions.</p>
         </div>
-        <div className={styles.projectGrid}>
-          {PROJECTS.map((project, index) => (
-            <Link href="/demo" className={styles.projectCard} key={project.title}>
-              <ImagePlaceholder label={`IMAGE ${String(index + 9).padStart(2, "0")} · PLACEHOLDER`} title={project.image} detail="Photo documentaire CVC / entreprise française." />
-              <div className={styles.projectOverlay}><span>{project.tag}</span><strong>{project.title}</strong></div>
+        <div className="landing-scenario-grid">
+          {SCENARIOS.map((scenario) => (
+            <Link href="/demo" className={`landing-scenario-card ${scenario.tone}`} key={scenario.title}>
+              <div className="landing-scenario-card__top"><span>{scenario.tag}</span><small>EXEMPLE</small></div>
+              <strong className="landing-scenario-card__value">{scenario.value}</strong>
+              <h3>{scenario.title}</h3>
+              <p>{scenario.context}</p>
+              <div className="landing-scenario-card__action"><span>{scenario.action}</span><b aria-hidden="true">→</b></div>
             </Link>
           ))}
         </div>
@@ -328,43 +367,13 @@ export default function HomePage() {
             <h2 id="trust-title">SESIRA prépare. Vous décidez.</h2>
             <p>Le produit peut gagner en autonomie uniquement là où vous avez défini la règle. Il ne fabrique ni succès provider, ni preuve externe, ni verdict réglementaire.</p>
           </div>
-          <div className={styles.trustStats}>
-            <article><strong>5</strong><span>sujets maximum mis en avant pour commencer la journée</span></article>
-            <article><strong>90 j</strong><span>d’observation pour mesurer avant d’automatiser</span></article>
-            <article><strong>0</strong><span>action externe présentée comme faite sans preuve ou règle</span></article>
+          <div className="landing-guardrail-grid">
+            <article><span>01</span><strong>Décision humaine</strong><p>Les arbitrages sensibles restent entre vos mains.</p></article>
+            <article><span>02</span><strong>Preuve explicite</strong><p>Une action externe n’est jamais présentée comme faite sans preuve.</p></article>
+            <article><span>03</span><strong>Autonomie graduelle</strong><p>Vous choisissez les règles qui peuvent s’exécuter sans validation.</p></article>
           </div>
         </section>
       </div>
-
-      <section className={styles.testimonials} aria-labelledby="testimonials-title">
-        <ImagePlaceholder className={styles.testimonialImage} label="IMAGE 13 · PLACEHOLDER" title="Portrait client / dirigeant CVC" detail="À remplacer par une vraie photo lorsque le premier témoignage client publiable sera disponible." />
-        <div className={styles.testimonialsCopy}>
-          <span className={styles.sectionEyebrow}>PREUVE CLIENT</span>
-          <h2 id="testimonials-title">La place est prête pour une vraie voix client — pas pour une fausse citation.</h2>
-          <p>Cette section reprendra le principe testimonial de la référence, mais elle restera factuelle tant qu’un témoignage publiable n’est pas disponible.</p>
-          <div className={styles.quotePlaceholder}>
-            <span>TÉMOIGNAGE CLIENT · À REMPLACER</span>
-            <blockquote>« Ici viendra une citation réelle sur un résultat mesuré : devis repris, délais réduits, factures remises dans le suivi ou charge administrative économisée. »</blockquote>
-            <small>Nom · société · fonction — uniquement après accord de publication.</small>
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.resources} aria-labelledby="resources-title">
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionEyebrow}>RESSOURCES</span>
-          <h2 id="resources-title">Des contenus utiles pour mieux voir où se perd le travail.</h2>
-          <p>La structure reprend le bloc éditorial de la référence. Les cartes sont prêtes pour accueillir de vrais articles, études ou retours terrain.</p>
-        </div>
-        <div className={styles.resourceGrid}>
-          {RESOURCES.map((resource, index) => (
-            <article className={styles.resourceCard} key={resource.title}>
-              <ImagePlaceholder className={styles.resourceImage} label={`IMAGE ${index + 14} · PLACEHOLDER`} title={resource.image} detail="Illustration éditoriale ou photo métier." />
-              <div className={styles.resourceBody}><span>{resource.tag}</span><h3>{resource.title}</h3></div>
-            </article>
-          ))}
-        </div>
-      </section>
 
       <section className={styles.cta}>
         <div className={styles.ctaCopy}>
@@ -385,7 +394,7 @@ export default function HomePage() {
           <p>Le suivi, c’est SESIRA. Les décisions, c’est vous.</p>
         </div>
         <div className={styles.footerLinks}>
-          <div><span>PRODUIT</span><Link href="/demo">Démo</Link><Link href="/diagnostic">Diagnostic</Link><Link href="/automatisation">Automatisation</Link></div>
+          <div><span>PRODUIT</span><Link href="/demo">Démo</Link><Link href="/diagnostic">Diagnostic</Link><Link href="/demo/automatisations">Automatisations</Link></div>
           <div><span>ACCÈS</span><Link href="/login">Connexion</Link><a href="#services">Solutions</a><a href="#fonctionnement">Fonctionnement</a></div>
         </div>
         <div className={styles.footerMeta}><span>SESIRA · France</span><span>© 2026 SESIRA</span></div>
