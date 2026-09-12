@@ -9,6 +9,9 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
+const DASHBOARD_VIEWPORT_WIDTH = 2047;
+const DASHBOARD_VIEWPORT_HEIGHT = 1159;
+
 const TODAY_ITEMS = [
   {
     kind: "DEVIS",
@@ -127,6 +130,8 @@ export function TodayPreview({ compact = false }: TodayPreviewProps) {
   const triggerRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const dragStartY = useRef<number | null>(null);
+  const dashboardFrameRef = useRef<HTMLDivElement | null>(null);
+  const dashboardIframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const closePanel = useCallback(() => {
     const originIndex = activeIndex;
@@ -135,6 +140,24 @@ export function TodayPreview({ compact = false }: TodayPreviewProps) {
       if (originIndex !== null) triggerRefs.current[originIndex]?.focus();
     });
   }, [activeIndex]);
+
+  useEffect(() => {
+    if (!compact) return;
+
+    const frame = dashboardFrameRef.current;
+    const iframe = dashboardIframeRef.current;
+    if (!frame || !iframe) return;
+
+    const fitDashboard = () => {
+      const scale = frame.clientWidth / DASHBOARD_VIEWPORT_WIDTH;
+      iframe.style.transform = `scale(${scale})`;
+    };
+
+    fitDashboard();
+    const observer = new ResizeObserver(fitDashboard);
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, [compact]);
 
   useEffect(() => {
     if (activeIndex === null) return;
@@ -193,12 +216,32 @@ export function TodayPreview({ compact = false }: TodayPreviewProps) {
 
   const activePanel = activeIndex === null ? null : PANELS[activeIndex];
 
+  if (compact) {
+    return (
+      <div
+        ref={dashboardFrameRef}
+        className="cvc-dashboard-snapshot"
+        role="img"
+        aria-label="Tableau de bord SESIRA de démonstration avec file de décisions, devis, factures et interventions"
+      >
+        <iframe
+          ref={dashboardIframeRef}
+          className="cvc-dashboard-snapshot-frame"
+          src="/demo"
+          title="Aperçu du tableau de bord SESIRA"
+          width={DASHBOARD_VIEWPORT_WIDTH}
+          height={DASHBOARD_VIEWPORT_HEIGHT}
+          tabIndex={-1}
+          aria-hidden="true"
+        />
+        <span className="cvc-dashboard-snapshot-glass" aria-hidden="true" />
+      </div>
+    );
+  }
+
   return (
     <>
-      <div
-        className={compact ? "cvc-today-preview compact" : "cvc-today-preview"}
-        aria-label="Exemple de SESIRA Aujourd'hui"
-      >
+      <div className="cvc-today-preview" aria-label="Exemple de SESIRA Aujourd'hui">
         <div className="cvc-product-chrome">
           <div><i /><i /><i /></div>
           <span>SESIRA · AUJOURD&apos;HUI</span>
@@ -213,31 +256,25 @@ export function TodayPreview({ compact = false }: TodayPreviewProps) {
             <div className="cvc-product-count"><strong>5</strong><span>à voir</span></div>
           </div>
 
-          {compact ? (
+          <div className="cvc-today-list cvc-today-interactive-list">
+            {TODAY_ITEMS.map((item, index) => (
+              <article key={`${item.kind}-${item.title}`} className="cvc-today-interactive-row">
+                <button
+                  ref={(node) => { triggerRefs.current[index] = node; }}
+                  type="button"
+                  className="cvc-today-row-trigger"
+                  onClick={() => openPanel(index)}
+                  aria-haspopup="dialog"
+                >
+                  <TodayRow item={item} />
+                </button>
+              </article>
+            ))}
+          </div>
+          <noscript>
+            <style>{`.cvc-today-interactive-list{display:none!important}`}</style>
             <StaticTodayList />
-          ) : (
-            <>
-              <div className="cvc-today-list cvc-today-interactive-list">
-                {TODAY_ITEMS.map((item, index) => (
-                  <article key={`${item.kind}-${item.title}`} className="cvc-today-interactive-row">
-                    <button
-                      ref={(node) => { triggerRefs.current[index] = node; }}
-                      type="button"
-                      className="cvc-today-row-trigger"
-                      onClick={() => openPanel(index)}
-                      aria-haspopup="dialog"
-                    >
-                      <TodayRow item={item} />
-                    </button>
-                  </article>
-                ))}
-              </div>
-              <noscript>
-                <style>{`.cvc-today-interactive-list{display:none!important}`}</style>
-                <StaticTodayList />
-              </noscript>
-            </>
-          )}
+          </noscript>
         </div>
       </div>
 
