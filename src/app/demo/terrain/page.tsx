@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -99,7 +98,7 @@ export default function TerrainDemoPage() {
     window.setTimeout(() => setToast(null), 2200);
   }
 
-  function saveCapture(kind: Exclude<CaptureKind, null>) {
+  function saveCapture() {
     setQueued((value) => value + 1);
     setCapture(null);
     flash(online ? "Saisie enregistrée et envoyée." : "Saisie gardée sur le téléphone.");
@@ -115,26 +114,12 @@ export default function TerrainDemoPage() {
   }
 
   return (
-    <main className={styles.demoPage}>
-      <div className={styles.showcaseCopy}>
-        <div className={styles.eyebrow}>SESIRA · Démo terrain</div>
-        <h1>Le technicien voit sa journée. Pas votre ERP.</h1>
-        <p>
-          Démonstration avec données fictives : prochaine intervention, procédure, saisies terrain,
-          fonctionnement hors ligne et remontée d’exception.
-        </p>
-        <div className={styles.showcasePoints}>
-          <span><CheckCircle2 size={18} /> 3 gestes principaux maximum par écran</span>
-          <span><CheckCircle2 size={18} /> Les cas normaux restent silencieux côté patron</span>
-          <span><CheckCircle2 size={18} /> Une anomalie devient une demande de décision</span>
-        </div>
-        <Link className={styles.realAppLink} href="/app/terrain">
-          Ouvrir l’app réelle <ArrowRight size={16} />
-        </Link>
-      </div>
-
-      <section className={styles.phoneStage} aria-label="Démo de l’application technicien">
-        <div className={styles.demoBadge}>Données fictives</div>
+    <main
+      className={styles.demoPage}
+      style={{ gridTemplateColumns: "minmax(320px, 520px)", gap: 0, padding: 0 }}
+    >
+      <section className={styles.phoneStage} aria-label="Application SESIRA du technicien">
+        <div className={styles.demoBadge}>Mode démonstration</div>
         <div className={styles.phone}>
           <div className={styles.statusBar}>
             <span>09:46</span>
@@ -154,6 +139,7 @@ export default function TerrainDemoPage() {
               {screen === "today" ? (
                 <TodayScreen current={current} onOpenMission={() => setScreen("mission")} />
               ) : null}
+
               {screen === "mission" ? (
                 <MissionScreen
                   current={current}
@@ -165,26 +151,26 @@ export default function TerrainDemoPage() {
                   }}
                   onException={() => {
                     setQueued((value) => value + 1);
-                    flash("Exception remontée au bureau pour décision.");
+                    flash("Demande d’aide envoyée.");
                   }}
                 />
               ) : null}
+
               {screen === "sync" ? (
                 <SyncScreen online={online} queued={queued} onSync={syncNow} />
               ) : null}
+
               {screen === "profile" ? <ProfileScreen onBack={() => setScreen("today")} /> : null}
             </div>
 
-            {screen !== "profile" ? (
-              <BottomNav active={screen} onChange={setScreen} />
-            ) : null}
+            {screen !== "profile" ? <BottomNav active={screen} onChange={setScreen} /> : null}
 
             {capture ? (
               <CaptureSheet
                 kind={capture}
                 online={online}
                 onClose={() => setCapture(null)}
-                onSave={() => saveCapture(capture)}
+                onSave={saveCapture}
               />
             ) : null}
 
@@ -216,11 +202,16 @@ function AppHeader({
         <span>ClimaPro Services</span>
       </div>
       <div className={styles.headerActions}>
-        <button className={styles.syncState} onClick={onToggleOnline} type="button" aria-label="Basculer le réseau de la démo">
+        <button className={styles.syncState} onClick={onToggleOnline} type="button" aria-label="Basculer le réseau">
           {online ? <Signal size={14} /> : <SignalZero size={14} />}
           <span>{syncLabel}</span>
         </button>
-        <button className={`${styles.avatarButton} ${screen === "profile" ? styles.avatarActive : ""}`} onClick={onProfile} type="button" aria-label="Voir mon profil">
+        <button
+          className={`${styles.avatarButton} ${screen === "profile" ? styles.avatarActive : ""}`}
+          onClick={onProfile}
+          type="button"
+          aria-label="Voir mon profil"
+        >
           <UserRound size={16} />
         </button>
       </div>
@@ -335,15 +326,18 @@ function MissionScreen({
           <button type="button" onClick={() => onCapture("photo")}><Camera size={21} /><strong>Photo</strong><span>Avant / après</span></button>
           <button type="button" onClick={() => onCapture("measurement")}><Gauge size={21} /><strong>Mesure</strong><span>Pression, °C…</span></button>
           <button type="button" onClick={() => onCapture("part")}><Package size={21} /><strong>Pièce</strong><span>Référence utilisée</span></button>
-          <button className={styles.alertCapture} type="button" onClick={() => onCapture("anomaly")}><AlertTriangle size={21} /><strong>Anomalie</strong><span>Faire remonter</span></button>
+          <button className={styles.alertCapture} type="button" onClick={() => onCapture("anomaly")}><AlertTriangle size={21} /><strong>Anomalie</strong><span>Signaler</span></button>
         </div>
       </section>
 
       {!completed ? (
         <section className={styles.exceptionCard}>
           <div className={styles.exceptionIcon}><AlertTriangle size={19} /></div>
-          <div><strong>Besoin d’une décision ?</strong><p>Le patron n’est sollicité que lorsqu’une exception bloque la mission.</p></div>
-          <button type="button" onClick={onException}>Demander une décision</button>
+          <div>
+            <strong>Mission bloquée ?</strong>
+            <p>Demande de l’aide seulement si tu ne peux pas poursuivre l’intervention.</p>
+          </div>
+          <button type="button" onClick={onException}>Demander de l’aide</button>
         </section>
       ) : null}
 
@@ -360,7 +354,7 @@ function SyncScreen({ online, queued, onSync }: { online: boolean; queued: numbe
       <section className={styles.simpleHero}>
         <span className={styles.kicker}>Envois</span>
         <h2>{queued ? `${queued} élément${queued > 1 ? "s" : ""} à transmettre` : "Tout est envoyé"}</h2>
-        <p>SESIRA garde automatiquement les saisies sur ce téléphone quand le réseau n’est pas disponible.</p>
+        <p>SESIRA garde automatiquement tes saisies sur ce téléphone quand le réseau n’est pas disponible.</p>
       </section>
 
       <section className={`${styles.networkCard} ${!online ? styles.networkOffline : ""}`}>
@@ -377,7 +371,7 @@ function SyncScreen({ online, queued, onSync }: { online: boolean; queued: numbe
       <button className={styles.syncButton} type="button" onClick={onSync} disabled={!queued}>
         <RefreshCw size={17} /> {queued ? "Envoyer maintenant" : "Synchronisé"}
       </button>
-      <p className={styles.syncFootnote}>Les conflits ne sont jamais écrasés automatiquement : ils restent visibles comme exception à vérifier.</p>
+      <p className={styles.syncFootnote}>Si un envoi demande une vérification, il reste visible ici au lieu d’être supprimé automatiquement.</p>
     </div>
   );
 }
@@ -388,17 +382,17 @@ function ProfileScreen({ onBack }: { onBack: () => void }) {
       <button className={styles.backButton} type="button" onClick={onBack}><X size={17} /> Fermer</button>
       <section className={styles.profileHero}>
         <div className={styles.profileAvatar}><UserRound size={28} /></div>
-        <span>Compte technicien</span>
+        <span>Mon compte</span>
         <h2>Malik Benali</h2>
         <p>ClimaPro Services · Technicien CVC</p>
       </section>
       <section className={styles.privacyCard}>
         <ShieldCheck size={22} />
-        <div><strong>Transparence localisation</strong><p>SESIRA affiche ici ce qui peut être enregistré pendant une intervention et pourquoi.</p></div>
+        <div><strong>Ma localisation</strong><p>Tu peux voir ici quand la localisation peut être utilisée pendant tes interventions.</p></div>
       </section>
       <div className={styles.profileList}>
         <div><span>Localisation</span><strong>Uniquement pendant les actions terrain</strong></div>
-        <div><span>Historique personnel</span><strong>Pas de notation de performance</strong></div>
+        <div><span>Suivi personnel</span><strong>Aucune note de performance</strong></div>
         <div><span>Téléphone</span><strong>iPhone terrain · appareil actuel</strong></div>
       </div>
     </div>
@@ -407,7 +401,7 @@ function ProfileScreen({ onBack }: { onBack: () => void }) {
 
 function BottomNav({ active, onChange }: { active: DemoScreen; onChange: (screen: DemoScreen) => void }) {
   return (
-    <nav className={styles.bottomNav} aria-label="Navigation de la démo terrain">
+    <nav className={styles.bottomNav} aria-label="Navigation terrain">
       <button data-active={active === "today"} type="button" onClick={() => onChange("today")}><CalendarDays size={18} /><span>Aujourd’hui</span></button>
       <button data-active={active === "mission"} type="button" onClick={() => onChange("mission")}><Wrench size={18} /><span>Mission</span></button>
       <button data-active={active === "sync"} type="button" onClick={() => onChange("sync")}><FileText size={18} /><span>Envois</span></button>
@@ -415,11 +409,11 @@ function BottomNav({ active, onChange }: { active: DemoScreen; onChange: (screen
   );
 }
 
-function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function InfoRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return <div className={styles.infoRow}><span>{icon}</span><div><small>{label}</small><strong>{value}</strong></div></div>;
 }
 
-function SyncRow({ icon, title, meta, status }: { icon: React.ReactNode; title: string; meta: string; status: string }) {
+function SyncRow({ icon, title, meta, status }: { icon: ReactNode; title: string; meta: string; status: string }) {
   return (
     <div className={styles.syncRow}>
       <span className={styles.syncIcon}>{icon}</span>
@@ -429,7 +423,17 @@ function SyncRow({ icon, title, meta, status }: { icon: React.ReactNode; title: 
   );
 }
 
-function CaptureSheet({ kind, online, onClose, onSave }: { kind: Exclude<CaptureKind, null>; online: boolean; onClose: () => void; onSave: () => void }) {
+function CaptureSheet({
+  kind,
+  online,
+  onClose,
+  onSave,
+}: {
+  kind: Exclude<CaptureKind, null>;
+  online: boolean;
+  onClose: () => void;
+  onSave: () => void;
+}) {
   const config = {
     photo: { icon: <Camera size={21} />, title: "Ajouter une photo", label: "Photo de l’équipement", placeholder: "Photo prête à être capturée" },
     measurement: { icon: <Gauge size={21} />, title: "Ajouter une mesure", label: "Pression BP", placeholder: "4,8 bar" },
@@ -441,10 +445,16 @@ function CaptureSheet({ kind, online, onClose, onSave }: { kind: Exclude<Capture
     <div className={styles.sheetBackdrop} role="presentation" onClick={onClose}>
       <section className={styles.captureSheet} role="dialog" aria-modal="true" aria-label={config.title} onClick={(event) => event.stopPropagation()}>
         <div className={styles.sheetHandle} />
-        <header><span>{config.icon}</span><div><strong>{config.title}</strong><p>{online ? "Connexion disponible" : "Sera conservé hors ligne"}</p></div><button type="button" onClick={onClose}><X size={18} /></button></header>
+        <header>
+          <span>{config.icon}</span>
+          <div><strong>{config.title}</strong><p>{online ? "Connexion disponible" : "Sera conservé hors ligne"}</p></div>
+          <button type="button" onClick={onClose}><X size={18} /></button>
+        </header>
         <label>{config.label}<input defaultValue={config.placeholder} /></label>
         <label>Note facultative<textarea placeholder="Ajouter un détail utile…" /></label>
-        <button className={kind === "anomaly" ? styles.warningSave : styles.sheetSave} type="button" onClick={onSave}>{kind === "anomaly" ? "Enregistrer l’anomalie" : "Enregistrer"}</button>
+        <button className={kind === "anomaly" ? styles.warningSave : styles.sheetSave} type="button" onClick={onSave}>
+          {kind === "anomaly" ? "Enregistrer l’anomalie" : "Enregistrer"}
+        </button>
       </section>
     </div>
   );
