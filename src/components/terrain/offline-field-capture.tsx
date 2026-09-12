@@ -23,6 +23,7 @@ const CHOICES: Array<{ kind: ArtifactKind; label: string; icon: typeof StickyNot
 
 export function OfflineFieldCapture({ interventionId }: { interventionId: string }) {
   const router = useRouter();
+  const [expanded, setExpanded] = useState(false);
   const [kind, setKind] = useState<ArtifactKind>("NOTE");
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [busy, setBusy] = useState(false);
@@ -60,7 +61,7 @@ export function OfflineFieldCapture({ interventionId }: { interventionId: string
 
     persist(remaining);
     setBusy(false);
-    if (conflicts > 0) setNotice(`${conflicts} saisie${conflicts > 1 ? "s" : ""} reçue${conflicts > 1 ? "s" : ""}, avec vérification nécessaire.`);
+    if (conflicts > 0) setNotice(`${conflicts} saisie${conflicts > 1 ? "s" : ""} à vérifier.`);
     else if (synced > 0) setNotice(`${synced} saisie${synced > 1 ? "s" : ""} synchronisée${synced > 1 ? "s" : ""}.`);
     if (synced > 0 || conflicts > 0) router.refresh();
   }, [persist, router]);
@@ -96,7 +97,7 @@ export function OfflineFieldCapture({ interventionId }: { interventionId: string
     const data = new FormData(form);
     const payload = buildPayload(kind, data);
     if (!payload) {
-      setNotice("Complétez seulement les informations demandées.");
+      setNotice("Complétez les informations demandées.");
       return;
     }
 
@@ -114,13 +115,13 @@ export function OfflineFieldCapture({ interventionId }: { interventionId: string
         const result = await syncOfflineFieldArtifactAction(item);
         setBusy(false);
         if (result.status === "SYNCED") {
-          setNotice("Saisie synchronisée.");
+          setNotice("Saisie enregistrée.");
           form.reset();
           router.refresh();
           return;
         }
         if (result.status === "CONFLICT") {
-          setNotice("Saisie reçue par SESIRA. Une vérification sera nécessaire, sans écraser la donnée d’origine.");
+          setNotice("Saisie enregistrée avec vérification nécessaire.");
           form.reset();
           router.refresh();
           return;
@@ -132,17 +133,34 @@ export function OfflineFieldCapture({ interventionId }: { interventionId: string
 
     const next = [...readQueue(storageKey), item];
     persist(next);
-    setNotice("La saisie reste sur cet appareil et sera renvoyée quand la connexion revient.");
+    setNotice("Saisie gardée sur cet appareil jusqu’au retour du réseau.");
     form.reset();
+  }
+
+  if (!expanded) {
+    return (
+      <section className={styles.capture} aria-label="Saisie libre">
+        <div className={styles.captureHeader}>
+          <div>
+            <span className={styles.kicker}>En plus</span>
+            <h3>Ajouter une saisie libre</h3>
+            <p>Pour une note, une mesure, une pièce ou un imprévu qui n’est pas déjà demandé par la procédure.</p>
+          </div>
+          {queue.length ? <span className={styles.syncPill}>{queue.length} en attente</span> : null}
+        </div>
+        <button className={styles.secondaryAction} type="button" onClick={() => setExpanded(true)}>Ajouter</button>
+        {notice ? <p className={styles.helper}>{notice}</p> : null}
+      </section>
+    );
   }
 
   return (
     <section className={styles.capture} aria-labelledby={`capture-${interventionId}`}>
       <div className={styles.captureHeader}>
         <div>
-          <span className={styles.kicker}>Saisie terrain</span>
-          <h3 id={`capture-${interventionId}`}>Ajouter ce que vous observez</h3>
-          <p>Une observation à la fois. SESIRA conserve l’heure de capture.</p>
+          <span className={styles.kicker}>Saisie libre</span>
+          <h3 id={`capture-${interventionId}`}>Ajouter un élément</h3>
+          <p>Utilisez cette zone seulement si l’élément n’est pas déjà demandé dans la procédure.</p>
         </div>
         <span className={styles.syncPill}>{online ? "En ligne" : "Hors connexion"}</span>
       </div>
@@ -169,7 +187,7 @@ export function OfflineFieldCapture({ interventionId }: { interventionId: string
       <form className={styles.captureForm} onSubmit={onSubmit}>
         {kind === "NOTE" ? (
           <label>
-            <span>Observation factuelle</span>
+            <span>Observation</span>
             <textarea name="text" required maxLength={4000} placeholder="Ex. filtre remplacé, bruit observé, accès dégagé…" />
           </label>
         ) : null}
@@ -187,7 +205,7 @@ export function OfflineFieldCapture({ interventionId }: { interventionId: string
             </label>
             <label>
               <span>Ce que vous avez constaté</span>
-              <textarea name="summary" required maxLength={2000} placeholder="Décrivez le fait observé, sans diagnostic inventé." />
+              <textarea name="summary" required maxLength={2000} />
             </label>
           </>
         ) : null}
@@ -216,8 +234,8 @@ export function OfflineFieldCapture({ interventionId }: { interventionId: string
 
         {kind === "PART_USED" ? (
           <>
-            <label><span>Référence pièce</span><input name="partCode" required maxLength={100} autoCapitalize="characters" /></label>
-            <label><span>Désignation</span><input name="partLabel" required maxLength={200} /></label>
+            <label><span>Référence</span><input name="partCode" required maxLength={100} autoCapitalize="characters" /></label>
+            <label><span>Pièce utilisée</span><input name="partLabel" required maxLength={200} /></label>
             <label><span>Quantité</span><input name="quantity" type="number" inputMode="decimal" min="0.001" step="any" required /></label>
           </>
         ) : null}
@@ -227,20 +245,20 @@ export function OfflineFieldCapture({ interventionId }: { interventionId: string
         </button>
       </form>
 
-      <div className={styles.syncCard} aria-live="polite">
-        <div className={styles.syncTop}>
-          <strong>{queue.length ? `${queue.length} en attente` : "Aucune saisie locale en attente"}</strong>
-          <span>{online ? "Connexion disponible" : "Hors connexion"}</span>
-        </div>
-        {queue.length ? (
+      {queue.length ? (
+        <div className={styles.syncCard} aria-live="polite">
+          <div className={styles.syncTop}>
+            <strong>{queue.length} en attente</strong>
+            <span>{online ? "Connexion disponible" : "Hors connexion"}</span>
+          </div>
           <button type="button" className={styles.syncButton} disabled={busy || !online} onClick={() => void flush(readQueue(storageKey))}>
-            {online ? "Synchroniser maintenant" : "Synchronisation au retour du réseau"}
+            {online ? "Synchroniser maintenant" : "Au retour du réseau"}
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {notice ? <p className={styles.helper}>{notice}</p> : null}
-      <p className={styles.helper}>Notes, anomalies, mesures et pièces utilisent la file hors connexion existante. Aucun succès serveur n’est affiché avant confirmation.</p>
+      <button className={styles.secondaryAction} type="button" onClick={() => setExpanded(false)}>Fermer</button>
     </section>
   );
 }
