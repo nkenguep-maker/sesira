@@ -5,7 +5,7 @@ import "./globals.css";
 import "./ui-additions.css";
 import "./premium-surfaces.css";
 import "./cvc-landing.css";
-import "./landing-dashboard-snapshot.css";
+import "./landing-native-preview.css";
 import "./cvc-diagnostic.css";
 import "./c21-hardening.css";
 import "./app-workspace-dense.css";
