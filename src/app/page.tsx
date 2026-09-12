@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { LandingDashboardPreview } from "@/components/marketing/landing-dashboard-preview";
 import { TodayPreview } from "@/components/marketing/today-preview";
 import { SesiraLogo } from "@/components/sesira/logo";
 
@@ -100,10 +101,10 @@ export default function HomePage() {
 
       <header className="cvc-hero">
         <div className="cvc-hero-copy">
-          <span className="cvc-kicker">POUR LES ENTREPRISES CVC DE 8 À 50 PERSONNES</span>
-          <h1>Vous faites le CVC. SESIRA s’assure que rien ne se perd après.</h1>
+          <span className="cvc-kicker">LE PILOTAGE SIMPLE POUR LES ENTREPRISES CVC</span>
+          <h1>5 choses à faire. Pas 50 écrans à surveiller.</h1>
           <p className="cvc-hero-lede">
-            Devis sans réponse, chantier vendu sans date, facture échue, contrat à renouveler : SESIRA remet chaque matin les bons sujets devant la bonne personne.
+            Chaque matin, SESIRA remet devant vous les cinq sujets qui comptent vraiment : devis, chantier, rapport terrain, facture et entretien.
           </p>
           <div className="cvc-actions">
             <Link className="cvc-main-cta" href="/diagnostic">Calculer ce qui se perd chez moi</Link>
@@ -116,12 +117,8 @@ export default function HomePage() {
         </div>
 
         <div className="cvc-hero-product">
-          <div className="cvc-product-label"><span>LE PRODUIT, PAS UNE MAQUETTE</span><b>Données fictives</b></div>
-          <TodayPreview compact />
-          <div className="cvc-floating-note">
-            <strong>5 choses à traiter</strong>
-            <span>Une file courte, ordonnée par valeur et urgence.</span>
-          </div>
+          <div className="cvc-product-label"><span>APERÇU DU TABLEAU DE BORD</span><b>Données fictives · même logique que l’application</b></div>
+          <LandingDashboardPreview />
         </div>
       </header>
 
