@@ -271,7 +271,7 @@ function BottomNav({ date, interventionId }: { date: string; interventionId: str
       <Link href={`/app/terrain?date=${encodeURIComponent(date)}#aujourdhui`} data-active="true"><CalendarDays size={18} /><span>Aujourd’hui</span></Link>
       <Link href={interventionHref}><Wrench size={18} /><span>Intervention</span></Link>
       <Link href={`/app/terrain?date=${encodeURIComponent(date)}#envois`}><FileText size={18} /><span>Envois</span></Link>
-      <Link href="/app/parametres"><Settings size={18} /><span>Moi</span></Link>
+      <Link href="/app/terrain/moi"><Settings size={18} /><span>Moi</span></Link>
     </nav>
   );
 }
