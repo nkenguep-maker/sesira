@@ -1,0 +1,372 @@
+.kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: #0e6970;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.contextGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.contextCard,
+.procedureCard {
+  border: 1px solid rgba(16, 38, 41, .09);
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgba(16, 38, 41, .045);
+}
+
+.contextCard {
+  padding: 16px;
+}
+
+.contextIcon {
+  width: 38px;
+  height: 38px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #0e6970;
+  background: #e9f4f2;
+}
+
+.contextCard h3 {
+  margin: 0 0 5px;
+  font-size: 17px;
+  letter-spacing: -.02em;
+}
+
+.contextCard p,
+.contextCard small {
+  display: block;
+  margin: 0;
+  color: #667b7e;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.contextCard small {
+  margin-top: 10px;
+  color: #829092;
+}
+
+.procedureCard {
+  margin-top: 12px;
+  padding: 18px;
+}
+
+.captureHeader,
+.procedureHeader,
+.currentStepHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.captureHeader h3,
+.procedureHeader h3 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  letter-spacing: -.025em;
+}
+
+.captureHeader p,
+.procedureHeader p {
+  margin: 0;
+  color: #738285;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.procedureHeader > strong {
+  flex: none;
+  font-size: 24px;
+  letter-spacing: -.04em;
+  color: #0e6970;
+}
+
+.progressTrack {
+  height: 7px;
+  margin: 16px 0 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9efee;
+}
+
+.progressTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #0e6970;
+  transition: width .25s ease;
+}
+
+.templateList,
+.stepList {
+  display: grid;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.templateButton {
+  width: 100%;
+  min-height: 68px;
+  border: 1px solid rgba(16, 38, 41, .1);
+  border-radius: 16px;
+  background: #f6f9f8;
+  color: #173a3e;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.templateButton span {
+  display: grid;
+  gap: 3px;
+}
+
+.templateButton strong {
+  font-size: 13px;
+}
+
+.templateButton small {
+  color: #77888a;
+  font-size: 10px;
+}
+
+.stepRow {
+  display: grid;
+  grid-template-columns: 32px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 10px;
+  border-radius: 15px;
+  background: #f5f8f7;
+}
+
+.stepRowDone {
+  opacity: .7;
+}
+
+.stepIndex {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #0e6970;
+  background: #e5f1ef;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.stepCopy {
+  min-width: 0;
+}
+
+.stepCopy strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.stepCopy span {
+  display: block;
+  margin-top: 3px;
+  color: #7a898c;
+  font-size: 9px;
+}
+
+.stepState {
+  color: #728285;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.currentStep {
+  margin-top: 16px;
+  padding: 15px;
+  border-radius: 18px;
+  background: #edf5f3;
+  border: 1px solid rgba(14, 105, 112, .12);
+}
+
+.currentStepHeader {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.currentStepHeader h4 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: -.02em;
+}
+
+.stepForm,
+.reviewCard {
+  display: grid;
+  gap: 11px;
+  margin-top: 14px;
+}
+
+.stepForm label,
+.reviewCard label {
+  display: grid;
+  gap: 6px;
+  color: #526b6f;
+  font-size: 10px;
+  font-weight: 760;
+}
+
+.stepForm input,
+.stepForm textarea,
+.stepForm select,
+.reviewCard textarea {
+  width: 100%;
+  border: 1px solid rgba(16, 38, 41, .13);
+  background: #fff;
+  color: #102629;
+  border-radius: 13px;
+  padding: 12px 13px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.stepForm textarea,
+.reviewCard textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.primaryAction {
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-radius: 15px;
+  background: #0e6970;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(14, 105, 112, .17);
+}
+
+.filePicker {
+  min-height: 92px;
+  border: 1px dashed rgba(14, 105, 112, .34) !important;
+  border-radius: 16px;
+  background: #f7fbfa;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px !important;
+  color: #0e6970 !important;
+  cursor: pointer;
+  text-align: center;
+}
+
+.filePicker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.confirmCheck {
+  min-height: 56px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #fff;
+  display: flex !important;
+  grid-template-columns: auto 1fr;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px !important;
+}
+
+.confirmCheck input {
+  width: 22px;
+  height: 22px;
+  accent-color: #0e6970;
+}
+
+.reviewCard {
+  padding-top: 16px;
+  border-top: 1px solid rgba(16, 38, 41, .09);
+}
+
+.notice {
+  margin-top: 13px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid #eed8bb;
+  background: #fff8ef;
+  color: #765027;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.noticeGood {
+  border-color: #cfe6dc;
+  background: #eef8f4;
+  color: #295e4c;
+}
+
+.helper {
+  margin: 7px 0 0;
+  color: #76878a;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+@media (max-width: 520px) {
+  .contextGrid,
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .procedureCard {
+    padding: 15px;
+  }
+
+  .stepRow {
+    grid-template-columns: 30px minmax(0,1fr);
+  }
+
+  .stepState {
+    grid-column: 2;
+  }
+}

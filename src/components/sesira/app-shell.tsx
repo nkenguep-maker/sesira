@@ -98,6 +98,11 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const technician = TECH_ROLES.has(role);
+
+  if (technician && routeMatches(pathname, "/app/terrain")) {
+    return <>{children}</>;
+  }
+
   const primary = technician ? TECH_PRIMARY : MANAGER_PRIMARY;
   const piloting = technician
     ? []
