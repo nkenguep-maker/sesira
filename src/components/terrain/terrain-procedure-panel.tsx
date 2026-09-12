@@ -6,10 +6,8 @@ import {
   ClipboardCheck,
   FileCheck2,
   Gauge,
-  Package,
   PenLine,
   ShieldCheck,
-  Type,
 } from "lucide-react";
 
 import {
@@ -28,7 +26,7 @@ import type {
   TerrainRegulatoryExport,
 } from "@/lib/data/terrain-procedure-ui";
 
-import styles from "./terrain-mobile.module.css";
+import styles from "./terrain-procedure.module.css";
 
 type Props = {
   date: string;
@@ -87,9 +85,9 @@ export function TerrainProcedurePanel({ date, interventionId, templates, run, eq
 
 function ProcedureRunPanel({ date, interventionId, run, binaries }: { date: string; interventionId: string; run: TerrainProcedureRun; binaries: TerrainBinaryEvidence[] }) {
   const required = run.steps.filter((step) => step.required);
-  const completedRequired = required.filter((step) => isStepSatisfied(step, binaries)).length;
+  const completedRequired = required.filter(isStepSatisfied).length;
   const progress = required.length ? Math.round((completedRequired / required.length) * 100) : 100;
-  const current = run.steps.find((step) => !isStepSatisfied(step, binaries)) ?? null;
+  const current = run.steps.find((step) => !isStepSatisfied(step)) ?? null;
   const conflicts = run.steps.filter((step) => step.result?.syncStatus === "CONFLICT").length + binaries.filter((item) => item.status === "CONFLICT").length;
 
   return (
@@ -109,7 +107,7 @@ function ProcedureRunPanel({ date, interventionId, run, binaries }: { date: stri
 
       <div className={styles.stepList}>
         {run.steps.map((step) => {
-          const done = isStepSatisfied(step, binaries);
+          const done = isStepSatisfied(step);
           return (
             <div className={`${styles.stepRow} ${done ? styles.stepRowDone : ""}`} key={step.id}>
               <span className={styles.stepIndex}>{done ? <Check size={15} /> : step.ordinal}</span>
@@ -168,6 +166,7 @@ function StepForm({ date, interventionId, runId, step }: { date: string; interve
         <input type="hidden" name="focus" value={interventionId} />
         <input type="hidden" name="date" value={date} />
         <input type="hidden" name="runId" value={runId} />
+        <input type="hidden" name="stepId" value={step.id} />
         <input type="hidden" name="kind" value={step.kind} />
         {signature ? (
           <>
@@ -245,9 +244,7 @@ function RegulatoryCard({ item }: { item: TerrainRegulatoryExport }) {
   );
 }
 
-function isStepSatisfied(step: TerrainProcedureStep, binaries: TerrainBinaryEvidence[]) {
-  if (step.kind === "PHOTO") return binaries.some((item) => item.kind === "PHOTO" && item.status === "FINALIZED");
-  if (step.kind === "SIGNATURE") return binaries.some((item) => item.kind === "SIGNATURE" && item.status === "FINALIZED");
+function isStepSatisfied(step: TerrainProcedureStep) {
   return step.result?.syncStatus === "SYNCED";
 }
 
