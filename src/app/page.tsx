@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { LandingDashboardPreview } from "@/components/marketing/landing-dashboard-preview";
-import { TodayPreview } from "@/components/marketing/today-preview";
 import { SesiraLogo } from "@/components/sesira/logo";
 
-import "./today-panels.css";
+import styles from "./coolify-landing.module.css";
 
 export const metadata: Metadata = {
   title: "SESIRA | Le suivi opérationnel des entreprises CVC",
@@ -13,233 +12,383 @@ export const metadata: Metadata = {
     "SESIRA suit vos devis, interventions, factures, contrats et obligations CVC pour faire remonter chaque jour les décisions qui comptent.",
 };
 
-const PROOF = [
-  { value: "5 max.", label: "décisions mises en avant le matin" },
-  { value: "3", label: "zones critiques : vendre, exécuter, encaisser" },
-  { value: "90 j", label: "d’observation avant de vous demander de changer" },
-  { value: "0", label: "envoi automatique sans règle explicite" },
-] as const;
+type PlaceholderProps = {
+  label: string;
+  title: string;
+  detail: string;
+  className?: string;
+};
 
-const BENEFITS = [
+function ImagePlaceholder({ label, title, detail, className = "" }: PlaceholderProps) {
+  return (
+    <div className={`${styles.imagePlaceholder} ${className}`} role="img" aria-label={`${title} — emplacement image`}>
+      <div className={styles.placeholderContent}>
+        <span>{label}</span>
+        <strong>{title}</strong>
+        <small>{detail}</small>
+      </div>
+    </div>
+  );
+}
+
+const SERVICES = [
   {
-    number: "01",
-    tag: "VENDRE",
-    title: "Aucun devis ne disparaît dans le quotidien.",
-    copy: "SESIRA repère les devis sans réponse, prépare la prochaine relance et fait remonter les réponses qui demandent votre décision.",
+    tag: "COMMERCIAL",
+    title: "Devis & relances",
+    copy: "Repérer les devis sans réponse, préparer la prochaine relance et remettre le bon dossier devant la bonne personne.",
     href: "/demo/devis",
+    image: "Photo dirigeant CVC / devis client",
   },
   {
-    number: "02",
-    tag: "EXÉCUTER",
-    title: "Ce qui est vendu rejoint vraiment le terrain.",
-    copy: "Les affaires gagnées sans créneau, les interventions du jour et les rapports à valider restent visibles jusqu’à ce qu’un geste soit fait.",
+    tag: "OPÉRATIONS",
+    title: "Interventions",
+    copy: "Faire le lien entre ce qui a été vendu, ce qui doit être planifié et ce qui s’est réellement passé sur le terrain.",
     href: "/demo/interventions",
+    image: "Photo technicien CVC sur site",
   },
   {
-    number: "03",
-    tag: "ENCAISSER",
-    title: "Une facture échue ne devient plus un angle mort.",
-    copy: "Échéance, promesse de paiement, litige : SESIRA reprend uniquement les faits connus et vous remet le bon dossier au bon moment.",
+    tag: "TRÉSORERIE",
+    title: "Factures",
+    copy: "Reprendre les échéances, promesses de paiement et litiges sans transformer le suivi en tableur de plus.",
     href: "/demo/factures",
+    image: "Photo bureau / suivi facturation",
   },
   {
-    number: "04",
-    tag: "PRÉPARER",
-    title: "Les échéances CVC cessent de vivre dans des fichiers séparés.",
-    copy: "Équipements, fluides, attestations et documents à préparer rejoignent le même espace opérationnel, sans inventer de verdict réglementaire.",
+    tag: "CVC",
+    title: "Maintenance & obligations",
+    copy: "Voir au même endroit les contrats à renouveler, les équipements, les fluides, les attestations et les documents à préparer.",
     href: "/demo/obligations",
+    image: "Photo installation CVC / maintenance",
   },
 ] as const;
 
-const SOLUTIONS = [
-  { tag: "COMMERCIAL", title: "Devis & relances", copy: "Savoir quoi reprendre, quand, et pourquoi.", href: "/demo/devis" },
-  { tag: "OPÉRATIONS", title: "Interventions", copy: "Vendu, planifié, en cours, terminé : une seule continuité.", href: "/demo/interventions" },
-  { tag: "TRÉSORERIE", title: "Factures", copy: "Retards, promesses et litiges remis dans la file de travail.", href: "/demo/factures" },
-  { tag: "RÉCURRENCE", title: "Maintenance", copy: "Contrats et renouvellements à préparer avant l’échéance.", href: "/demo/maintenance" },
-  { tag: "CVC", title: "Obligations", copy: "Échéances, données manquantes et documents à joindre.", href: "/demo/obligations" },
-  { tag: "AUTONOMIE", title: "Automatisations", copy: "Commencer en observation, puis ouvrir seulement ce que vous choisissez.", href: "/demo/automatisations" },
+const STEPS = [
+  {
+    no: "01.",
+    title: "SESIRA observe ce qui existe déjà",
+    copy: "Demandes, devis, interventions, factures et échéances sont lus sans vous demander de changer vos habitudes le premier jour.",
+  },
+  {
+    no: "02.",
+    title: "Les écarts deviennent visibles",
+    copy: "Un devis silencieux, une vente sans planning ou une promesse de paiement dépassée revient dans une file courte.",
+  },
+  {
+    no: "03.",
+    title: "Le contexte reste attaché au dossier",
+    copy: "Vous voyez ce qui s’est passé, depuis quand, et l’action proposée sans reconstruire l’historique dans plusieurs outils.",
+  },
+  {
+    no: "04.",
+    title: "Vous choisissez ce qui peut devenir autonome",
+    copy: "Observation d’abord. Autonomie graduelle ensuite. Les décisions sensibles restent humaines tant que vous le décidez.",
+  },
 ] as const;
 
-const STORIES = [
+const PROJECTS = [
   {
-    tag: "SCÉNARIO 01 · DEVIS",
+    tag: "SCÉNARIO · DEVIS",
     title: "18 450 € envoyés. Sept jours de silence.",
-    copy: "SESIRA voit que le devis n’a pas de réponse enregistrée, prépare une relance contextualisée et la place dans la file du dirigeant.",
-    result: "Le message est prêt. L’envoi reste une décision humaine.",
-    href: "/demo/devis",
+    image: "Photo commerciale / client CVC",
   },
   {
-    tag: "SCÉNARIO 02 · TERRAIN",
+    tag: "SCÉNARIO · TERRAIN",
     title: "22 400 € gagnés. Aucun chantier planifié.",
-    copy: "La vente est faite, mais aucun créneau n’existe. SESIRA transforme cet écart en sujet opérationnel visible jusqu’à planification.",
-    result: "Le chiffre d’affaires vendu ne reste pas entre CRM et planning.",
-    href: "/demo/interventions",
+    image: "Photo chantier / équipe terrain",
   },
   {
-    tag: "SCÉNARIO 03 · FACTURE",
+    tag: "SCÉNARIO · FACTURE",
     title: "12 400 € échus. Une promesse dépassée.",
-    copy: "La date promise est passée sans règlement enregistré. SESIRA prépare une relance factuelle, sans inventer de menace ni de pénalité.",
-    result: "Le dossier revient au dirigeant avec le contexte utile.",
-    href: "/demo/factures",
+    image: "Photo administratif / trésorerie",
+  },
+  {
+    tag: "SCÉNARIO · ENTRETIEN",
+    title: "Un contrat approche de l’échéance sans préparation.",
+    image: "Photo maintenance préventive CVC",
+  },
+] as const;
+
+const FEATURES = [
+  {
+    icon: "01",
+    title: "Une file courte",
+    copy: "Maximum cinq sujets mis en avant pour commencer la journée sans parcourir cinquante écrans.",
+  },
+  {
+    icon: "02",
+    title: "Des faits, pas des suppositions",
+    copy: "Une donnée absente n’est jamais remplacée par un faux zéro ou une conclusion rassurante.",
+  },
+  {
+    icon: "03",
+    title: "Le terrain dans la même continuité",
+    copy: "Planning, intervention, rapport et validation restent liés au dossier commercial et financier.",
+  },
+  {
+    icon: "04",
+    title: "Des règles explicites",
+    copy: "Aucun envoi automatique ou action externe n’est présenté comme acquis sans règle configurée.",
+  },
+] as const;
+
+const RESOURCES = [
+  {
+    tag: "GUIDE",
+    title: "Les 5 angles morts qui coûtent le plus cher à une PME CVC",
+    image: "Visuel éditorial / dirigeant CVC",
+  },
+  {
+    tag: "MÉTHODE",
+    title: "Passer de devis signés à des chantiers réellement planifiés",
+    image: "Visuel éditorial / planning terrain",
+  },
+  {
+    tag: "TRÉSORERIE",
+    title: "Reprendre une facture en retard sans perdre le contexte client",
+    image: "Visuel éditorial / finance PME",
   },
 ] as const;
 
 export default function HomePage() {
   return (
-    <main className="cvc-shell">
-      <nav className="cvc-nav" aria-label="Navigation principale">
-        <Link href="/" aria-label="SESIRA" className="cvc-brand-link"><SesiraLogo /></Link>
-        <div className="cvc-nav-links">
-          <a href="#produit">Produit</a>
-          <a href="#solutions">Solutions</a>
-          <a href="#scenarios">Scénarios</a>
+    <main className={styles.page}>
+      <nav className={styles.nav} aria-label="Navigation principale">
+        <Link href="/" aria-label="SESIRA" className={styles.brand}>
+          <SesiraLogo />
+        </Link>
+        <div className={styles.navLinks}>
+          <a href="#services">Solutions</a>
+          <a href="#fonctionnement">Fonctionnement</a>
+          <a href="#cas">Cas d’usage</a>
           <Link href="/demo">Démo</Link>
-          <Link className="cvc-nav-login" href="/login">Connexion</Link>
-          <Link className="cvc-nav-cta" href="/diagnostic">Calculer mes pertes</Link>
+          <Link className={styles.navLogin} href="/login">Connexion</Link>
+          <Link className={styles.navCta} href="/diagnostic">Calculer mes pertes</Link>
         </div>
       </nav>
 
-      <header className="cvc-hero">
-        <div className="cvc-hero-copy">
-          <span className="cvc-kicker">VOTRE JOURNÉE CVC, SANS ANGLE MORT</span>
+      <header className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <span className={styles.eyebrow}>LE SUIVI OPÉRATIONNEL POUR LES ENTREPRISES CVC</span>
           <h1>5 choses à faire. Pas 50 écrans à surveiller.</h1>
-          <p className="cvc-hero-lede">
-            Chaque matin, SESIRA remet devant vous les cinq sujets qui comptent vraiment : devis, chantier, rapport terrain, facture et entretien.
+          <p className={styles.heroLead}>
+            SESIRA suit les dossiers qui se perdent entre devis, planning, terrain, facturation et obligations — puis remet chaque matin les sujets qui demandent vraiment votre attention.
           </p>
-          <div className="cvc-actions">
-            <Link className="cvc-main-cta" href="/diagnostic">Calculer ce qui se perd chez moi</Link>
-            <Link className="cvc-ghost-cta" href="/demo">Explorer la démo <span aria-hidden="true">↗</span></Link>
+          <div className={styles.heroActions}>
+            <Link className={styles.primaryCta} href="/diagnostic">Calculer ce qui se perd chez moi</Link>
+            <Link className={styles.secondaryCta} href="/demo"><span aria-hidden="true">▶</span> Voir la démo</Link>
           </div>
-          <div className="cvc-hero-footnote">
+          <div className={styles.heroNotes}>
             <span>Gratuit · sans compte · 3 minutes</span>
             <span>SESIRA prépare. Vous décidez.</span>
           </div>
         </div>
 
-        <div className="cvc-hero-product">
-          <div className="cvc-product-label"><span>APERÇU DU TABLEAU DE BORD</span><b>Données fictives · même logique que l’application</b></div>
-          <LandingDashboardPreview />
+        <div className={styles.heroVisual}>
+          <ImagePlaceholder
+            className={styles.heroImage}
+            label="IMAGE HERO · PLACEHOLDER"
+            title="Dirigeant et technicien CVC devant une installation"
+            detail="Remplacer par une photo premium, réelle, française, avec espace négatif suffisant pour la composition."
+          />
+          <Link href="/demo" className={styles.playCard}>
+            <span className={styles.playIcon} aria-hidden="true">▶</span>
+            <span><strong>Voir SESIRA en action</strong><span>Démo produit · données fictives</span></span>
+          </Link>
+          <div className={styles.trustCard}>
+            <span>AUJOURD’HUI</span>
+            <strong>5</strong>
+            <p>sujets maximum mis en avant pour commencer la journée.</p>
+          </div>
         </div>
       </header>
 
-      <section className="cvc-proof-strip" aria-label="Principes du produit">
-        {PROOF.map((item) => <article key={item.label}><strong>{item.value}</strong><span>{item.label}</span></article>)}
+      <section className={styles.quickProof} aria-label="Repères SESIRA">
+        <article><strong>5 max.</strong><span>décisions mises en avant le matin</span></article>
+        <article><strong>90 jours</strong><span>d’observation avant de vous demander de changer</span></article>
+        <article><strong>3 zones</strong><span>vendre, exécuter, encaisser</span></article>
+        <article><strong>0 action</strong><span>externe sans règle explicite</span></article>
       </section>
 
-      <section className="cvc-benefits" aria-labelledby="benefits-title">
-        <div className="cvc-section-intro">
-          <span>CE QUE ÇA CHANGE</span>
-          <h2 id="benefits-title">Moins de logiciel à regarder. Plus de travail qui avance.</h2>
-          <p>SESIRA ne vous demande pas de surveiller un nouveau tableau de bord. Il transforme les écarts déjà présents dans vos outils en une file de décisions courte et exploitable.</p>
+      <section className={styles.about} aria-labelledby="about-title">
+        <div className={styles.aboutCopy}>
+          <span className={styles.sectionEyebrow}>POURQUOI SESIRA</span>
+          <h2 id="about-title">Le problème n’est pas votre logiciel. C’est ce qui tombe entre deux logiciels.</h2>
+          <p>
+            Une PME CVC travaille déjà avec des mails, devis, agendas, factures et dossiers réglementaires. SESIRA ne remplace pas tout : il relie les moments où un dossier devrait avancer mais n’avance plus.
+          </p>
+          <div className={styles.aboutList}>
+            <div><b>✓</b><span>Le devis reste visible jusqu’à réponse ou décision.</span></div>
+            <div><b>✓</b><span>Une vente gagnée sans créneau revient au bon moment.</span></div>
+            <div><b>✓</b><span>Une facture ou une échéance ne disparaît pas après le premier rappel.</span></div>
+          </div>
+          <Link href="/demo" className={styles.textLink}>Explorer le produit <span aria-hidden="true">→</span></Link>
         </div>
-        <div className="cvc-benefit-grid">
-          {BENEFITS.map((item) => (
-            <Link href={item.href} className="cvc-benefit-card" key={item.number}>
-              <div><span>{item.number}</span><b>{item.tag}</b></div>
-              <h3>{item.title}</h3>
-              <p>{item.copy}</p>
-              <strong>Voir dans la démo <i aria-hidden="true">↗</i></strong>
+        <div className={styles.aboutMedia}>
+          <ImagePlaceholder className={styles.tall} label="IMAGE 01 · PLACEHOLDER" title="Technicien CVC en intervention" detail="Portrait vertical / environnement réel / uniforme neutre." />
+          <ImagePlaceholder className={styles.smallTop} label="IMAGE 02 · PLACEHOLDER" title="Dirigeant PME CVC au bureau" detail="Photo naturelle, devis ou planning visible en arrière-plan." />
+          <ImagePlaceholder className={styles.smallBottom} label="IMAGE 03 · PLACEHOLDER" title="Installation technique" detail="Groupe froid, PAC, CTA ou chaufferie moderne." />
+        </div>
+      </section>
+
+      <section id="services" className={styles.services} aria-labelledby="services-title">
+        <div className={styles.servicesHead}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionEyebrow}>CE QUE SESIRA SUIT</span>
+            <h2 id="services-title">Un même fil, du premier devis au dernier euro encaissé.</h2>
+            <p>Chaque zone répond à une question très simple : qu’est-ce qui doit avancer maintenant, et qui doit décider ?</p>
+          </div>
+          <Link href="/demo" className={styles.textLink}>Voir toute la démo <span aria-hidden="true">→</span></Link>
+        </div>
+        <div className={styles.serviceGrid}>
+          {SERVICES.map((service, index) => (
+            <Link href={service.href} className={styles.serviceCard} key={service.title}>
+              <ImagePlaceholder className={styles.serviceImage} label={`IMAGE 0${index + 4} · PLACEHOLDER`} title={service.image} detail="Ratio paysage, traitement photo cohérent avec le reste du site." />
+              <div className={styles.serviceBody}>
+                <span>{service.tag}</span>
+                <h3>{service.title}</h3>
+                <p>{service.copy}</p>
+                <b>Découvrir dans la démo →</b>
+              </div>
             </Link>
           ))}
         </div>
       </section>
 
-      <section id="produit" className="cvc-product-section" aria-labelledby="product-title">
-        <div className="cvc-product-section-copy">
-          <span>SESIRA AUJOURD’HUI</span>
-          <h2 id="product-title">Une seule vue pour comprendre ce qui compte en cinq secondes.</h2>
-          <p>Pas un mur de rapports. Pas vingt graphiques. Une file de décisions, l’argent à surveiller, le terrain du jour et les obligations à préparer.</p>
-          <ul>
-            <li>Le contexte reste attaché au dossier.</li>
-            <li>Une donnée absente n’est jamais remplacée par un faux zéro.</li>
-            <li>Les décisions sensibles restent humaines.</li>
-          </ul>
-          <Link href="/demo">Ouvrir le produit avec des données de démonstration <span aria-hidden="true">↗</span></Link>
+      <section id="fonctionnement" className={styles.process} aria-labelledby="process-title">
+        <ImagePlaceholder className={styles.processImage} label="IMAGE 08 · PLACEHOLDER" title="Équipe CVC au travail, photo large" detail="Image principale de la section fonctionnement. Privilégier interaction humaine + contexte technique." />
+        <div className={styles.processCopy}>
+          <span className={styles.sectionEyebrow}>COMMENT ÇA MARCHE</span>
+          <h2 id="process-title">SESIRA observe, remet le contexte, puis vous laisse décider.</h2>
+          <p>Pas de grand chantier de transformation avant de voir de la valeur. Le produit commence par ce qui existe déjà.</p>
+          <div className={styles.steps}>
+            {STEPS.map((step) => (
+              <article className={styles.step} key={step.no}>
+                <span className={styles.stepNo}>{step.no}</span>
+                <div><h3>{step.title}</h3><p>{step.copy}</p></div>
+              </article>
+            ))}
+          </div>
         </div>
-        <div className="cvc-product-stage"><TodayPreview /></div>
       </section>
 
-      <section id="solutions" className="cvc-solutions" aria-labelledby="solutions-title">
-        <div className="cvc-section-intro compact">
-          <span>UN FIL CONTINU</span>
-          <h2 id="solutions-title">Du premier devis au dernier euro encaissé.</h2>
-          <p>Chaque module répond à une question opérationnelle simple. Ensemble, ils empêchent les dossiers de tomber entre deux outils ou deux équipes.</p>
+      <section className={styles.product} aria-labelledby="product-title">
+        <div className={styles.productCopy}>
+          <span className={styles.sectionEyebrow}>LE PRODUIT</span>
+          <h2 id="product-title">Le tableau de bord montre ce qui compte. Pas tout ce qui existe.</h2>
+          <p>Une file de décisions, l’argent à surveiller, le terrain du jour et les obligations à préparer. Le reste reste accessible sans encombrer l’accueil.</p>
+          <div className={styles.productPoints}>
+            <span>✓ Une donnée absente n’est jamais remplacée par un faux zéro.</span>
+            <span>✓ Les décisions sensibles restent humaines.</span>
+            <span>✓ Le contexte reste attaché au dossier.</span>
+          </div>
+          <Link href="/demo" className={styles.textLink}>Ouvrir la démo complète →</Link>
         </div>
-        <div className="cvc-solution-grid">
-          {SOLUTIONS.map((item) => (
-            <Link href={item.href} key={item.title} className="cvc-solution-card">
-              <span>{item.tag}</span>
-              <h3>{item.title}</h3>
-              <p>{item.copy}</p>
-              <b aria-hidden="true">↗</b>
+        <div className={styles.productStage}>
+          <LandingDashboardPreview />
+        </div>
+      </section>
+
+      <section id="cas" className={styles.projects} aria-labelledby="projects-title">
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionEyebrow}>CAS D’USAGE · DONNÉES FICTIVES</span>
+          <h2 id="projects-title">Les petits écarts qui finissent par coûter cher.</h2>
+          <p>Chaque scénario correspond à un moment concret où le dossier devrait avancer mais reste bloqué entre deux actions.</p>
+        </div>
+        <div className={styles.projectGrid}>
+          {PROJECTS.map((project, index) => (
+            <Link href="/demo" className={styles.projectCard} key={project.title}>
+              <ImagePlaceholder label={`IMAGE ${String(index + 9).padStart(2, "0")} · PLACEHOLDER`} title={project.image} detail="Photo documentaire CVC / entreprise française." />
+              <div className={styles.projectOverlay}><span>{project.tag}</span><strong>{project.title}</strong></div>
             </Link>
           ))}
         </div>
       </section>
 
-      <section id="scenarios" className="cvc-stories" aria-labelledby="stories-title">
-        <div className="cvc-stories-head">
-          <div><span>SCÉNARIOS CVC · DONNÉES FICTIVES</span><h2 id="stories-title">Le produit devient clair quand on suit un dossier jusqu’au bout.</h2></div>
-          <Link href="/demo">Explorer toute la démo <span aria-hidden="true">↗</span></Link>
+      <section className={styles.features} aria-labelledby="features-title">
+        <div className={styles.featuresCopy}>
+          <span className={styles.sectionEyebrow}>CE QUI DÉFINIT SESIRA</span>
+          <h2 id="features-title">Simple devant. Rigoureux derrière.</h2>
+          <p>La simplicité de l’écran ne doit pas être obtenue en inventant de la certitude. SESIRA garde visibles les limites, les données manquantes et les décisions humaines.</p>
         </div>
-        <div className="cvc-story-grid">
-          {STORIES.map((item) => (
-            <Link href={item.href} className="cvc-story-card" key={item.tag}>
-              <span>{item.tag}</span>
-              <h3>{item.title}</h3>
-              <p>{item.copy}</p>
-              <div><b>Ce que SESIRA fait</b><strong>{item.result}</strong></div>
-            </Link>
+        <div className={styles.featureGrid}>
+          {FEATURES.map((feature) => (
+            <article className={styles.featureCard} key={feature.icon}>
+              <span className={styles.featureIcon}>{feature.icon}</span>
+              <h3>{feature.title}</h3>
+              <p>{feature.copy}</p>
+            </article>
           ))}
         </div>
       </section>
 
-      <section className="cvc-control-band" aria-labelledby="control-title">
-        <div className="cvc-control-title"><span>QUI DÉCIDE</span><h2 id="control-title">SESIRA prépare. Vous décidez.</h2></div>
-        <div className="cvc-control-points">
-          <article><strong>01</strong><div><h3>Observation d’abord.</h3><p>SESIRA commence par lire et mesurer. Aucun envoi n’est nécessaire pour voir la valeur.</p></div></article>
-          <article><strong>02</strong><div><h3>Autonomie graduelle.</h3><p>Vous choisissez les règles qui peuvent agir seules et celles qui doivent toujours attendre votre validation.</p></div></article>
-          <article><strong>03</strong><div><h3>Pas de vérité inventée.</h3><p>Prix, litiges, preuves externes et verdicts réglementaires ne sont jamais fabriqués pour rendre l’écran plus rassurant.</p></div></article>
+      <div className={styles.trustBand}>
+        <section className={styles.trust} aria-labelledby="trust-title">
+          <div className={styles.trustCopy}>
+            <span className={styles.sectionEyebrow}>QUI DÉCIDE</span>
+            <h2 id="trust-title">SESIRA prépare. Vous décidez.</h2>
+            <p>Le produit peut gagner en autonomie uniquement là où vous avez défini la règle. Il ne fabrique ni succès provider, ni preuve externe, ni verdict réglementaire.</p>
+          </div>
+          <div className={styles.trustStats}>
+            <article><strong>5</strong><span>sujets maximum mis en avant pour commencer la journée</span></article>
+            <article><strong>90 j</strong><span>d’observation pour mesurer avant d’automatiser</span></article>
+            <article><strong>0</strong><span>action externe présentée comme faite sans preuve ou règle</span></article>
+          </div>
+        </section>
+      </div>
+
+      <section className={styles.testimonials} aria-labelledby="testimonials-title">
+        <ImagePlaceholder className={styles.testimonialImage} label="IMAGE 13 · PLACEHOLDER" title="Portrait client / dirigeant CVC" detail="À remplacer par une vraie photo lorsque le premier témoignage client publiable sera disponible." />
+        <div className={styles.testimonialsCopy}>
+          <span className={styles.sectionEyebrow}>PREUVE CLIENT</span>
+          <h2 id="testimonials-title">La place est prête pour une vraie voix client — pas pour une fausse citation.</h2>
+          <p>Cette section reprendra le principe testimonial de la référence, mais elle restera factuelle tant qu’un témoignage publiable n’est pas disponible.</p>
+          <div className={styles.quotePlaceholder}>
+            <span>TÉMOIGNAGE CLIENT · À REMPLACER</span>
+            <blockquote>« Ici viendra une citation réelle sur un résultat mesuré : devis repris, délais réduits, factures remises dans le suivi ou charge administrative économisée. »</blockquote>
+            <small>Nom · société · fonction — uniquement après accord de publication.</small>
+          </div>
         </div>
       </section>
 
-      <section className="cvc-now" aria-labelledby="now-title">
-        <div className="cvc-now-copy">
-          <span>POURQUOI MAINTENANT</span>
-          <h2 id="now-title">Deux dates que vous n’avez pas choisies.</h2>
-          <p>La pression administrative augmente pendant que les marges restent serrées. SESIRA rassemble ce qui doit être préparé sans prétendre faire à votre place ce qui reste votre responsabilité.</p>
+      <section className={styles.resources} aria-labelledby="resources-title">
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionEyebrow}>RESSOURCES</span>
+          <h2 id="resources-title">Des contenus utiles pour mieux voir où se perd le travail.</h2>
+          <p>La structure reprend le bloc éditorial de la référence. Les cartes sont prêtes pour accueillir de vrais articles, études ou retours terrain.</p>
         </div>
-        <div className="cvc-now-dates">
-          <article><span>FACTURATION ÉLECTRONIQUE</span><strong>1er septembre 2027</strong><p>Échéance d’émission pour les PME et microentreprises en France.</p></article>
-          <article><span>FLUIDES</span><strong>31 janvier</strong><p>Le bilan annuel doit être préparé à partir des données disponibles de l’entreprise.</p></article>
+        <div className={styles.resourceGrid}>
+          {RESOURCES.map((resource, index) => (
+            <article className={styles.resourceCard} key={resource.title}>
+              <ImagePlaceholder className={styles.resourceImage} label={`IMAGE ${index + 14} · PLACEHOLDER`} title={resource.image} detail="Illustration éditoriale ou photo métier." />
+              <div className={styles.resourceBody}><span>{resource.tag}</span><h3>{resource.title}</h3></div>
+            </article>
+          ))}
         </div>
       </section>
 
-      <section id="commencer" className="cvc-start-section">
-        <div className="cvc-start-copy">
-          <span>COMMENCER</span>
+      <section className={styles.cta}>
+        <div className={styles.ctaCopy}>
+          <span className={styles.sectionEyebrow}>COMMENCER</span>
           <h2>Commencez par un constat, pas par un logiciel.</h2>
-          <p>Pendant 90 jours, SESIRA observe vos demandes, devis et relances. Il n’envoie rien. À la fin, vous obtenez un constat daté : dossiers sans réponse, demandes jamais reprises et délais réellement observés.</p>
-          <div className="cvc-start-benefits"><span>Sans engagement</span><span>Aucun changement de process imposé</span><span>Déduit de l’installation si vous continuez</span></div>
+          <p>Pendant 90 jours, SESIRA observe vos demandes, devis et relances. Il n’envoie rien. À la fin, vous obtenez un constat daté de ce qui n’a pas été repris.</p>
         </div>
-        <div className="cvc-start-card">
-          <span>CONSTAT 90 JOURS</span>
-          <strong>590 €</strong>
-          <p>Voir ce qui se perd avant de décider quoi automatiser.</p>
-          <Link className="cvc-main-cta" href="/diagnostic">Calculer mon point de départ</Link>
-          <Link className="cvc-start-demo" href="/demo">D’abord voir la démo <span aria-hidden="true">↗</span></Link>
+        <div className={styles.ctaActions}>
+          <div className={styles.ctaPrice}><strong>590 €</strong><span>constat 90 jours</span></div>
+          <Link className={styles.darkCta} href="/diagnostic">Calculer mon point de départ</Link>
+          <Link className={styles.secondaryCta} href="/demo">D’abord voir la démo</Link>
         </div>
       </section>
 
-      <section className="cvc-founder-short">
-        <div className="cvc-founder-photo" aria-hidden="true">PN</div>
-        <div><span>PAUL NKENGUE · FONDATEUR</span><p>J’ai passé des années en vente B2B à voir la même chose : ce n’est pas le gros problème qui fait perdre un dossier, c’est le devis que personne n’a relancé, le chantier que personne n’a planifié ou la facture que personne n’a reprise. SESIRA est construit autour de ces petits écarts coûteux.</p></div>
-      </section>
-
-      <footer className="cvc-footer">
-        <div className="cvc-footer-brand"><SesiraLogo /><p>Le suivi, c’est SESIRA.<br />Les décisions, c’est vous.</p></div>
-        <div className="cvc-footer-links"><div><span>PRODUIT</span><Link href="/demo">Démo</Link><Link href="/diagnostic">Diagnostic</Link><Link href="/automatisation">Automatisation</Link></div><div><span>ACCÈS</span><Link href="/login">Connexion</Link><Link href="/app">Application</Link></div></div>
-        <div className="cvc-footer-note"><span>SESIRA · FRANCE</span><small>© 2026 SESIRA</small></div>
+      <footer className={styles.footer}>
+        <div className={styles.footerIntro}>
+          <SesiraLogo />
+          <p>Le suivi, c’est SESIRA. Les décisions, c’est vous.</p>
+        </div>
+        <div className={styles.footerLinks}>
+          <div><span>PRODUIT</span><Link href="/demo">Démo</Link><Link href="/diagnostic">Diagnostic</Link><Link href="/automatisation">Automatisation</Link></div>
+          <div><span>ACCÈS</span><Link href="/login">Connexion</Link><a href="#services">Solutions</a><a href="#fonctionnement">Fonctionnement</a></div>
+        </div>
+        <div className={styles.footerMeta}><span>SESIRA · France</span><span>© 2026 SESIRA</span></div>
       </footer>
     </main>
   );
