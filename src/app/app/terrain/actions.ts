@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -11,6 +12,8 @@ async function client(): Promise<SupabaseClient> { return (await createClient())
 
 const OFFLINE_KINDS = new Set(["NOTE", "ANOMALY", "MEASUREMENT", "PART_USED"]);
 const PROCEDURE_KINDS = new Set(["CHECK", "MEASUREMENT", "TEXT", "PART", "REGULATORY_CONFIRMATION"]);
+const BINARY_KINDS = new Set(["PHOTO", "SIGNATURE"]);
+const SIGNER_ROLES = new Set(["CUSTOMER", "SITE_MANAGER", "TECHNICIAN", "OTHER"]);
 
 export type OfflineFieldArtifactInput = {
   interventionId: string;
@@ -156,6 +159,79 @@ export async function submitProcedureStepAction(formData: FormData) {
   const status = result.error ? "not-applied" : first?.sync_status === "CONFLICT" ? "procedure-conflict" : "step-saved";
   revalidatePath("/app/terrain");
   redirect(buildTerrainUrl(formData, status));
+}
+
+export async function uploadBinaryEvidenceAction(formData: FormData) {
+  const viewer = await getViewerContext();
+  if (!viewer) redirect("/login");
+  const interventionId = String(formData.get("interventionId") ?? "");
+  const runId = String(formData.get("runId") ?? "");
+  const kind = String(formData.get("kind") ?? "");
+  const file = formData.get("file");
+  if (!interventionId || !runId || !BINARY_KINDS.has(kind) || !(file instanceof File) || file.size <= 0) {
+    redirect(buildTerrainUrl(formData, "invalid"));
+  }
+
+  if (file.size > 15 * 1024 * 1024) redirect(buildTerrainUrl(formData, "file-too-large"));
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const sha256 = createHash("sha256").update(bytes).digest("hex");
+  const capturedAt = new Date();
+  const offlineClientId = `web-binary:${interventionId}:${sha256}`.slice(0, 100);
+  const supabase = await client();
+  const reserved = await supabase.rpc("reserve_binary_artifact", {
+    target_organization_id: viewer.organization.id,
+    target_intervention_id: interventionId,
+    target_run_id: runId,
+    target_kind: kind,
+    target_expected_sha256: sha256,
+    target_captured_at: capturedAt.toISOString(),
+    target_uploaded_by_user_id: viewer.userId,
+    target_offline_client_id: offlineClientId,
+    target_payload_snapshot: { source: "sesira-terrain-ui" },
+  });
+  const reserveRow = Array.isArray(reserved.data) ? reserved.data[0] as Record<string, unknown> | undefined : undefined;
+  if (reserved.error || !reserveRow) redirect(buildTerrainUrl(formData, "not-applied"));
+
+  const artifactId = String(reserveRow.artifact_id);
+  const storageBucket = String(reserveRow.storage_bucket);
+  const storagePath = String(reserveRow.storage_path);
+  const existingStatus = String(reserveRow.upload_status ?? "RESERVED");
+
+  if (existingStatus !== "FINALIZED") {
+    const upload = await supabase.storage.from(storageBucket).upload(storagePath, bytes, {
+      contentType: file.type || "application/octet-stream",
+      upsert: true,
+    });
+    if (upload.error) redirect(buildTerrainUrl(formData, "not-applied"));
+
+    const finalized = await supabase.rpc("finalize_binary_artifact", {
+      target_organization_id: viewer.organization.id,
+      target_artifact_id: artifactId,
+      target_actual_sha256: sha256,
+      target_size_bytes: file.size,
+      target_content_type: file.type || "application/octet-stream",
+    });
+    const finalizedRow = Array.isArray(finalized.data) ? finalized.data[0] as Record<string, unknown> | undefined : undefined;
+    if (finalized.error || finalizedRow?.upload_status !== "FINALIZED") redirect(buildTerrainUrl(formData, "binary-conflict"));
+  }
+
+  if (kind === "SIGNATURE") {
+    const signerName = String(formData.get("signerName") ?? "").trim().slice(0, 200);
+    const signerRole = String(formData.get("signerRole") ?? "CUSTOMER");
+    if (!signerName || !SIGNER_ROLES.has(signerRole)) redirect(buildTerrainUrl(formData, "invalid"));
+    const signature = await supabase.rpc("submit_signature_evidence", {
+      target_organization_id: viewer.organization.id,
+      target_run_id: runId,
+      target_artifact_id: artifactId,
+      target_signer_name: signerName,
+      target_signer_role: signerRole,
+      target_consent_version: "sesira-terrain-emargement-v1",
+    });
+    if (signature.error) redirect(buildTerrainUrl(formData, "not-applied"));
+  }
+
+  revalidatePath("/app/terrain");
+  redirect(buildTerrainUrl(formData, kind === "PHOTO" ? "photo-saved" : "signature-saved"));
 }
 
 export async function markProcedureReadyAction(formData: FormData) {
