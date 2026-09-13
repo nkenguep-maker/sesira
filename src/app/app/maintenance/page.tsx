@@ -4,6 +4,7 @@ import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { getCustomerList } from "@/lib/data";
 import { getMaintenanceWorkspace } from "@/lib/data/c32-workspaces";
+import { getConfirmedDocumentLinkCounts } from "@/lib/data/document-links";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export default async function MaintenancePage() {
   }
 
   const rows = result.rows;
+  const documentCounts = await getConfirmedDocumentLinkCounts(viewer.organization.id, "maintenance_contract", rows.map((row) => row.id));
   const active = rows.filter((row) => row.status === "ACTIVE").length;
   const expiring = rows.filter((row) => row.status === "EXPIRING_SOON").length;
   const expired = rows.filter((row) => row.status === "EXPIRED").length;
@@ -32,7 +34,7 @@ export default async function MaintenancePage() {
       <PageHeader
         eyebrow="CONTRATS"
         title="Maintenance"
-        description="Voyez les prochaines visites et les contrats qui demandent une préparation commerciale."
+        description="Voyez les prochaines visites, les renouvellements et les contrats que SESIRA a reconnus dans vos documents."
         actions={<Link className="button ghost" href="/app/interventions">Voir le planning</Link>}
       />
 
@@ -47,34 +49,38 @@ export default async function MaintenancePage() {
 
       {rows.length ? (
         <section className="workspace-list" aria-label="Contrats de maintenance">
-          {rows.map((row) => (
-            <article className="workspace-row" key={row.id}>
-              <div className="workspace-row-main">
-                <div className="workspace-row-heading">
-                  <div><span className="eyebrow">{customerNames.get(row.customerId) ?? "Client"}</span><h2>{row.title}</h2></div>
-                  <StatusPill tone={maintenanceTone(row.status)}>{maintenanceLabel(row.status)}</StatusPill>
+          {rows.map((row) => {
+            const documents = documentCounts.get(row.id) ?? 0;
+            return (
+              <article className="workspace-row" id={`maintenance-${row.id}`} key={row.id}>
+                <div className="workspace-row-main">
+                  <div className="workspace-row-heading">
+                    <div><span className="eyebrow">{customerNames.get(row.customerId) ?? "Client"}</span><h2>{row.title}</h2></div>
+                    <StatusPill tone={maintenanceTone(row.status)}>{maintenanceLabel(row.status)}</StatusPill>
+                  </div>
+                  <div className="workspace-meta">
+                    <span><b>Prochaine visite</b>{row.nextVisitDueAt ? formatDate(row.nextVisitDueAt) : "Non planifiée"}</span>
+                    <span><b>Cadence</b>{row.cadenceDays} jours</span>
+                    <span><b>Fin de contrat</b>{row.endDate ? formatDate(row.endDate) : "Non renseignée"}</span>
+                    <span><b>Documents</b>{documents ? `${documents} relié${documents > 1 ? "s" : ""}` : "Aucun"}</span>
+                  </div>
+                  {row.renewalNoticeSentAt ? <p className="workspace-description">Avis de renouvellement enregistré le {formatDate(row.renewalNoticeSentAt)}.</p> : null}
                 </div>
-                <div className="workspace-meta">
-                  <span><b>Prochaine visite</b>{row.nextVisitDueAt ? formatDate(row.nextVisitDueAt) : "Non planifiée"}</span>
-                  <span><b>Cadence</b>{row.cadenceDays} jours</span>
-                  <span><b>Fin de contrat</b>{row.endDate ? formatDate(row.endDate) : "Non renseignée"}</span>
-                  <span><b>Valeur connue</b>{row.amount === null ? "Non renseignée" : formatAmount(row.amount, row.currency)}</span>
+                <div className="workspace-row-actions">
+                  <div className={row.status === "EXPIRING_SOON" || row.status === "EXPIRED" ? "workspace-gap-box" : "workspace-preview"}>
+                    <span>Prochaine étape</span>
+                    <p>{maintenanceNextStep(row.status, row.nextVisitDueAt)}</p>
+                  </div>
+                  {documents ? <Link className="button ghost small" href={`/app/documents?entity=maintenance_contract&entityId=${row.id}`}>Voir les documents</Link> : null}
+                  {row.nextVisitDueAt ? <Link className="button ghost small" href="/app/interventions">Ouvrir le planning</Link> : null}
                 </div>
-                {row.renewalNoticeSentAt ? <p className="workspace-description">Avis de renouvellement enregistré le {formatDate(row.renewalNoticeSentAt)}.</p> : null}
-              </div>
-              <div className="workspace-row-actions">
-                <div className={row.status === "EXPIRING_SOON" || row.status === "EXPIRED" ? "workspace-gap-box" : "workspace-preview"}>
-                  <span>Prochaine étape</span>
-                  <p>{maintenanceNextStep(row.status, row.nextVisitDueAt)}</p>
-                </div>
-                {row.nextVisitDueAt ? <Link className="button ghost small" href="/app/interventions">Ouvrir le planning</Link> : null}
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </section>
       ) : <EmptyState title="Aucun contrat de maintenance" description="Les contrats apparaîtront ici lorsqu’ils seront enregistrés ou synchronisés." action={<Link className="button primary" href="/app/imports">Importer des données</Link>} />}
 
-      <section className="premium-trust-note"><span className="eyebrow">DÉCISION HUMAINE</span><h2>SESIRA prépare l’échéance, pas la décision contractuelle.</h2><p>SESIRA ne renouvelle pas un contrat et ne change pas son prix. Le renouvellement, les nouvelles conditions et une éventuelle résiliation restent décidés par votre entreprise.</p></section>
+      <section className="premium-trust-note"><span className="eyebrow">DÉCISION HUMAINE</span><h2>SESIRA prépare l’échéance, pas la décision contractuelle.</h2><p>SESIRA peut reconnaître et rattacher le contrat d’origine, mais ne le renouvelle pas et ne change pas son prix. Le renouvellement, les nouvelles conditions et une éventuelle résiliation restent décidés par votre entreprise.</p></section>
     </>
   );
 }
@@ -84,4 +90,3 @@ function isDueSoon(value: string | null, days: number) { if (!value) return fals
 function maintenanceTone(status: string): "good" | "warning" | "neutral" { if (status === "ACTIVE") return "good"; if (["EXPIRING_SOON", "EXPIRED"].includes(status)) return "warning"; return "neutral"; }
 function maintenanceLabel(status: string) { return ({ DRAFT: "Brouillon", ACTIVE: "Actif", EXPIRING_SOON: "À préparer", EXPIRED: "Expiré", CANCELLED: "Annulé" } as Record<string, string>)[status] ?? status; }
 function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "Date inconnue" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(date); }
-function formatAmount(amount: number, currency: string) { return new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount); }
