@@ -5,21 +5,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getViewerContext } from "@/lib/auth/viewer";
+import {
+  DOCUMENT_BUCKET,
+  MAX_DOCUMENT_BYTES,
+  isDocumentKind,
+  safeStorageName,
+  sniffDocumentType,
+} from "@/lib/documents/upload-policy";
 import { createClient } from "@/lib/supabase/server";
-
-const DOCUMENT_BUCKET = "sesira-documents";
-const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024;
-const DOCUMENT_KINDS = new Set([
-  "CONTRACT",
-  "INVOICE",
-  "PROOF_OF_DELIVERY",
-  "REGULATORY",
-  "PHOTO",
-  "REPORT",
-  "OTHER",
-]);
-
-type AcceptedDocumentType = "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
 
 async function context() {
   const viewer = await getViewerContext();
@@ -43,42 +36,6 @@ function finishDocumentUpload(result: string) {
   redirect(`/app/documents?result=${encodeURIComponent(result)}`);
 }
 
-function safeStorageName(fileName: string) {
-  const normalized = fileName.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
-  const cleaned = normalized.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-");
-  return cleaned.replace(/^[-.]+|[-.]+$/g, "").slice(0, 180) || "document";
-}
-
-function sniffDocumentType(bytes: Uint8Array): AcceptedDocumentType | null {
-  if (bytes.length >= 5 && bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46 && bytes[4] === 0x2d) {
-    return "application/pdf";
-  }
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-    return "image/jpeg";
-  }
-  if (
-    bytes.length >= 8 &&
-    bytes[0] === 0x89 &&
-    bytes[1] === 0x50 &&
-    bytes[2] === 0x4e &&
-    bytes[3] === 0x47 &&
-    bytes[4] === 0x0d &&
-    bytes[5] === 0x0a &&
-    bytes[6] === 0x1a &&
-    bytes[7] === 0x0a
-  ) {
-    return "image/png";
-  }
-  if (
-    bytes.length >= 12 &&
-    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
-    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
-  ) {
-    return "image/webp";
-  }
-  return null;
-}
-
 export async function uploadDocumentAction(formData: FormData) {
   const { viewer, client } = await context();
   const candidate = formData.get("file");
@@ -87,7 +44,7 @@ export async function uploadDocumentAction(formData: FormData) {
   if (!(candidate instanceof File) || candidate.size === 0) {
     finishDocumentUpload("upload-missing-file");
   }
-  if (!DOCUMENT_KINDS.has(kind)) {
+  if (!isDocumentKind(kind)) {
     finishDocumentUpload("upload-invalid-kind");
   }
   if (candidate.name.length > 300) {
