@@ -158,7 +158,7 @@ export async function resolveDocumentLinks(
 async function readRows(client: SupabaseClient, table: string, select: string, organizationId: string): Promise<Row[]> {
   const { data, error } = await client.from(table).select(select).eq("organization_id", organizationId).limit(1000);
   if (error) throw new Error(`document linking read ${table}: ${error.message}`);
-  return (data ?? []) as Row[];
+  return (data ?? []) as unknown as Row[];
 }
 
 function matchCustomers(customers: Row[], extraction: DocumentExtraction): Array<Omit<DocumentLinkCandidate, "isPrimary">> {
