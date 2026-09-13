@@ -77,20 +77,21 @@ export default function HomePage() {
           <span className={styles.heroNote}>Commencez avec vos propres clients et équipements.</span>
         </div>
 
-        <div className={styles.heroVisual} aria-label="Équipe d’intervention et suivi du jour">
+        <div className={styles.heroVisual} aria-label="Technicien sur site et suivi du jour">
           <div className={styles.heroPhoto}>
             <Image
-              src="/api/landing-image/team"
-              alt="Équipe technique d’une entreprise d’intervention"
-              width={1000}
-              height={760}
+              src="/images/landing/hero-hvac.webp"
+              alt="Technicien CVC inspectant une installation sur site"
+              width={1448}
+              height={1086}
+              quality={92}
+              sizes="(max-width: 1050px) 100vw, 56vw"
               priority
-              unoptimized
             />
           </div>
           <div className={styles.floatingBadge}>
-            <small>ÉQUIPE TERRAIN</small>
-            <strong>4 interventions aujourd’hui</strong>
+            <small>TERRAIN AUJOURD’HUI</small>
+            <strong>4 interventions planifiées</strong>
             <span>Le bureau garde la vue d’ensemble.</span>
           </div>
           <div className={styles.todayCard}>
@@ -131,20 +132,21 @@ export default function HomePage() {
       <section id="terrain" className={styles.splitSection} aria-labelledby="terrain-title">
         <div className={styles.splitMedia}>
           <Image
-            src="/api/landing-image/planning"
-            alt="Technicien et organisation des interventions"
-            width={900}
-            height={760}
-            unoptimized
+            src="/images/landing/terrain-technician.webp"
+            alt="Technicienne CVC documentant un équipement sur site"
+            width={1448}
+            height={1086}
+            quality={92}
+            sizes="(max-width: 1050px) 100vw, 52vw"
           />
           <div className={styles.mediaCaption}>
-            <strong>Intervention planifiée</strong>
-            <span>Mission → technicien → rapport</span>
+            <strong>Intervention sur équipement</strong>
+            <span>Mission → photo → rapport</span>
           </div>
         </div>
         <div className={styles.splitCopy}>
           <span className={styles.sectionEyebrow}>BUREAU + TERRAIN</span>
-          <h2 id="terrain-title">Le bureau planifie. Le technicien fait le travail.</h2>
+          <h2 id="terrain-title">Le bureau planifie. L’équipe terrain fait le travail.</h2>
           <p>Chacun voit ce dont il a besoin. Le reste reste au bureau.</p>
           <div className={styles.bulletList}>
             <div><b>01</b><span><strong>Planning clair</strong><span>Intervention, adresse, créneau et technicien dans la même vue.</span></span></div>
@@ -157,11 +159,12 @@ export default function HomePage() {
       <section className={`${styles.splitSection} ${styles.reverse}`} aria-labelledby="cash-title">
         <div className={styles.splitMedia}>
           <Image
-            src="/api/landing-image/finance"
-            alt="Suivi des devis et de la facturation"
-            width={900}
-            height={760}
-            unoptimized
+            src="/images/landing/office-operations.webp"
+            alt="Responsable d’exploitation suivant devis, factures et échéances"
+            width={1448}
+            height={1086}
+            quality={92}
+            sizes="(max-width: 1050px) 100vw, 52vw"
           />
           <div className={styles.mediaCaption}>
             <strong>Un dossier, jusqu’au paiement</strong>
@@ -200,11 +203,12 @@ export default function HomePage() {
         <div className={styles.documentBand}>
           <div className={styles.documentPhoto}>
             <Image
-              src="/api/landing-image/editorial"
-              alt="Documents et dossiers d’une entreprise technique"
-              width={850}
-              height={650}
-              unoptimized
+              src="/images/landing/documents-upload.webp"
+              alt="Technicien téléversant un rapport dans le bon dossier"
+              width={1448}
+              height={1086}
+              quality={92}
+              sizes="(max-width: 1050px) 100vw, 44vw"
             />
           </div>
           <div className={styles.documentCopy}>
