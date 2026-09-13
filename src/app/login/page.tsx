@@ -156,6 +156,13 @@ export default function LoginPage() {
             {recovery ? "Retour à la connexion" : "Mot de passe oublié ?"}
           </button>
 
+          {!recovery ? (
+            <>
+              <div className="auth-divider"><span />NOUVEAU SUR SESIRA<span /></div>
+              <Link href="/signup" className="button ghost full">Créer un compte entreprise</Link>
+            </>
+          ) : null}
+
           <div className="auth-divider"><span />OU<span /></div>
           <Link href="/" className="button ghost full">Retour au site</Link>
         </div>
