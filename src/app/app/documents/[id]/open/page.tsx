@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 
 import { getViewerContext } from "@/lib/auth/viewer";
@@ -13,7 +14,7 @@ export default async function OpenDocumentPage({ params }: { params: Params }) {
   if (!viewer) redirect("/login");
 
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = (await createClient()) as SupabaseClient;
   const document = await supabase
     .from("documents")
     .select("file_reference")
