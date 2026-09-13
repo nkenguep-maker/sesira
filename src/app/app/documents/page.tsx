@@ -1,10 +1,11 @@
 import Link from "next/link";
 
+import { DocumentUploadForm } from "@/components/documents/document-upload-form";
 import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { getDocumentsWorkspace } from "@/lib/data/c32-workspaces";
 
-import { archiveDocumentAction, rejectDocumentAction, uploadDocumentAction, validateDocumentAction } from "../c32-actions";
+import { archiveDocumentAction, rejectDocumentAction, validateDocumentAction } from "../c32-actions";
 
 export const dynamic = "force-dynamic";
 type SearchParams = Promise<{ result?: string }>;
@@ -32,27 +33,9 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Se
           </div>
           <StatusPill>Stockage privé</StatusPill>
         </div>
-        <p className="workspace-card-copy">PDF, JPEG, PNG ou WebP · 15 Mo maximum. Le type réel du fichier est contrôlé côté serveur avant stockage.</p>
-        <form action={uploadDocumentAction} className="workspace-inline-form">
-          <label>
-            <span>Type de document</span>
-            <select name="kind" defaultValue="OTHER" required>
-              <option value="CONTRACT">Contrat</option>
-              <option value="INVOICE">Facture</option>
-              <option value="PROOF_OF_DELIVERY">Preuve de livraison</option>
-              <option value="REGULATORY">Réglementaire</option>
-              <option value="PHOTO">Photo</option>
-              <option value="REPORT">Rapport</option>
-              <option value="OTHER">Autre</option>
-            </select>
-          </label>
-          <label>
-            <span>Fichier</span>
-            <input name="file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp" required />
-          </label>
-          <button type="submit" className="button primary">Ajouter le document</button>
-        </form>
-        <small className="workspace-helper">Le fichier est isolé dans le dossier privé de votre organisation. SESIRA ne se fie pas seulement à l’extension ou au MIME envoyé par le navigateur.</small>
+        <p className="workspace-card-copy">PDF, JPEG, PNG ou WebP · 15 Mo maximum. Le fichier est envoyé directement vers l’espace privé puis vérifié côté serveur avant son inscription au registre.</p>
+        <DocumentUploadForm />
+        <small className="workspace-helper">Le contenu du fichier ne transite pas par la Function SESIRA. Le type réel et la taille sont revérifiés après transfert ; un fichier incohérent est supprimé et n’entre pas au registre.</small>
       </section>
 
       {rows.length ? (
@@ -110,15 +93,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Se
 function ResultNotice({ result }: { result?: string }) {
   if (!result) return null;
   const messages: Record<string, { tone: "good" | "warning"; title: string; copy: string }> = {
-    uploaded: { tone: "good", title: "Document ajouté", copy: "Le fichier a été stocké dans l’espace privé de l’organisation et inscrit au registre documentaire." },
     saved: { tone: "good", title: "Enregistré", copy: "La décision a été enregistrée." },
-    "upload-missing-file": { tone: "warning", title: "Fichier manquant", copy: "Sélectionnez un fichier avant de lancer l’ajout." },
-    "upload-invalid-kind": { tone: "warning", title: "Type invalide", copy: "Le type documentaire sélectionné n’est pas accepté." },
-    "upload-invalid-name": { tone: "warning", title: "Nom trop long", copy: "Le nom du fichier dépasse la limite autorisée." },
-    "upload-too-large": { tone: "warning", title: "Fichier trop volumineux", copy: "La taille maximale est de 15 Mo." },
-    "upload-invalid-format": { tone: "warning", title: "Format refusé", copy: "SESIRA accepte actuellement PDF, JPEG, PNG et WebP et vérifie le contenu réel du fichier." },
-    "upload-storage-error": { tone: "warning", title: "Stockage indisponible", copy: "Le fichier n’a pas été enregistré. Réessayez plus tard." },
-    "upload-registry-error": { tone: "warning", title: "Ajout annulé", copy: "Le registre n’a pas pu être mis à jour ; SESIRA a tenté de supprimer le fichier déjà transféré pour éviter un document orphelin." },
     "not-found": { tone: "warning", title: "Document introuvable", copy: "Ce document n’existe pas ou n’appartient pas à votre organisation." },
     "open-error": { tone: "warning", title: "Ouverture impossible", copy: "Impossible de générer un accès temporaire au fichier." },
   };
