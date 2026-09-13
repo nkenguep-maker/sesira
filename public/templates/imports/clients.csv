@@ -1,0 +1,2 @@
+external_id;external_provider;type;display_name;company_name;email;phone
+CUST-001;csv_import;COMPANY;Entreprise Exemple;Entreprise Exemple SAS;contact@entreprise-exemple.test;+33184000001

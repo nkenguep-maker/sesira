@@ -1,0 +1,2 @@
+external_id;external_provider;customer_external_id;customer_external_provider;customer_email;reference;title;amount;currency;status;sent_at;expires_at
+QUOTE-001;csv_import;CUST-001;csv_import;;DV-2026-001;Maintenance CVC annuelle;4800.00;EUR;SENT;2026-09-13;2026-10-13

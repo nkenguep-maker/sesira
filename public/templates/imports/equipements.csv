@@ -1,0 +1,2 @@
+external_ref;customer_external_id;customer_external_provider;customer_email;label;installation_address;equipment_category;fluid_code;charge_kg;is_hermetic;is_residential;is_mobile;has_leak_detector;commissioned_at;decommissioned_at;status
+EQ-001;CUST-001;csv_import;;PAC toiture;10 rue Exemple, 75000 Paris;PAC;R410A;7.8;false;false;false;true;2025-06-01;;ACTIVE
