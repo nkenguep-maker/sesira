@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 
 import { SesiraLogo } from "@/components/sesira/logo";
+import { createClient } from "@/lib/supabase/client";
 import {
   loginAction,
   requestPasswordResetAction,
@@ -14,6 +15,8 @@ const INITIAL_STATE: AuthActionState = {};
 
 export default function LoginPage() {
   const [recovery, setRecovery] = useState(false);
+  const [passkeyPending, setPasskeyPending] = useState(false);
+  const [passkeyError, setPasskeyError] = useState<string | null>(null);
   const [loginState, loginFormAction, loginPending] = useActionState(loginAction, INITIAL_STATE);
   const [recoveryState, recoveryFormAction, recoveryPending] = useActionState(
     requestPasswordResetAction,
@@ -22,6 +25,36 @@ export default function LoginPage() {
 
   const state = recovery ? recoveryState : loginState;
   const pending = recovery ? recoveryPending : loginPending;
+
+  async function handlePasskeySignIn() {
+    setPasskeyError(null);
+
+    if (typeof window === "undefined" || !("PublicKeyCredential" in window)) {
+      setPasskeyError("Les clés d’accès ne sont pas prises en charge sur cet appareil ou ce navigateur.");
+      return;
+    }
+
+    setPasskeyPending(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPasskey();
+
+      if (error) {
+        setPasskeyError(
+          error.code === "passkey_disabled"
+            ? "Les clés d’accès ne sont pas encore activées pour SESIRA."
+            : "Connexion par clé d’accès impossible. Réessayez ou utilisez votre mot de passe.",
+        );
+        return;
+      }
+
+      window.location.assign("/app");
+    } catch {
+      setPasskeyError("Connexion par clé d’accès annulée ou indisponible sur cet appareil.");
+    } finally {
+      setPasskeyPending(false);
+    }
+  }
 
   return (
     <main className="auth-layout">
@@ -62,7 +95,7 @@ export default function LoginPage() {
                   autoComplete="email"
                   placeholder="vous@entreprise.com"
                   required
-                  disabled={pending}
+                  disabled={pending || passkeyPending}
                 />
               </label>
 
@@ -76,14 +109,14 @@ export default function LoginPage() {
                     placeholder="••••••••••"
                     minLength={8}
                     required
-                    disabled={pending}
+                    disabled={pending || passkeyPending}
                   />
                 </label>
               )}
 
               {state.error && <p className="form-error" role="alert">{state.error}</p>}
 
-              <button className="button primary full" type="submit" disabled={pending}>
+              <button className="button primary full" type="submit" disabled={pending || passkeyPending}>
                 {pending
                   ? "Traitement…"
                   : recovery
@@ -93,11 +126,29 @@ export default function LoginPage() {
             </form>
           )}
 
+          {!recovery && !state.success ? (
+            <>
+              <div className="auth-divider"><span />OU<span /></div>
+              <button
+                className="button ghost full"
+                type="button"
+                onClick={handlePasskeySignIn}
+                disabled={pending || passkeyPending}
+              >
+                {passkeyPending ? "Vérification…" : "Utiliser une clé d’accès / Face ID"}
+              </button>
+              {passkeyError ? <p className="form-error" role="alert">{passkeyError}</p> : null}
+            </>
+          ) : null}
+
           <button
             className="text-button recovery-link"
             type="button"
-            onClick={() => setRecovery((value) => !value)}
-            disabled={pending}
+            onClick={() => {
+              setPasskeyError(null);
+              setRecovery((value) => !value);
+            }}
+            disabled={pending || passkeyPending}
           >
             {recovery ? "Retour à la connexion" : "Mot de passe oublié ?"}
           </button>
