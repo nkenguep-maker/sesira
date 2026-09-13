@@ -4,24 +4,22 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 
 import { getViewerContext } from "@/lib/auth/viewer";
+import { analyzeStoredDocument } from "@/lib/documents/intelligence";
 import {
   DOCUMENT_BUCKET,
   MAX_DOCUMENT_BYTES,
-  isDocumentKind,
   safeStorageName,
   sniffDocumentType,
 } from "@/lib/documents/upload-policy";
 import { createClient } from "@/lib/supabase/server";
 
 type PrepareInput = {
-  kind: string;
   fileName: string;
   fileSize: number;
   contentType: string;
 };
 
 type FinalizeInput = {
-  kind: string;
   fileName: string;
   fileSize: number;
   storagePath: string;
@@ -75,14 +73,21 @@ export async function finalizeDocumentUploadAction(input: FinalizeInput) {
 
   const existing = await client
     .from("documents")
-    .select("id")
+    .select("id,content_type")
     .eq("organization_id", viewer.organization.id)
     .eq("file_reference", input.storagePath)
     .limit(1)
     .maybeSingle();
 
   if (existing.data?.id) {
-    return { ok: true as const, documentId: String(existing.data.id) };
+    const analysis = await analyzeStoredDocument({
+      organizationId: viewer.organization.id,
+      documentId: String(existing.data.id),
+      contentType: typeof existing.data.content_type === "string" ? existing.data.content_type : undefined,
+      fileName: input.fileName,
+    });
+    revalidateDocumentSurfaces();
+    return { ok: true as const, documentId: String(existing.data.id), analysis };
   }
 
   const downloaded = await client.storage.from(DOCUMENT_BUCKET).download(input.storagePath);
@@ -116,7 +121,7 @@ export async function finalizeDocumentUploadAction(input: FinalizeInput) {
       file_name: input.fileName,
       content_type: detectedType,
       size_bytes: blob.size,
-      kind: input.kind,
+      kind: "OTHER",
       status: "UPLOADED",
       uploaded_by_user_id: viewer.userId,
       metadata: {
@@ -124,6 +129,7 @@ export async function finalizeDocumentUploadAction(input: FinalizeInput) {
         storage_path: input.storagePath,
         source: "signed_browser_upload",
         verified_content_type: detectedType,
+        document_intelligence: { state: "PENDING" },
       },
     })
     .select("id")
@@ -139,7 +145,15 @@ export async function finalizeDocumentUploadAction(input: FinalizeInput) {
       .maybeSingle();
 
     if (raced.data?.id) {
-      return { ok: true as const, documentId: String(raced.data.id) };
+      const analysis = await analyzeStoredDocument({
+        organizationId: viewer.organization.id,
+        documentId: String(raced.data.id),
+        bytes,
+        contentType: detectedType,
+        fileName: input.fileName,
+      });
+      revalidateDocumentSurfaces();
+      return { ok: true as const, documentId: String(raced.data.id), analysis };
     }
 
     await cleanupObject(client, input.storagePath);
@@ -152,14 +166,34 @@ export async function finalizeDocumentUploadAction(input: FinalizeInput) {
     return { ok: false as const, code: "registry-failed" };
   }
 
-  revalidatePath("/app/documents");
-  return { ok: true as const, documentId: String(insert.data.id) };
+  const documentId = String(insert.data.id);
+  const analysis = await analyzeStoredDocument({
+    organizationId: viewer.organization.id,
+    documentId,
+    bytes,
+    contentType: detectedType,
+    fileName: input.fileName,
+  });
+
+  revalidateDocumentSurfaces();
+  return { ok: true as const, documentId, analysis };
+}
+
+export async function reanalyzeDocumentAction(formData: FormData) {
+  const viewer = await getViewerContext();
+  if (!viewer) return { ok: false as const, code: "auth-required" };
+  const documentId = String(formData.get("documentId") ?? "").trim();
+  if (!documentId) return { ok: false as const, code: "missing-document" };
+
+  const analysis = await analyzeStoredDocument({
+    organizationId: viewer.organization.id,
+    documentId,
+  });
+  revalidateDocumentSurfaces();
+  return { ok: analysis.status === "CLASSIFIED", analysis };
 }
 
 function validateMetadata(input: PrepareInput, validateDeclaredType = true) {
-  if (!isDocumentKind(input.kind)) {
-    return { ok: false as const, code: "invalid-kind" };
-  }
   if (!input.fileName || input.fileName.length > 300) {
     return { ok: false as const, code: "invalid-name" };
   }
@@ -176,6 +210,17 @@ function isOrganizationStoragePath(storagePath: string, organizationId: string) 
   const escaped = organizationId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const pattern = new RegExp(`^${escaped}/[0-9a-fA-F-]{36}/[^/]{1,180}$`);
   return pattern.test(storagePath);
+}
+
+function revalidateDocumentSurfaces() {
+  revalidatePath("/app/documents");
+  revalidatePath("/app/clients");
+  revalidatePath("/app/devis");
+  revalidatePath("/app/factures");
+  revalidatePath("/app/interventions");
+  revalidatePath("/app/maintenance");
+  revalidatePath("/app/rapports");
+  revalidatePath("/app/obligations/equipements");
 }
 
 async function cleanupObject(client: SupabaseClient, storagePath: string) {
