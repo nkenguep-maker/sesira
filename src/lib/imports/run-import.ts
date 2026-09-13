@@ -17,9 +17,7 @@ import {
   type QuoteRow,
 } from "@/lib/imports/schemas";
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database";
-
-type Client = SupabaseClient<Database>;
+type Client = SupabaseClient;
 type RawRow = Record<string, string>;
 
 type AppliedRow = {
