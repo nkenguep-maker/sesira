@@ -72,16 +72,19 @@ export async function signupAction(
       data: {
         full_name: parsed.data.fullName,
         organization_name: parsed.data.organizationName,
+        account_type: "company_owner",
       },
     },
   });
 
   if (error) {
-    return { error: "Création du compte impossible pour le moment." };
+    return { error: "Création du compte entreprise impossible pour le moment." };
   }
 
   if (!data.session) {
-    return { success: "Compte créé. Confirmez votre adresse email avant de vous connecter." };
+    return {
+      success: "Votre espace entreprise est prêt. Confirmez votre adresse e-mail avant de vous connecter.",
+    };
   }
 
   redirect("/app");
