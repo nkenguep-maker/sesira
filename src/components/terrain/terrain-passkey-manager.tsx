@@ -12,22 +12,24 @@ export function TerrainPasskeyManager() {
   const [message, setMessage] = useState<{ tone: "good" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    void refreshPasskeys();
-  }, []);
+    let active = true;
 
-  async function refreshPasskeys() {
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.passkey.list();
-      if (error) {
-        setPasskeyCount(null);
-        return;
+    async function loadPasskeys() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.passkey.list();
+        if (!active) return;
+        setPasskeyCount(error ? null : Array.isArray(data) ? data.length : 0);
+      } catch {
+        if (active) setPasskeyCount(null);
       }
-      setPasskeyCount(Array.isArray(data) ? data.length : 0);
-    } catch {
-      setPasskeyCount(null);
     }
-  }
+
+    void loadPasskeys();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function registerPasskey() {
     setMessage(null);
@@ -52,8 +54,8 @@ export function TerrainPasskeyManager() {
         return;
       }
 
+      setPasskeyCount((current) => (current ?? 0) + 1);
       setMessage({ tone: "good", text: "Clé d’accès enregistrée. Vous pourrez désormais vous connecter avec la biométrie ou le code de cet appareil." });
-      await refreshPasskeys();
     } catch {
       setMessage({ tone: "error", text: "Enregistrement annulé ou indisponible sur cet appareil." });
     } finally {
