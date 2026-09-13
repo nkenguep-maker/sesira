@@ -11,6 +11,9 @@ import { MAX_DOCUMENT_BYTES } from "@/lib/documents/upload-policy";
 import { createClient } from "@/lib/supabase/client";
 
 type UploadMessage = { tone: "good" | "error"; text: string };
+type FinalizeResult = Awaited<ReturnType<typeof finalizeDocumentUploadAction>>;
+type FinalizeSuccess = Extract<FinalizeResult, { ok: true }>;
+type DocumentAnalysis = FinalizeSuccess["analysis"];
 
 const ACCEPTED_CONTENT_TYPES = new Set([
   "application/pdf",
@@ -122,8 +125,7 @@ export function DocumentUploadForm() {
   );
 }
 
-function analysisMessage(analysis: Awaited<ReturnType<typeof finalizeDocumentUploadAction>> extends { analysis: infer T } ? T : never) {
-  if (!analysis) return "Document ajouté et vérifié.";
+function analysisMessage(analysis: DocumentAnalysis) {
   if (analysis.status === "CLASSIFIED") {
     const confirmed = analysis.links.filter((link) => link.status === "CONFIRMED").length;
     const suggested = analysis.links.filter((link) => link.status === "SUGGESTED").length;
