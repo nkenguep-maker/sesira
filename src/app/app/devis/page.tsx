@@ -3,6 +3,7 @@ import Link from "next/link";
 import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { getQuoteDraftReadiness, getQuoteList } from "@/lib/data";
+import { getConfirmedDocumentLinkCounts } from "@/lib/data/document-links";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function DevisPage() {
     getQuoteList(organizationId),
     getQuoteDraftReadiness(organizationId),
   ]);
+  const documentCounts = await getConfirmedDocumentLinkCounts(organizationId, "quote", quotes.map((quote) => quote.id));
   const readinessByQuoteId = new Map(draftReadiness.map((item) => [item.quoteId, item] as const));
   const active = quotes.filter((quote) => ACTIVE_STATUSES.has(quote.status)).length;
   const needsHuman = quotes.filter((quote) => quote.status === "NEEDS_HUMAN").length;
@@ -27,7 +29,7 @@ export default async function DevisPage() {
       <PageHeader
         eyebrow="VENTES"
         title="Devis"
-        description="Retrouvez les devis qui avancent, ceux qui attendent une décision et les prochaines actions à mener."
+        description="Retrouvez les devis qui avancent, ceux qui attendent une décision et les pièces que SESIRA leur a rattachées."
         actions={<><Link className="button ghost" href="/app/imports">Importer</Link><Link className="button primary" href="/app/clients">Voir les clients</Link></>}
       />
 
@@ -44,8 +46,9 @@ export default async function DevisPage() {
         <section className="workspace-list" aria-label="Devis">
           {quotes.map((quote) => {
             const readiness = quote.status === "DRAFT" ? readinessByQuoteId.get(quote.id) : undefined;
+            const documents = documentCounts.get(quote.id) ?? 0;
             return (
-              <article key={quote.id} className="workspace-row">
+              <article key={quote.id} id={`quote-${quote.id}`} className="workspace-row">
                 <div className="workspace-row-main">
                   <div className="workspace-row-heading">
                     <div><span className="eyebrow">{quote.reference ?? "DEVIS"}</span><h2>{quote.title}</h2></div>
@@ -54,12 +57,15 @@ export default async function DevisPage() {
                   <div className="workspace-meta">
                     <span><b>Montant</b>{formatAmount(quote.amount, quote.currency)}</span>
                     <span><b>Prochaine action</b>{quote.nextActionAt ? formatDateTime(quote.nextActionAt) : "Aucune planifiée"}</span>
-                    <span><b>Dernière mise à jour</b>{formatDateTime(quote.updatedAt)}</span>
+                    <span><b>Documents</b>{documents ? `${documents} relié${documents > 1 ? "s" : ""}` : "Aucun"}</span>
                     <span><b>Envoi</b>{quote.sentAt ? formatDate(quote.sentAt) : "Pas encore envoyé"}</span>
                   </div>
                   {quote.status === "DRAFT" ? <div className="premium-inline-notice"><StatusPill tone={readiness?.sendEligible ? "good" : "warning"}>{draftReadinessLabel(readiness)}</StatusPill><p>{draftReadinessCopy(readiness)}</p></div> : null}
                 </div>
-                <div className="workspace-row-actions"><div className="workspace-preview"><span>État du dossier</span><p>{quote.status === "DRAFT" ? draftReadinessCopy(readiness) : nextStepCopy(quote.status)}</p></div></div>
+                <div className="workspace-row-actions">
+                  <div className="workspace-preview"><span>État du dossier</span><p>{quote.status === "DRAFT" ? draftReadinessCopy(readiness) : nextStepCopy(quote.status)}</p></div>
+                  {documents ? <Link className="button ghost small" href={`/app/documents?entity=quote&entityId=${quote.id}`}>Voir les documents</Link> : null}
+                </div>
               </article>
             );
           })}

@@ -4,6 +4,7 @@ import { EInvoicingStatus } from "@/components/sesira/einvoicing-status";
 import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { getCustomerList } from "@/lib/data";
+import { getConfirmedDocumentLinkCounts } from "@/lib/data/document-links";
 import { getInvoiceCollectionWorkspace } from "@/lib/data/invoice-collection";
 
 import { openInvoiceDisputeAction, recordPaymentPromiseAction, resolveInvoiceDisputeAction } from "./actions";
@@ -26,6 +27,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
   }
 
   const rows = result.rows;
+  const documentCounts = await getConfirmedDocumentLinkCounts(viewer.organization.id, "invoice", rows.map((row) => row.id));
   const overdue = rows.filter((row) => row.status === "OVERDUE");
   const promises = rows.filter((row) => row.collectionState === "PROMISE_TO_PAY" && !["PAID", "CANCELLED"].includes(row.status));
   const disputes = rows.filter((row) => row.collectionState === "DISPUTED" && !["PAID", "CANCELLED"].includes(row.status));
@@ -38,7 +40,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
       <PageHeader
         eyebrow="FINANCES"
         title="Factures"
-        description="Concentrez-vous sur les échéances et les exceptions. Votre comptabilité reste la référence pour les montants et les paiements."
+        description="Concentrez-vous sur les échéances et les exceptions. Les pièces reconnues par SESIRA restent accessibles depuis chaque facture."
         actions={<Link className="button ghost" href="/app/integrations">Connexions comptables</Link>}
       />
 
@@ -55,7 +57,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
 
       <section className="premium-inline-notice">
         <StatusPill>Décision financière humaine</StatusPill>
-        <p>SESIRA suit les échéances et les états de recouvrement, mais ne change ni le montant, ni la devise, ni le statut comptable de référence. La prochaine décision reste humaine.</p>
+        <p>SESIRA peut reconnaître et rattacher une facture reçue, mais ne change ni le montant, ni la devise, ni le statut comptable de référence. La décision financière reste humaine.</p>
       </section>
 
       <EInvoicingStatus organizationId={viewer.organization.id} invoiceLabels={invoiceLabels} />
@@ -64,8 +66,9 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
         <section className="workspace-list" aria-label="Factures suivies">
           {rows.map((row) => {
             const editableCollection = ["ISSUED", "OVERDUE"].includes(row.status);
+            const documents = documentCounts.get(row.id) ?? 0;
             return (
-              <article className="workspace-row" key={row.id}>
+              <article className="workspace-row" id={`invoice-${row.id}`} key={row.id}>
                 <div className="workspace-row-main">
                   <div className="workspace-row-heading">
                     <div>
@@ -81,7 +84,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
                   <div className="workspace-meta">
                     <span><b>Montant</b>{formatAmount(row.amount, row.currency)}</span>
                     <span><b>Échéance</b>{row.dueAt ? formatDate(row.dueAt) : "Non renseignée"}</span>
-                    <span><b>Retard observé</b>{row.pastDueDays !== null && row.pastDueDays > 0 ? `${row.pastDueDays} j` : "Aucun"}</span>
+                    <span><b>Documents</b>{documents ? `${documents} relié${documents > 1 ? "s" : ""}` : "Aucun"}</span>
                     <span><b>Dernière relance</b>{row.reminderLastSentAt ? formatDateTime(row.reminderLastSentAt) : "Aucune"}</span>
                   </div>
 
@@ -91,6 +94,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
 
                 <div className="workspace-row-actions">
                   <div className="workspace-preview"><span>Recouvrement</span><p>{collectionSummary(row.status, row.collectionState, row.pastDueDays)}</p></div>
+                  {documents ? <Link className="button ghost small" href={`/app/documents?entity=invoice&entityId=${row.id}`}>Voir les documents</Link> : null}
                   {editableCollection ? (
                     <details className="sesira-action-drawer">
                       <summary>Enregistrer une décision</summary>

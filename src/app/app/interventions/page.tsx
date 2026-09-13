@@ -4,6 +4,7 @@ import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { getCustomerList } from "@/lib/data";
 import { getInterventionsWorkspace } from "@/lib/data/c32-workspaces";
+import { getConfirmedDocumentLinkCounts } from "@/lib/data/document-links";
 
 import { completeInterventionAction, scheduleInterventionAction } from "../c32-actions";
 
@@ -25,6 +26,7 @@ export default async function InterventionsPage({ searchParams }: { searchParams
   }
 
   const rows = result.rows;
+  const documentCounts = await getConfirmedDocumentLinkCounts(viewer.organization.id, "intervention", rows.map((row) => row.id));
   const toSchedule = rows.filter((row) => row.status === "PLANNED" && !row.scheduledAt).length;
   const scheduled = rows.filter((row) => ["PLANNED", "CONFIRMED"].includes(row.status) && row.scheduledAt).length;
   const inProgress = rows.filter((row) => row.status === "IN_PROGRESS").length;
@@ -35,7 +37,7 @@ export default async function InterventionsPage({ searchParams }: { searchParams
       <PageHeader
         eyebrow="TERRAIN"
         title="Interventions"
-        description="Voyez ce qui doit être planifié, ce qui se passe aujourd’hui et ce qui demande une reprise."
+        description="Voyez ce qui doit être planifié, ce qui se passe aujourd’hui et les pièces que SESIRA a reconnues pour chaque intervention."
         actions={<Link className="button ghost" href="/app/rapports">Rapports terrain</Link>}
       />
 
@@ -54,8 +56,9 @@ export default async function InterventionsPage({ searchParams }: { searchParams
         <section className="workspace-list" aria-label="Interventions">
           {rows.map((row) => {
             const actionable = row.status === "PLANNED" || ["CONFIRMED", "IN_PROGRESS"].includes(row.status);
+            const documents = documentCounts.get(row.id) ?? 0;
             return (
-              <article className="workspace-row" key={row.id}>
+              <article className="workspace-row" id={`intervention-${row.id}`} key={row.id}>
                 <div className="workspace-row-main">
                   <div className="workspace-row-heading">
                     <div>
@@ -69,13 +72,14 @@ export default async function InterventionsPage({ searchParams }: { searchParams
                     <span><b>Quand</b>{row.scheduledAt ? formatDateTime(row.scheduledAt) : "À planifier"}</span>
                     <span><b>Durée</b>{row.durationMinutes ? `${row.durationMinutes} min` : "Non renseignée"}</span>
                     <span><b>Lieu</b>{formatAddress(row)}</span>
-                    <span><b>Assignation</b>{row.assignedUserId ? "Technicien assigné" : "Non assignée"}</span>
+                    <span><b>Documents</b>{documents ? `${documents} relié${documents > 1 ? "s" : ""}` : "Aucun"}</span>
                   </div>
                   {row.description ? <p className="workspace-description">{row.description}</p> : null}
                 </div>
 
                 <div className="workspace-row-actions">
                   <div className="workspace-preview"><span>Prochaine étape</span><p>{nextStepCopy(row.status, Boolean(row.scheduledAt), Boolean(row.assignedUserId))}</p></div>
+                  {documents ? <Link className="button ghost small" href={`/app/documents?entity=intervention&entityId=${row.id}`}>Voir les documents</Link> : null}
                   {actionable ? (
                     <details className="sesira-action-drawer">
                       <summary>{row.status === "PLANNED" ? "Planifier l’intervention" : "Mettre à jour"}</summary>
