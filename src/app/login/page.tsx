@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 
 import { SesiraLogo } from "@/components/sesira/logo";
@@ -14,6 +15,7 @@ import {
 const INITIAL_STATE: AuthActionState = {};
 
 export default function LoginPage() {
+  const router = useRouter();
   const [recovery, setRecovery] = useState(false);
   const [passkeyPending, setPasskeyPending] = useState(false);
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
@@ -48,7 +50,8 @@ export default function LoginPage() {
         return;
       }
 
-      window.location.assign("/app");
+      router.replace("/app");
+      router.refresh();
     } catch {
       setPasskeyError("Connexion par clé d’accès annulée ou indisponible sur cet appareil.");
     } finally {
