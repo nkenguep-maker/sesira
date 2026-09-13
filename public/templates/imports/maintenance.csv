@@ -1,0 +1,2 @@
+external_ref;customer_external_id;customer_external_provider;customer_email;quote_external_id;quote_external_provider;quote_reference;title;cadence_days;amount;currency;status;start_date;end_date
+CM-001;CUST-001;csv_import;;QUOTE-001;csv_import;DV-2026-001;Contrat maintenance annuelle;90;4800.00;EUR;ACTIVE;2026-01-01;2026-12-31

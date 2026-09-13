@@ -1,0 +1,2 @@
+external_ref;customer_external_id;customer_external_provider;customer_email;quote_external_id;quote_external_provider;quote_reference;amount;currency;status;issued_at;due_at;paid_at
+FA-2026-001;CUST-001;csv_import;;QUOTE-001;csv_import;DV-2026-001;1200.00;EUR;ISSUED;2026-09-13;2026-10-13;
