@@ -40,12 +40,5 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (redirectPath === "/app") {
-    const appUrl = request.nextUrl.clone();
-    appUrl.pathname = "/app";
-    appUrl.search = "";
-    return NextResponse.redirect(appUrl);
-  }
-
   return response;
 }

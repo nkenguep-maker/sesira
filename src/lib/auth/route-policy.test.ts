@@ -22,8 +22,8 @@ describe("product route policy", () => {
     expect(getAuthRedirect("/diagnostic", false)).toBeNull();
   });
 
-  it("keeps authenticated users in the product and out of the login page", () => {
+  it("keeps authenticated product routes available without silently skipping the login screen", () => {
     expect(getAuthRedirect("/app/quotes", true)).toBeNull();
-    expect(getAuthRedirect("/login", true)).toBe("/app");
+    expect(getAuthRedirect("/login", true)).toBeNull();
   });
 });
