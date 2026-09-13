@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 
 import { getViewerContext } from "@/lib/auth/viewer";
 import { analyzeStoredDocument } from "@/lib/documents/intelligence";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 function value(formData: FormData, key: string) {
   const raw = formData.get(key);
@@ -35,7 +35,14 @@ export async function confirmDocumentLinkAction(formData: FormData) {
   const linkId = value(formData, "linkId");
   if (!linkId) finish("link-not-applied");
 
-  const client = (await createClient()) as SupabaseClient;
+  let client: SupabaseClient;
+  try {
+    client = createServiceClient() as unknown as SupabaseClient;
+  } catch (error) {
+    console.error("document link service client unavailable", { message: (error as Error).message });
+    finish("link-not-applied");
+  }
+
   const { data, error } = await client.rpc("confirm_document_link", {
     target_organization_id: viewer.organization.id,
     target_link_id: linkId,
@@ -50,7 +57,14 @@ export async function rejectDocumentLinkAction(formData: FormData) {
   const linkId = value(formData, "linkId");
   if (!linkId) finish("link-not-applied");
 
-  const client = (await createClient()) as SupabaseClient;
+  let client: SupabaseClient;
+  try {
+    client = createServiceClient() as unknown as SupabaseClient;
+  } catch (error) {
+    console.error("document link service client unavailable", { message: (error as Error).message });
+    finish("link-not-applied");
+  }
+
   const { data, error } = await client.rpc("reject_document_link", {
     target_organization_id: viewer.organization.id,
     target_link_id: linkId,
