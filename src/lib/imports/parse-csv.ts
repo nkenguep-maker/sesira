@@ -1,26 +1,19 @@
 import "server-only";
 
 /**
- * Minimal RFC 4180 CSV parser. No external dependency (matches the
- * SESIRA minimal-deps ethos — C9's Resend adapter and C11's Claude
- * adapter use `fetch` directly, this file uses only native string
- * operations).
+ * Small RFC 4180-style CSV parser tailored to SESIRA imports.
  *
  * Supported:
- *   * Comma separator (fixed for V1)
+ *   * Comma or semicolon separator, auto-detected from the header
  *   * Double-quoted fields with escaped `""` (RFC 4180 §2.5)
  *   * CRLF and LF line endings
- *   * BOM stripping
- *   * Trailing empty line tolerated
- *   * First row is treated as the header
+ *   * UTF-8 BOM stripping
+ *   * Trailing empty lines
+ *   * Header validation, including duplicate column names
  *
- * NOT supported (raise for these — the caller decides how to surface):
- *   * Alternate separator (semicolon / tab). Excel exports with
- *     semicolons are the most common failure; the caller should
- *     detect and hand off to a semicolon parser variant in a future
- *     commit if needed. For V1: reject with a clear error.
- *   * Multi-line quoted fields (rare in business CSVs; V1 rejects).
- *   * Header-less files (V1 requires a header row).
+ * Multi-line quoted fields remain deliberately unsupported: a malformed
+ * business export is surfaced as an explicit row error instead of being
+ * guessed into a different record shape.
  */
 
 export interface ParseCsvResult {
@@ -29,17 +22,28 @@ export interface ParseCsvResult {
   errors: Array<{ rowIndex: number; message: string }>;
 }
 
+type Delimiter = "," | ";";
+
 export function parseCsv(text: string): ParseCsvResult {
   const errors: Array<{ rowIndex: number; message: string }> = [];
   const cleaned = stripBom(text);
   if (cleaned.length === 0) {
     return { header: [], rows: [], errors: [{ rowIndex: 0, message: "empty file" }] };
   }
+
   const lines = splitLines(cleaned);
-  const rawHeader = parseLine(lines[0], 0, errors);
+  const delimiter = detectDelimiter(lines[0]);
+  const rawHeader = parseLine(lines[0], 0, errors, delimiter);
   const header = rawHeader.map((h) => h.trim());
+
   if (header.length === 0 || header.some((h) => h.length === 0)) {
     errors.push({ rowIndex: 0, message: "header row is empty or contains blank column" });
+    return { header, rows: [], errors };
+  }
+
+  const duplicates = duplicateHeaders(header);
+  if (duplicates.length > 0) {
+    errors.push({ rowIndex: 0, message: `duplicate header column: ${duplicates.join(", ")}` });
     return { header, rows: [], errors };
   }
 
@@ -47,7 +51,9 @@ export function parseCsv(text: string): ParseCsvResult {
   for (let i = 1; i < lines.length; i += 1) {
     const line = lines[i];
     if (line.length === 0) continue;
-    const fields = parseLine(line, i, errors);
+    const beforeErrors = errors.length;
+    const fields = parseLine(line, i, errors, delimiter);
+    if (errors.length > beforeErrors) continue;
     if (fields.length !== header.length) {
       errors.push({
         rowIndex: i,
@@ -73,10 +79,44 @@ function splitLines(text: string): string[] {
   return text.split(/\r\n|\n|\r/);
 }
 
+function detectDelimiter(headerLine: string): Delimiter {
+  const commas = countDelimiterOutsideQuotes(headerLine, ",");
+  const semicolons = countDelimiterOutsideQuotes(headerLine, ";");
+  return semicolons > commas ? ";" : ",";
+}
+
+function countDelimiterOutsideQuotes(line: string, delimiter: Delimiter) {
+  let count = 0;
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i += 1) {
+    if (line[i] === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        i += 1;
+        continue;
+      }
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (!inQuotes && line[i] === delimiter) count += 1;
+  }
+  return count;
+}
+
+function duplicateHeaders(header: string[]) {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+  for (const name of header) {
+    if (seen.has(name)) duplicates.add(name);
+    seen.add(name);
+  }
+  return [...duplicates];
+}
+
 function parseLine(
   line: string,
   rowIndex: number,
   errors: Array<{ rowIndex: number; message: string }>,
+  delimiter: Delimiter,
 ): string[] {
   const fields: string[] = [];
   let cur = "";
@@ -104,7 +144,7 @@ function parseLine(
       inQuotes = true;
       continue;
     }
-    if (ch === ",") {
+    if (ch === delimiter) {
       fields.push(cur);
       cur = "";
       continue;

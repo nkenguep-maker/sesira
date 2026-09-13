@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { runImport } from "@/lib/imports/run-import";
 
-const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
+// Customer imports still transit through a Server Action. Vercel Functions
+// cap the entire request body at 4.5 MB, so keep the file itself at 3 MB to
+// leave safe room for multipart/form-data overhead and framework metadata.
+const MAX_IMPORT_BYTES = 3 * 1024 * 1024;
 
 export async function importCustomersAction(formData: FormData) {
   const viewer = await getViewerContext();

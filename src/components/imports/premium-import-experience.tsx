@@ -6,6 +6,8 @@ import { useState } from "react";
 import { importCustomersAction } from "@/app/app/imports/actions";
 import { PageHeader, StatusPill } from "@/components/sesira/ui";
 
+const MAX_IMPORT_BYTES = 3 * 1024 * 1024;
+
 type ImportStatus = { import?: string; ok?: string; errors?: string };
 
 export function PremiumImportExperience({ view, status }: { view: "home" | "new"; status?: ImportStatus }) {
@@ -66,9 +68,9 @@ function NewImport({ status }: { status?: ImportStatus }) {
       setError("Ce format n’est pas accepté. Aucun fichier n’a été envoyé.");
       return;
     }
-    if (candidate.size > 25 * 1024 * 1024) {
+    if (candidate.size > MAX_IMPORT_BYTES) {
       setFile(null);
-      setError("Ce fichier dépasse 25 Mo. Aucun fichier n’a été envoyé.");
+      setError("Ce fichier dépasse 3 Mo. Aucun fichier n’a été envoyé.");
       return;
     }
     setError(null);
@@ -96,7 +98,7 @@ function NewImport({ status }: { status?: ImportStatus }) {
           <label className="premium-file-field" htmlFor="import-file">
             <span>Fichier à importer</span>
             <input id="import-file" name="file" type="file" accept=".csv,text/csv" required onChange={(event) => choose(event.target.files?.[0])} />
-            <small>CSV · 25 Mo maximum · colonnes attendues : external_id, display_name, type, email, téléphone selon disponibilité</small>
+            <small>CSV · 3 Mo maximum · virgule ou point-virgule · colonnes attendues : external_id, display_name, type, email, téléphone selon disponibilité</small>
           </label>
 
           {error ? <p className="form-error" role="alert">{error}</p> : null}
@@ -144,7 +146,7 @@ function ImportNotice({ status }: { status?: ImportStatus }) {
   }
   const copy: Record<string, string> = {
     "missing-file": "Sélectionnez un fichier CSV avant de lancer l’import.",
-    "file-too-large": "Le fichier dépasse la limite de 25 Mo.",
+    "file-too-large": "Le fichier dépasse la limite de 3 Mo.",
     "invalid-format": "Le fichier fourni n’est pas reconnu comme CSV.",
     rejected: "Le serveur a refusé cet import. Aucun succès n’est affiché.",
   };
