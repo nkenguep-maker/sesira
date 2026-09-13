@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { DocumentUploadForm } from "@/components/documents/document-upload-form";
 import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { getDocumentsWorkspace } from "@/lib/data/c32-workspaces";
@@ -21,6 +24,19 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Se
     <div className="sesira-page--documents">
       <PageHeader eyebrow="OPÉRATIONS" title="Documents" description="Les pièces liées aux dossiers et celles qui demandent encore une vérification humaine." />
       <ResultNotice result={params.result} />
+
+      <section className="workspace-card" aria-labelledby="document-upload-title">
+        <div className="workspace-row-heading">
+          <div>
+            <span className="eyebrow">AJOUTER UNE PIÈCE</span>
+            <h2 id="document-upload-title">Importer un document</h2>
+          </div>
+          <StatusPill>Stockage privé</StatusPill>
+        </div>
+        <p className="workspace-card-copy">PDF, JPEG, PNG ou WebP · 15 Mo maximum. Le fichier est envoyé directement vers l’espace privé puis vérifié côté serveur avant son inscription au registre.</p>
+        <DocumentUploadForm />
+        <small className="workspace-helper">Le contenu du fichier ne transite pas par la Function SESIRA. Le type réel et la taille sont revérifiés après transfert ; un fichier incohérent est supprimé et n’entre pas au registre.</small>
+      </section>
 
       {rows.length ? (
         <section className="workspace-stat-strip" aria-label="État des documents">
@@ -50,6 +66,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Se
               </div>
 
               <div className="workspace-row-actions">
+                <Link href={`/app/documents/${row.id}/open`} className="button ghost small" target="_blank" rel="noreferrer">Ouvrir</Link>
                 {row.status === "CLASSIFIED" ? <form action={validateDocumentAction}><input type="hidden" name="documentId" value={row.id} /><button type="submit" className="button primary small">Valider</button></form> : null}
                 {["UPLOADED", "CLASSIFIED", "VALIDATED"].includes(row.status) ? (
                   <details className="sesira-action-drawer">
@@ -68,12 +85,21 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Se
             </article>
           ))}
         </section>
-      ) : <EmptyState title="Aucun document" description="Les pièces liées aux clients, devis, interventions et factures apparaîtront ici après leur ajout." />}
+      ) : <EmptyState title="Aucun document" description="Ajoutez votre première pièce ci-dessus. Les documents liés aux clients, devis, interventions et factures apparaîtront ici." />}
     </div>
   );
 }
 
-function ResultNotice({ result }: { result?: string }) { if (!result) return null; return result === "saved" ? <section className="premium-inline-notice"><StatusPill tone="good">Enregistré</StatusPill><p>La décision a été enregistrée.</p></section> : <section className="premium-inline-notice"><StatusPill tone="warning">Non appliqué</StatusPill><p>Le document n’a pas changé d’état.</p></section>; }
+function ResultNotice({ result }: { result?: string }) {
+  if (!result) return null;
+  const messages: Record<string, { tone: "good" | "warning"; title: string; copy: string }> = {
+    saved: { tone: "good", title: "Enregistré", copy: "La décision a été enregistrée." },
+    "not-found": { tone: "warning", title: "Document introuvable", copy: "Ce document n’existe pas ou n’appartient pas à votre organisation." },
+    "open-error": { tone: "warning", title: "Ouverture impossible", copy: "Impossible de générer un accès temporaire au fichier." },
+  };
+  const message = messages[result] ?? { tone: "warning" as const, title: "Non appliqué", copy: "Le document n’a pas changé d’état." };
+  return <section className="premium-inline-notice"><StatusPill tone={message.tone}>{message.title}</StatusPill><p>{message.copy}</p></section>;
+}
 function documentTone(status: string, confidence: number | null): "good" | "warning" | "neutral" { if (confidence !== null && confidence < 0.5 && status === "CLASSIFIED") return "warning"; if (status === "VALIDATED") return "good"; if (status === "REJECTED") return "warning"; return "neutral"; }
 function documentLabel(status: string) { return ({ UPLOADED: "À classer", CLASSIFIED: "À vérifier", VALIDATED: "Validé", ARCHIVED: "Archivé", REJECTED: "Rejeté" } as Record<string, string>)[status] ?? status; }
 function kindLabel(kind: string) { return ({ CONTRACT: "Contrat", INVOICE: "Facture", PROOF_OF_DELIVERY: "Preuve de livraison", REGULATORY: "Réglementaire", PHOTO: "Photo", REPORT: "Rapport", OTHER: "Autre" } as Record<string, string>)[kind] ?? kind; }
