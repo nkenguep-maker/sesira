@@ -26,12 +26,12 @@ function text(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function finish(path: string, ok: boolean) {
+function finish(path: string, ok: boolean): never {
   revalidatePath(path);
   redirect(`${path}?result=${ok ? "saved" : "not-applied"}`);
 }
 
-function finishDocumentUpload(result: string) {
+function finishDocumentUpload(result: string): never {
   revalidatePath("/app/documents");
   redirect(`/app/documents?result=${encodeURIComponent(result)}`);
 }
