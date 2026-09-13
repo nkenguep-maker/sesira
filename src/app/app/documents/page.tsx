@@ -1,8 +1,10 @@
+import Link from "next/link";
+
 import { EmptyState, PageHeader, StatusPill } from "@/components/sesira/ui";
 import { getViewerContext } from "@/lib/auth/viewer";
 import { getDocumentsWorkspace } from "@/lib/data/c32-workspaces";
 
-import { archiveDocumentAction, rejectDocumentAction, validateDocumentAction } from "../c32-actions";
+import { archiveDocumentAction, rejectDocumentAction, uploadDocumentAction, validateDocumentAction } from "../c32-actions";
 
 export const dynamic = "force-dynamic";
 type SearchParams = Promise<{ result?: string }>;
@@ -21,6 +23,37 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Se
     <div className="sesira-page--documents">
       <PageHeader eyebrow="OPÉRATIONS" title="Documents" description="Les pièces liées aux dossiers et celles qui demandent encore une vérification humaine." />
       <ResultNotice result={params.result} />
+
+      <section className="workspace-card" aria-labelledby="document-upload-title">
+        <div className="workspace-row-heading">
+          <div>
+            <span className="eyebrow">AJOUTER UNE PIÈCE</span>
+            <h2 id="document-upload-title">Importer un document</h2>
+          </div>
+          <StatusPill>Stockage privé</StatusPill>
+        </div>
+        <p className="workspace-card-copy">PDF, JPEG, PNG ou WebP · 15 Mo maximum. Le type réel du fichier est contrôlé côté serveur avant stockage.</p>
+        <form action={uploadDocumentAction} className="workspace-inline-form">
+          <label>
+            <span>Type de document</span>
+            <select name="kind" defaultValue="OTHER" required>
+              <option value="CONTRACT">Contrat</option>
+              <option value="INVOICE">Facture</option>
+              <option value="PROOF_OF_DELIVERY">Preuve de livraison</option>
+              <option value="REGULATORY">Réglementaire</option>
+              <option value="PHOTO">Photo</option>
+              <option value="REPORT">Rapport</option>
+              <option value="OTHER">Autre</option>
+            </select>
+          </label>
+          <label>
+            <span>Fichier</span>
+            <input name="file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp" required />
+          </label>
+          <button type="submit" className="button primary">Ajouter le document</button>
+        </form>
+        <small className="workspace-helper">Le fichier est isolé dans le dossier privé de votre organisation. SESIRA ne se fie pas seulement à l’extension ou au MIME envoyé par le navigateur.</small>
+      </section>
 
       {rows.length ? (
         <section className="workspace-stat-strip" aria-label="État des documents">
@@ -50,6 +83,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Se
               </div>
 
               <div className="workspace-row-actions">
+                <Link href={`/app/documents/${row.id}/open`} className="button ghost small" target="_blank" rel="noreferrer">Ouvrir</Link>
                 {row.status === "CLASSIFIED" ? <form action={validateDocumentAction}><input type="hidden" name="documentId" value={row.id} /><button type="submit" className="button primary small">Valider</button></form> : null}
                 {["UPLOADED", "CLASSIFIED", "VALIDATED"].includes(row.status) ? (
                   <details className="sesira-action-drawer">
@@ -68,12 +102,29 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Se
             </article>
           ))}
         </section>
-      ) : <EmptyState title="Aucun document" description="Les pièces liées aux clients, devis, interventions et factures apparaîtront ici après leur ajout." />}
+      ) : <EmptyState title="Aucun document" description="Ajoutez votre première pièce ci-dessus. Les documents liés aux clients, devis, interventions et factures apparaîtront ici." />}
     </div>
   );
 }
 
-function ResultNotice({ result }: { result?: string }) { if (!result) return null; return result === "saved" ? <section className="premium-inline-notice"><StatusPill tone="good">Enregistré</StatusPill><p>La décision a été enregistrée.</p></section> : <section className="premium-inline-notice"><StatusPill tone="warning">Non appliqué</StatusPill><p>Le document n’a pas changé d’état.</p></section>; }
+function ResultNotice({ result }: { result?: string }) {
+  if (!result) return null;
+  const messages: Record<string, { tone: "good" | "warning"; title: string; copy: string }> = {
+    uploaded: { tone: "good", title: "Document ajouté", copy: "Le fichier a été stocké dans l’espace privé de l’organisation et inscrit au registre documentaire." },
+    saved: { tone: "good", title: "Enregistré", copy: "La décision a été enregistrée." },
+    "upload-missing-file": { tone: "warning", title: "Fichier manquant", copy: "Sélectionnez un fichier avant de lancer l’ajout." },
+    "upload-invalid-kind": { tone: "warning", title: "Type invalide", copy: "Le type documentaire sélectionné n’est pas accepté." },
+    "upload-invalid-name": { tone: "warning", title: "Nom trop long", copy: "Le nom du fichier dépasse la limite autorisée." },
+    "upload-too-large": { tone: "warning", title: "Fichier trop volumineux", copy: "La taille maximale est de 15 Mo." },
+    "upload-invalid-format": { tone: "warning", title: "Format refusé", copy: "SESIRA accepte actuellement PDF, JPEG, PNG et WebP et vérifie le contenu réel du fichier." },
+    "upload-storage-error": { tone: "warning", title: "Stockage indisponible", copy: "Le fichier n’a pas été enregistré. Réessayez plus tard." },
+    "upload-registry-error": { tone: "warning", title: "Ajout annulé", copy: "Le registre n’a pas pu être mis à jour ; SESIRA a tenté de supprimer le fichier déjà transféré pour éviter un document orphelin." },
+    "not-found": { tone: "warning", title: "Document introuvable", copy: "Ce document n’existe pas ou n’appartient pas à votre organisation." },
+    "open-error": { tone: "warning", title: "Ouverture impossible", copy: "Impossible de générer un accès temporaire au fichier." },
+  };
+  const message = messages[result] ?? { tone: "warning" as const, title: "Non appliqué", copy: "Le document n’a pas changé d’état." };
+  return <section className="premium-inline-notice"><StatusPill tone={message.tone}>{message.title}</StatusPill><p>{message.copy}</p></section>;
+}
 function documentTone(status: string, confidence: number | null): "good" | "warning" | "neutral" { if (confidence !== null && confidence < 0.5 && status === "CLASSIFIED") return "warning"; if (status === "VALIDATED") return "good"; if (status === "REJECTED") return "warning"; return "neutral"; }
 function documentLabel(status: string) { return ({ UPLOADED: "À classer", CLASSIFIED: "À vérifier", VALIDATED: "Validé", ARCHIVED: "Archivé", REJECTED: "Rejeté" } as Record<string, string>)[status] ?? status; }
 function kindLabel(kind: string) { return ({ CONTRACT: "Contrat", INVOICE: "Facture", PROOF_OF_DELIVERY: "Preuve de livraison", REGULATORY: "Réglementaire", PHOTO: "Photo", REPORT: "Rapport", OTHER: "Autre" } as Record<string, string>)[kind] ?? kind; }
