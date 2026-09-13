@@ -7,59 +7,59 @@ import { SesiraLogo } from "@/components/sesira/logo";
 import styles from "./coolify-landing.module.css";
 
 export const metadata: Metadata = {
-  title: "SESIRA | Le suivi opérationnel des entreprises d’intervention",
+  title: "SESIRA | Ne ratez plus ce qui compte",
   description:
-    "SESIRA suit chaque dossier entre vente, planning, terrain, facturation et échéances, puis remet la prochaine décision devant la bonne personne.",
+    "SESIRA montre aux entreprises d’intervention ce qui doit être fait aujourd’hui, ce qui arrive bientôt et ce qui coûte déjà de l’argent.",
   openGraph: {
-    title: "SESIRA | Le suivi opérationnel des entreprises d’intervention",
+    title: "SESIRA | Ne ratez plus ce qui compte",
     description:
-      "Du premier contact au renouvellement, SESIRA garde le contexte et fait remonter les dossiers qui attendent une décision.",
+      "Devis, factures, contrats, interventions et échéances : une seule liste pour savoir quoi reprendre avant qu’il soit trop tard.",
     type: "website",
   },
 };
 
 const HERO_PRIORITIES = [
-  { kind: "DEVIS", name: "Sophie Lefèvre", value: "18 450 €", action: "Relancer", tone: "warm" },
-  { kind: "FACTURE", name: "Garage Montreuil", value: "21 800 €", action: "Décider", tone: "ink" },
-  { kind: "CHANTIER", name: "Dupont SARL", value: "22 400 €", action: "Planifier", tone: "teal" },
+  { kind: "CONTRÔLE", name: "Clinique des Lilas", value: "avant le 18 sept.", action: "Planifier", tone: "warm" },
+  { kind: "FACTURE", name: "Garage Montreuil", value: "4 820 € · +12 j", action: "Relancer", tone: "ink" },
+  { kind: "DEVIS", name: "Sophie Lefèvre", value: "11 400 € · +7 j", action: "Relancer", tone: "teal" },
 ] as const;
 
 const SCENARIOS = [
   {
     tag: "COMMERCIAL",
     name: "Sophie Lefèvre",
-    value: "18 450 €",
-    title: "Devis envoyé, réponse absente",
-    context: "SESIRA garde la prochaine date de suivi, la réponse quand elle arrive et les objections qui nécessitent un humain.",
-    action: "Relance · réponse · approbation",
+    value: "7 jours",
+    title: "Le devis attend toujours une réponse",
+    context: "La date de relance reste visible jusqu’à ce que le dossier avance.",
+    action: "Voir le devis · relancer",
     tone: "warm",
-  },
-  {
-    tag: "OPÉRATIONS",
-    name: "Dupont SARL",
-    value: "22 400 €",
-    title: "Vente gagnée, aucune date au planning",
-    context: "L’affaire reste visible jusqu’à la planification, l’intervention et le rapport terrain.",
-    action: "Planning · technicien · rapport",
-    tone: "teal",
   },
   {
     tag: "ENCAISSEMENT",
     name: "Garage Montreuil",
-    value: "21 800 €",
-    title: "Promesse de règlement dépassée",
-    context: "Facture, échéance, promesse de règlement et historique restent reliés au même dossier.",
-    action: "Facture · échéance · suivi",
+    value: "4 820 €",
+    title: "La facture est déjà en retard",
+    context: "SESIRA garde l’échéance, le retard et la prochaine action dans le même dossier.",
+    action: "Voir la facture · relancer",
     tone: "ink",
   },
   {
     tag: "MAINTENANCE",
     name: "Martin & Fils",
     value: "26 jours",
-    title: "Contrat proche de l’échéance",
-    context: "Contrat, équipement, documents et échéance restent liés. Pour le CVC, SESIRA prépare aussi les éléments F-Gas et CERFA sans rendre de verdict réglementaire.",
-    action: "Renouvellement · documents · CVC",
+    title: "Le contrat arrive au renouvellement",
+    context: "Le contrat, le client, les équipements et les documents restent reliés jusqu’au renouvellement.",
+    action: "Voir le contrat · préparer",
     tone: "soft",
+  },
+  {
+    tag: "RÉGLEMENTAIRE",
+    name: "Clinique des Lilas",
+    value: "18 sept.",
+    title: "Un contrôle doit être fait avant la date limite",
+    context: "La date, l’équipement concerné et la règle utilisée restent visibles au même endroit.",
+    action: "Voir l’équipement · planifier",
+    tone: "teal",
   },
 ] as const;
 
@@ -71,36 +71,35 @@ export default function HomePage() {
           <SesiraLogo />
         </Link>
         <div className={styles.navLinks}>
+          <a href="#produit">Produit</a>
           <Link href="/demo">Démo</Link>
-          <a href="#exemples">Exemples</a>
-          <a href="#tarifs">Tarifs</a>
           <Link className={styles.navLogin} href="/login">Connexion</Link>
-          <Link className={styles.navCta} href="/diagnostic">Calculer ce qui se perd chez moi</Link>
+          <Link className={styles.navCta} href="/signup">Créer un compte entreprise</Link>
         </div>
       </nav>
 
       <header className="landing-five-hero">
         <div className="landing-five-hero__copy">
-          <span className={styles.eyebrow}>SESIRA · LE SUIVI OPÉRATIONNEL DES ENTREPRISES D’INTERVENTION</span>
-          <h1>Chaque matin, voyez les dossiers qui attendent une décision.</h1>
+          <span className={styles.eyebrow}>SESIRA · POUR LES ENTREPRISES D’INTERVENTION</span>
+          <h1>Ne ratez plus ce qui compte.</h1>
           <p>
-            SESIRA suit chaque dossier entre vente, terrain et encaissement. Il garde le contexte et remet la prochaine action devant la bonne personne.
+            Devis sans réponse, facture en retard, contrat à renouveler, intervention à planifier ou contrôle à faire : SESIRA vous montre ce qui demande votre attention aujourd’hui.
           </p>
           <div className={styles.heroActions}>
-            <Link className={styles.primaryCta} href="/diagnostic">Calculer ce qui se perd chez moi</Link>
-            <Link className={styles.secondaryCta} href="/demo">Voir la démo</Link>
+            <Link className={styles.primaryCta} href="/demo">Voir ce que SESIRA surveille</Link>
+            <Link className={styles.secondaryCta} href="/signup">Créer mon espace entreprise</Link>
           </div>
-          <small>Gratuit, sans compte, trois minutes.</small>
+          <small>Une liste claire. Des dates. Une prochaine action.</small>
         </div>
 
         <Link href="/demo" className="landing-five-queue" aria-label="Ouvrir la démo SESIRA">
           <div className="landing-five-queue__top">
-            <div><span>AUJOURD’HUI</span><strong>5 sujets à reprendre</strong></div>
+            <div><span>AUJOURD’HUI</span><strong>5 choses à traiter</strong></div>
             <b>5</b>
           </div>
           <div className="landing-five-queue__list">
             {HERO_PRIORITIES.map((item) => (
-              <article key={item.name}>
+              <article key={`${item.kind}-${item.name}`}>
                 <span className={`landing-five-queue__icon ${item.tone}`}>{item.kind.slice(0, 1)}</span>
                 <div><small>{item.kind}</small><strong>{item.name}</strong><span>{item.value}</span></div>
                 <b>{item.action}</b>
@@ -108,17 +107,17 @@ export default function HomePage() {
             ))}
           </div>
           <div className="landing-five-queue__more">
-            <span>+ Rapport #1842 · Boulangerie Rivet</span>
+            <span>+ Intervention terminée · facture à préparer</span>
             <span>+ Martin & Fils · renouvellement dans 26 jours</span>
           </div>
         </Link>
       </header>
 
-      <section className="landing-five-product" aria-labelledby="product-title">
+      <section id="produit" className="landing-five-product" aria-labelledby="product-title">
         <div className="landing-five-section-head">
           <div>
-            <span className={styles.sectionEyebrow}>LE TABLEAU DE BORD</span>
-            <h2 id="product-title">Les décisions du jour arrivent en premier.</h2>
+            <span className={styles.sectionEyebrow}>VOTRE MATINÉE COMMENCE ICI</span>
+            <h2 id="product-title">Une seule liste pour savoir quoi faire.</h2>
           </div>
           <Link href="/demo">Ouvrir la démo complète →</Link>
         </div>
@@ -130,14 +129,14 @@ export default function HomePage() {
       <section id="exemples" className="landing-five-examples" aria-labelledby="examples-title">
         <div className="landing-five-section-head">
           <div>
-            <span className={styles.sectionEyebrow}>DU PREMIER CONTACT AU RENOUVELLEMENT · DONNÉES FICTIVES</span>
-            <h2 id="examples-title">Le même dossier reste suivi jusqu’à l’étape suivante.</h2>
+            <span className={styles.sectionEyebrow}>TOUTES LES ÉCHÉANCES</span>
+            <h2 id="examples-title">Ce qui arrive bientôt. Ce qui est déjà en retard.</h2>
           </div>
-          <p>Commercial, planning, terrain, facturation et maintenance gardent le même contexte.</p>
+          <p>Vente, encaissement, maintenance et réglementation restent dans la même vue.</p>
         </div>
         <div className="landing-five-example-grid">
           {SCENARIOS.map((scenario) => (
-            <Link href="/demo" className={`landing-five-example ${scenario.tone}`} key={scenario.name}>
+            <Link href="/demo" className={`landing-five-example ${scenario.tone}`} key={scenario.name + scenario.tag}>
               <div className="landing-five-example__top"><span>{scenario.tag}</span><small>{scenario.name}</small></div>
               <strong className="landing-five-example__value">{scenario.value}</strong>
               <h3>{scenario.title}</h3>
@@ -148,36 +147,55 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="landing-five-guardrails" aria-labelledby="guardrails-title">
+      <section className="landing-five-guardrails" aria-labelledby="why-title">
         <div className="landing-five-guardrails__head">
-          <span className={styles.sectionEyebrow}>AUTONOMIE ET VÉRITÉ</span>
-          <h2 id="guardrails-title">Le produit avance seulement sur des faits et des règles explicites.</h2>
+          <span className={styles.sectionEyebrow}>TOUJOURS COMPRENDRE POURQUOI</span>
+          <h2 id="why-title">Une alerte doit être simple à vérifier.</h2>
         </div>
         <div className="landing-five-guardrails__grid">
           <article>
-            <span>ÉTAT RÉEL</span>
-            <strong>Une donnée absente n’est jamais remplacée par un faux zéro.</strong>
-            <p>Un statut inconnu reste inconnu. Une action externe non confirmée reste en attente ou indisponible.</p>
+            <span>LA DATE</span>
+            <strong>Vous voyez ce qui déclenche l’alerte.</strong>
+            <p>Date limite, retard, renouvellement ou absence de réponse : la raison reste visible.</p>
           </article>
           <article>
-            <span>AUTONOMIE GRADUELLE</span>
-            <strong>SESIRA prépare. Vous décidez.</strong>
-            <p>Observation, proposition, approbation, puis automatique : vous choisissez jusqu’où chaque règle peut aller.</p>
+            <span>L’ACTION</span>
+            <strong>Vous savez quoi faire ensuite.</strong>
+            <p>Planifier, relancer, préparer, vérifier ou décider. SESIRA remet le dossier devant la bonne personne.</p>
           </article>
         </div>
       </section>
 
-      <section id="tarifs" className="landing-five-offer" aria-labelledby="offer-title">
+      <section className="landing-five-guardrails" aria-labelledby="work-title">
+        <div className="landing-five-guardrails__head">
+          <span className={styles.sectionEyebrow}>DU BUREAU AU TERRAIN</span>
+          <h2 id="work-title">Moins de recherche. Moins de ressaisie.</h2>
+        </div>
+        <div className="landing-five-guardrails__grid">
+          <article>
+            <span>TERRAIN</span>
+            <strong>Le technicien voit seulement ce qu’il doit faire.</strong>
+            <p>Mission, adresse, consignes, photos, mesures et signature. Rien de plus.</p>
+          </article>
+          <article>
+            <span>DOCUMENTS</span>
+            <strong>Déposez le document. SESIRA le range au bon endroit.</strong>
+            <p>Facture, contrat, rapport ou photo : le bon client et les bonnes références restent reliés au dossier.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="essayer" className="landing-five-offer" aria-labelledby="offer-title">
         <div className="landing-five-offer__copy">
-          <span className={styles.sectionEyebrow}>OBSERVE · 90 JOURS</span>
-          <h2 id="offer-title">Quatre-vingt-dix jours d’observation avant de changer quoi que ce soit.</h2>
+          <span className={styles.sectionEyebrow}>TESTEZ AVEC VOS PROPRES DONNÉES</span>
+          <h2 id="offer-title">Vous ne repartez pas de zéro.</h2>
           <p>
-            Selon les données disponibles, SESIRA observe les demandes, devis, dossiers à planifier, interventions, factures et échéances. Aucune action externe pendant le constat. À la fin, vous obtenez un état daté de ce qui attendait une reprise.
+            Importez vos clients, devis, factures, équipements et contrats depuis vos fichiers CSV. Ajoutez ensuite vos documents et voyez ce que SESIRA retrouve et relie dans votre entreprise.
           </p>
         </div>
         <div className="landing-five-offer__action">
-          <div><strong>290 €</strong><span>constat 90 jours</span></div>
-          <Link className={styles.darkCta} href="/diagnostic">Calculer ce qui se perd chez moi</Link>
+          <div><strong>Votre entreprise</strong><span>un espace séparé, prêt à tester</span></div>
+          <Link className={styles.darkCta} href="/signup">Créer un compte entreprise</Link>
           <Link className={styles.secondaryCta} href="/demo">Voir d’abord la démo</Link>
         </div>
       </section>
