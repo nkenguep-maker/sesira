@@ -14,6 +14,21 @@ describe("parseCsv", () => {
     expect(r.errors).toEqual([]);
   });
 
+  it("auto-detects semicolon-separated Excel exports", () => {
+    const csv = "external_id;display_name;type\nc1;Client A;COMPANY\n";
+    const r = parseCsv(csv);
+    expect(r.header).toEqual(["external_id", "display_name", "type"]);
+    expect(r.rows).toEqual([{ external_id: "c1", display_name: "Client A", type: "COMPANY" }]);
+    expect(r.errors).toEqual([]);
+  });
+
+  it("does not mistake commas inside semicolon-separated quoted fields for delimiters", () => {
+    const csv = 'external_id;display_name;type\nc1;"Rivet, Paris";COMPANY\n';
+    const r = parseCsv(csv);
+    expect(r.rows[0]?.display_name).toBe("Rivet, Paris");
+    expect(r.errors).toEqual([]);
+  });
+
   it("parses CRLF line endings", () => {
     const csv = "a,b\r\n1,2\r\n";
     const r = parseCsv(csv);
@@ -51,10 +66,17 @@ describe("parseCsv", () => {
     ]);
   });
 
-  it("reports an error for an unterminated quoted field", () => {
-    const csv = "a,b\n1,\"unterminated\n";
+  it("reports an error for an unterminated quoted field and skips that row", () => {
+    const csv = 'a,b\n1,"unterminated\n2,valid\n';
     const r = parseCsv(csv);
     expect(r.errors.some((e) => e.message.includes("unterminated"))).toBe(true);
+    expect(r.rows).toEqual([{ a: "2", b: "valid" }]);
+  });
+
+  it("rejects duplicate header names instead of overwriting a field", () => {
+    const r = parseCsv("a,b,b\n1,2,3\n");
+    expect(r.rows).toEqual([]);
+    expect(r.errors.some((e) => e.message.includes("duplicate header column: b"))).toBe(true);
   });
 
   it("rejects an empty file", () => {
