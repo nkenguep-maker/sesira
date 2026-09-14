@@ -11,9 +11,9 @@ import styles from "./signup.module.css";
 const INITIAL_STATE: AuthActionState = {};
 
 const VALUE_POINTS = [
-  "Importez vos clients, équipements et contrats existants.",
-  "Reliez planning, terrain, devis, factures et maintenance.",
-  "Faites remonter les dossiers qui demandent vraiment une action.",
+  "Vos dossiers importants remontent au bon moment.",
+  "Bureau, terrain, devis et factures restent reliés.",
+  "Vous pouvez reprendre vos données existantes par CSV.",
 ] as const;
 
 export default function SignupPage() {
@@ -22,17 +22,18 @@ export default function SignupPage() {
 
   return (
     <main className={styles.page}>
-      <aside className={styles.valuePanel} aria-label="Ce que votre espace SESIRA vous apporte">
-        <div className={styles.logoWrap}>
-          <SesiraLogo />
-        </div>
+      <header className={styles.topbar}>
+        <SesiraLogo />
+        <Link href="/">Retour au site</Link>
+      </header>
 
-        <div className={styles.valueCopy}>
-          <span className={styles.eyebrow}>VOTRE ENTREPRISE, SOUS CONTRÔLE</span>
-          <h1>Commencez avec vos données. SESIRA fait remonter ce qui compte.</h1>
-          <p>
-            Un espace de travail unique pour le bureau et le terrain, sans repartir de zéro.
-          </p>
+      <div className={styles.shell}>
+        <aside className={styles.valuePanel} aria-label="Pourquoi créer un espace SESIRA">
+          <div>
+            <span className={styles.eyebrow}>SESIRA</span>
+            <h1>Votre entreprise.<br />Les priorités au bon moment.</h1>
+            <p>Créez votre espace et testez SESIRA avec vos propres clients, équipements et documents.</p>
+          </div>
 
           <div className={styles.valueList}>
             {VALUE_POINTS.map((point) => (
@@ -42,96 +43,63 @@ export default function SignupPage() {
               </div>
             ))}
           </div>
-        </div>
 
-        <div className={styles.previewCard} aria-hidden="true">
-          <div className={styles.previewTop}>
-            <div>
-              <small>À REPRENDRE AUJOURD’HUI</small>
-              <strong>3 sujets</strong>
-            </div>
-            <span>SESIRA</span>
-          </div>
-          <div className={styles.previewRows}>
-            <div><i className={styles.criticalDot} /><span>Facture Garage Montreuil</span><b>+12 j</b></div>
-            <div><i className={styles.warningDot} /><span>Contrat maintenance</span><b>28 j</b></div>
-            <div><i className={styles.calmDot} /><span>Intervention Clinique des Lilas</span><b>08:30</b></div>
-          </div>
-        </div>
+          <div className={styles.panelFoot}>PLANNING · TERRAIN · GESTION · MAINTENANCE</div>
+        </aside>
 
-        <div className={styles.panelFoot}>PLANNING · TERRAIN · DEVIS · FACTURES · MAINTENANCE</div>
-      </aside>
-
-      <section className={styles.formPanel}>
-        <div className={styles.mobileTop}>
-          <SesiraLogo />
-          <Link href="/">Retour au site</Link>
-        </div>
-
-        <div className={styles.formWrap}>
-          <div className={styles.topLine}>
-            <span className={styles.eyebrow}>CRÉER VOTRE ESPACE</span>
-            <span className={styles.loginPrompt}>Déjà un compte ? <Link href="/login">Se connecter</Link></span>
-          </div>
-
+        <section className={styles.formPanel}>
           {state.success ? (
             <div className={styles.successState} role="status" aria-live="polite">
               <div className={styles.successIcon} aria-hidden="true">✓</div>
-              <h2>Vérifiez votre boîte e-mail.</h2>
+              <span className={styles.eyebrow}>COMPTE CRÉÉ</span>
+              <h2>Confirmez votre e-mail.</h2>
               <p>{state.success}</p>
-              <div className={styles.successSteps}>
-                <span><b>1</b> Ouvrez l’e-mail SESIRA.</span>
-                <span><b>2</b> Confirmez votre adresse.</span>
-                <span><b>3</b> Connectez-vous à votre espace.</span>
-              </div>
               <Link href="/login" className={styles.primaryButton}>Aller à la connexion</Link>
-              <Link href="/" className={styles.textLink}>Retour au site</Link>
             </div>
           ) : (
             <>
-              <div className={styles.heading}>
-                <h2>Créez votre espace entreprise.</h2>
-                <p>
-                  Quatre informations suffisent pour démarrer. Vous pourrez ensuite importer vos données et configurer votre équipe.
-                </p>
-              </div>
-
-              <div className={styles.reassurance} aria-label="Informations sur l’inscription">
-                <span>✓ Aucune carte bancaire demandée</span>
-                <span>✓ Confirmation par e-mail</span>
+              <div className={styles.formHead}>
+                <div>
+                  <span className={styles.eyebrow}>CRÉER VOTRE ESPACE</span>
+                  <h2>Commencez maintenant.</h2>
+                  <p>Quatre informations, puis vous entrez dans SESIRA.</p>
+                </div>
+                <span className={styles.loginPrompt}>Déjà un compte ? <Link href="/login">Se connecter</Link></span>
               </div>
 
               <form className={styles.form} action={formAction}>
-                <label htmlFor="fullName">
-                  <span>Votre nom complet</span>
-                  <input
-                    id="fullName"
-                    type="text"
-                    name="fullName"
-                    autoComplete="name"
-                    placeholder="Jean Dupont"
-                    minLength={2}
-                    maxLength={120}
-                    required
-                    disabled={pending}
-                    autoFocus
-                  />
-                </label>
+                <div className={styles.twoColumns}>
+                  <label htmlFor="fullName">
+                    <span>Votre nom</span>
+                    <input
+                      id="fullName"
+                      type="text"
+                      name="fullName"
+                      autoComplete="name"
+                      placeholder="Jean Dupont"
+                      minLength={2}
+                      maxLength={120}
+                      required
+                      disabled={pending}
+                      autoFocus
+                    />
+                  </label>
 
-                <label htmlFor="organizationName">
-                  <span>Nom de l’entreprise</span>
-                  <input
-                    id="organizationName"
-                    type="text"
-                    name="organizationName"
-                    autoComplete="organization"
-                    placeholder="Dupont Climatisation"
-                    minLength={2}
-                    maxLength={160}
-                    required
-                    disabled={pending}
-                  />
-                </label>
+                  <label htmlFor="organizationName">
+                    <span>Entreprise</span>
+                    <input
+                      id="organizationName"
+                      type="text"
+                      name="organizationName"
+                      autoComplete="organization"
+                      placeholder="Dupont Climatisation"
+                      minLength={2}
+                      maxLength={160}
+                      required
+                      disabled={pending}
+                    />
+                  </label>
+                </div>
 
                 <label htmlFor="email">
                   <span>E-mail professionnel</span>
@@ -171,28 +139,29 @@ export default function SignupPage() {
                       {showPassword ? "Masquer" : "Afficher"}
                     </button>
                   </div>
-                  <small id="password-help">Au moins 8 caractères.</small>
+                  <small id="password-help">8 caractères minimum</small>
                 </label>
 
                 {state.error ? <p className={styles.error} role="alert">{state.error}</p> : null}
 
-                <button className={styles.primaryButton} type="submit" disabled={pending}>
-                  {pending ? "Création de votre espace…" : "Créer mon espace SESIRA"}
-                </button>
+                <div className={styles.reassurance} aria-label="Informations sur l’inscription">
+                  <span>Sans carte bancaire</span>
+                  <i aria-hidden="true" />
+                  <span>Confirmation par e-mail</span>
+                </div>
 
-                <p className={styles.confirmationNote}>
-                  Un e-mail de confirmation vous sera envoyé avant votre première connexion.
-                </p>
+                <button className={styles.primaryButton} type="submit" disabled={pending}>
+                  {pending ? "Création…" : "Créer mon espace SESIRA"}
+                </button>
               </form>
 
               <div className={styles.mobileLogin}>
                 Déjà un compte ? <Link href="/login">Se connecter</Link>
               </div>
-              <Link href="/" className={styles.backLink}>← Retour au site</Link>
             </>
           )}
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
   );
 }
