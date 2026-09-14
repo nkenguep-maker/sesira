@@ -7,7 +7,6 @@ import { SesiraLogo } from "@/components/sesira/logo";
 import {
   DEFAULT_LOSS_ASSUMPTIONS,
   calculateLossDiagnostic,
-  comparisonMessage,
   simulateFollowUpLoss,
   type FollowUpHabit,
   type LossAssumptions,
@@ -31,13 +30,13 @@ const AMOUNT_OPTIONS = [
 
 const FOLLOW_UP_OPTIONS = [
   { label: "Dans la semaine", value: 0.1 },
-  { label: "Ça dépend du client", value: 0.4 },
+  { label: "Selon le client", value: 0.4 },
   { label: "Quand j’y pense", value: 0.6 },
-  { label: "Jamais", value: 1 },
+  { label: "Je ne relance pas", value: 1 },
 ] as const;
 
 const PLANNING_OPTIONS = [
-  { label: "Aucun", value: 0 },
+  { label: "Aucune", value: 0 },
   { label: "1 ou 2", value: 2 },
   { label: "3 à 5", value: 4 },
   { label: "Plus de 5", value: 7 },
@@ -56,8 +55,7 @@ export function DiagnosticExperience() {
   const [followUpHabit, setFollowUpHabit] = useState<FollowUpHabit | null>(null);
   const [unscheduledJobs, setUnscheduledJobs] = useState<number | null>(null);
   const [overdueInvoices, setOverdueInvoices] = useState<number | null>(null);
-  const [phase, setPhase] = useState<1 | 2 | 3>(1);
-  const [estimate, setEstimate] = useState(0);
+  const [showResults, setShowResults] = useState(false);
   const [assumptions, setAssumptions] = useState<LossAssumptions>(() => ({ ...DEFAULT_LOSS_ASSUMPTIONS }));
   const [simulatedHabit, setSimulatedHabit] = useState(0.1);
 
@@ -83,23 +81,17 @@ export function DiagnosticExperience() {
     [assumptions, input, simulatedHabit],
   );
 
-  const mondayQueue = useMemo(
-    () => input && result ? buildMondayQueue(input, result) : [],
+  const attentionQueue = useMemo(
+    () => input && result ? buildAttentionQueue(input, result) : [],
     [input, result],
   );
 
   const allAnswered = input !== null;
 
-  function openEstimate() {
-    if (!input) return;
-    setPhase(2);
-    window.setTimeout(() => document.getElementById("estimation")?.scrollIntoView({ behavior: "smooth", block: "start" }), 30);
-  }
-
   function openResults() {
     if (!input) return;
     setSimulatedHabit(input.followUpHabit);
-    setPhase(3);
+    setShowResults(true);
     window.setTimeout(() => document.getElementById("diagnostic-result")?.scrollIntoView({ behavior: "smooth", block: "start" }), 30);
   }
 
@@ -110,7 +102,7 @@ export function DiagnosticExperience() {
   function printConstat() {
     const previousTitle = document.title;
     const date = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeZone: "Europe/Paris" }).format(new Date());
-    document.title = `Constat du ${date}`;
+    document.title = `Diagnostic SESIRA du ${date}`;
     window.print();
     window.setTimeout(() => { document.title = previousTitle; }, 500);
   }
@@ -120,15 +112,20 @@ export function DiagnosticExperience() {
       <header className="roi-topbar">
         <Link href="/" aria-label="Retour à SESIRA"><SesiraLogo /></Link>
         <div>
-          <span>Calculatrice · sans compte</span>
+          <span>Diagnostic · 2 min · sans compte</span>
           <Link className="button ghost small" href="/">Retour au site</Link>
         </div>
       </header>
 
       <section className="roi-hero">
-        <span className="roi-kicker">CE QUI SE PERD CHEZ MOI</span>
-        <h1>Cinq gestes. Puis vos chiffres devant vous.</h1>
-        <p>Choisissez les réponses qui ressemblent le plus à votre activité. Pas de formulaire à remplir, pas de moyenne de marché ajoutée en silence.</p>
+        <span className="roi-kicker">DIAGNOSTIC SESIRA</span>
+        <h1>Voyez ce que votre entreprise laisse passer.</h1>
+        <p>Devis sans réponse, affaires signées sans date, factures en retard. Répondez à cinq questions avec vos chiffres : SESIRA vous montre ce qui mérite votre attention.</p>
+        <div className="roi-hero-meta" aria-label="Informations sur le diagnostic">
+          <span>5 questions</span>
+          <span>Vos chiffres</span>
+          <span>Aucun compte</span>
+        </div>
       </section>
 
       <section className="roi-input-stage" aria-label="Cinq questions">
@@ -159,15 +156,15 @@ export function DiagnosticExperience() {
         <ChoiceQuestion
           index="04"
           label="PLANNING"
-          title="Combien d’affaires signées attendent une date ?"
+          title="Combien d’affaires signées attendent encore une date ?"
           options={PLANNING_OPTIONS}
           selectedValue={unscheduledJobs}
           onSelect={setUnscheduledJobs}
         />
         <ChoiceQuestion
           index="05"
-          label="FACTURES"
-          title="Combien vous doit-on en factures dépassées ?"
+          label="ENCAISSEMENT"
+          title="Quel montant de factures échues reste à encaisser ?"
           options={INVOICE_OPTIONS}
           selectedValue={overdueInvoices}
           onSelect={setOverdueInvoices}
@@ -175,60 +172,51 @@ export function DiagnosticExperience() {
 
         <div className="roi-stage-action">
           <div>
-            <strong>{allAnswered ? "Vos cinq réponses sont prêtes." : "Choisissez une réponse dans chaque ligne."}</strong>
-            <span>Pour les tranches, SESIRA retient volontairement une valeur prudente.</span>
+            <strong>{allAnswered ? "Votre diagnostic est prêt." : "Répondez aux cinq questions."}</strong>
+            <span>Les hypothèses de calcul restent visibles et modifiables.</span>
           </div>
-          <button className="button primary" type="button" disabled={!allAnswered} onClick={openEstimate}>
-            Continuer
+          <button className="button primary" type="button" disabled={!allAnswered} onClick={openResults}>
+            Voir mon diagnostic
           </button>
         </div>
       </section>
 
-      {phase >= 2 && input ? (
-        <section id="estimation" className="roi-estimate-stage">
-          <span className="roi-kicker">UNE DERNIÈRE CHOSE</span>
-          <h2>À votre avis, combien ça vous coûte par an ?</h2>
-          <div className="roi-estimate-value">{formatEuro(estimate)}</div>
-          <input
-            aria-label="Votre estimation annuelle"
-            type="range"
-            min="0"
-            max="200000"
-            step="1000"
-            value={estimate}
-            onChange={(event) => setEstimate(Number(event.target.value))}
-          />
-          <div className="roi-range-labels"><span>0 €</span><span>200 000 €</span></div>
-          <p>Répondez au feeling. Le curseur part à zéro et ne suggère aucun montant.</p>
-          <button className="button primary" type="button" onClick={openResults}>Voir le calcul</button>
-        </section>
-      ) : null}
-
-      {phase === 3 && input && result && simulation ? (
+      {showResults && input && result && simulation ? (
         <section id="diagnostic-result" className="roi-result">
-          <div className="roi-print-title">Constat SESIRA · Ce qui se perd chez moi</div>
+          <div className="roi-print-title">Diagnostic SESIRA · Ce que votre entreprise laisse passer</div>
 
-          <section className="roi-comparison">
-            <div className="roi-comparison-grid">
-              <article><span>VOUS AVIEZ DIT</span><strong>{formatEuro(estimate)}</strong><small>par an</small></article>
-              <article><span>LE CALCUL DONNE</span><strong>{formatEuro(result.annualQuoteLoss)}</strong><small>par an</small></article>
+          <section className="roi-output">
+            <div className="roi-section-head">
+              <div><span className="roi-kicker">VOTRE DIAGNOSTIC</span><h2>Voici ce qui mérite votre attention.</h2></div>
+              <small>Trois situations · jamais additionnées</small>
             </div>
-            <div className="roi-gap-line">Écart : <strong>{formatEuro(Math.abs(result.annualQuoteLoss - estimate))}</strong></div>
-            <p className="roi-comparison-context">
-              Sur {formatEuro(result.annualQuotedVolume)} de devis envoyés dans l’année, soit {formatPercent(result.annualQuoteLossShare)}. Fourchette basse {formatEuro(result.annualQuoteLossLow)} · haute {formatEuro(result.annualQuoteLossHigh)}.
-            </p>
-            <p className="roi-comparison-message">{comparisonMessage(estimate, result.annualQuoteLoss)}</p>
-            {input.followUpHabit === 0.1 ? <p className="roi-positive-note">Votre suivi de devis tient déjà. Le reste de la page regarde ailleurs.</p> : null}
+            <div className="roi-output-grid">
+              <article>
+                <span>DEVIS À REPRENDRE</span>
+                <strong>{formatEuro(result.annualQuoteLoss)}</strong>
+                <p>Ordre de grandeur annuel basé sur vos réponses et les hypothèses ci-dessous. Ce n’est pas du chiffre d’affaires garanti.</p>
+              </article>
+              <article>
+                <span>SIGNÉ · EN ATTENTE D’UNE DATE</span>
+                <strong>{formatEuro(result.signedValueWaitingForDate)}</strong>
+                <p>Valeur commerciale approximative des affaires déjà gagnées qui attendent encore une date.</p>
+              </article>
+              <article>
+                <span>FACTURÉ · PAS ENCAISSÉ</span>
+                <strong>{formatEuro(result.overdueInvoices)}</strong>
+                <p>Montant issu directement de votre réponse. Le travail est fait, l’argent reste à encaisser.</p>
+              </article>
+            </div>
           </section>
 
           <section className="roi-monday">
             <div className="roi-section-head">
-              <div><span className="roi-kicker">LUNDI MATIN, CHEZ VOUS</span><h2>Votre file SESIRA avec vos montants.</h2></div>
-              <small>{mondayQueue.length} ligne{mondayQueue.length === 1 ? "" : "s"} · maximum 5</small>
+              <div><span className="roi-kicker">SI SESIRA ÉTAIT OUVERT CE MATIN</span><h2>Voilà ce qui remonterait en premier.</h2></div>
+              <small>{attentionQueue.length} priorité{attentionQueue.length === 1 ? "" : "s"}</small>
             </div>
-            {mondayQueue.length ? (
+            {attentionQueue.length ? (
               <div className="roi-monday-list">
-                {mondayQueue.map((row, index) => (
+                {attentionQueue.map((row, index) => (
                   <article key={`${row.kind}-${index}`}>
                     <b>{index + 1}</b>
                     <div><span>{row.kind}</span><strong>{row.title}</strong><small>{row.detail}</small></div>
@@ -237,14 +225,14 @@ export function DiagnosticExperience() {
                 ))}
               </div>
             ) : (
-              <div className="roi-empty-result">D’après vos réponses, rien ne se perd de façon mesurable. C’est rare, et c’est une bonne nouvelle.</div>
+              <div className="roi-empty-result">D’après vos réponses, rien ne demande une reprise immédiate sur ces trois sujets.</div>
             )}
-            <p>Ces lignes viennent de vos réponses, pas d’un exemple préparé à l’avance.</p>
+            <p>Cette file est construite avec vos réponses. Aucun dossier fictif n’est ajouté.</p>
           </section>
 
           <section className="roi-simulation">
-            <span className="roi-kicker">ET SI VOUS RELANCIEZ PLUS TÔT ?</span>
-            <h2>Déplacez un seul réglage.</h2>
+            <span className="roi-kicker">UN LEVIER SIMPLE</span>
+            <h2>Voyez l’effet d’une relance plus tôt.</h2>
             <div className="roi-simulation-numbers">
               <strong>{formatEuro(result.annualQuoteLoss)}</strong><span>→</span><strong>{formatEuro(simulation.simulatedLoss)}</strong>
             </div>
@@ -257,41 +245,16 @@ export function DiagnosticExperience() {
               value={simulatedHabit}
               onChange={(event) => setSimulatedHabit(Number(event.target.value))}
             />
-            <div className="roi-range-labels"><span>Dans la semaine</span><span>Jamais</span></div>
-            <p><strong>{formatEuro(Math.abs(simulation.difference))}</strong> d’écart par an entre votre réglage actuel et cette position.</p>
-            <small>SESIRA ne relance pas à votre place. Il vous dit qui relancer.</small>
+            <div className="roi-range-labels"><span>Dans la semaine</span><span>Je ne relance pas</span></div>
+            <p><strong>{formatEuro(Math.abs(simulation.difference))}</strong> d’écart par an entre votre rythme actuel et cette position.</p>
+            <small>C’est une simulation, pas une promesse de chiffre d’affaires.</small>
           </section>
 
-          <section className="roi-output">
-            <div className="roi-section-head">
-              <div><span className="roi-kicker">CE N’EST PAS LA MÊME CHOSE</span><h2>Trois réalités, jamais additionnées.</h2></div>
-            </div>
-            <div className="roi-output-grid">
-              <article>
-                <span>DEVIS · ORDRE DE GRANDEUR</span>
-                <strong>{formatEuro(result.annualQuoteLoss)}</strong>
-                <p>de devis qui auraient pu aboutir selon les hypothèses visibles ci-dessous. Ce n’est pas du chiffre d’affaires garanti.</p>
-              </article>
-              {input.unscheduledJobs > 0 ? (
-                <article>
-                  <span>SIGNÉ · EN ATTENTE D’UNE DATE</span>
-                  <strong>{formatEuro(result.signedValueWaitingForDate)}</strong>
-                  <p>déjà gagnés commercialement et encore sans date. L’hypothèse de risque associée est {formatEuro(result.unscheduledRisk)}.</p>
-                </article>
-              ) : null}
-              {input.overdueInvoices > 0 ? (
-                <article>
-                  <span>FACTURÉ · PAS ENCAISSÉ</span>
-                  <strong>{formatEuro(result.overdueInvoices)}</strong>
-                  <p>Vous avez déjà fait le travail. Ce montant vient directement de votre réponse.</p>
-                </article>
-              ) : null}
-            </div>
-          </section>
-
-          <section className="roi-assumptions">
-            <div className="roi-section-head">
-              <div><span className="roi-kicker">TROIS HYPOTHÈSES NE VIENNENT PAS DE VOUS</span><h2>Changez-les. Tout se recalcule.</h2></div>
+          <details className="roi-calculation">
+            <summary>Voir comment ce diagnostic est calculé</summary>
+            <div className="roi-method-intro">
+              <strong>Vos réponses + trois hypothèses visibles.</strong>
+              <span>Changez une hypothèse : le diagnostic se recalcule immédiatement.</span>
             </div>
             <div className="roi-assumption-list">
               <AssumptionControl
@@ -319,25 +282,21 @@ export function DiagnosticExperience() {
                 onChange={(value) => updateAssumption("unscheduledCancellationShare", value)}
               />
             </div>
-            <p className="roi-order-note">Ce montant reprend vos réponses et trois hypothèses visibles. Il donne un ordre de grandeur, pas une mesure.</p>
-          </section>
-
-          <details className="roi-calculation" open>
-            <summary>Calcul détaillé</summary>
+            <p className="roi-order-note">Le résultat donne un ordre de grandeur. SESIRA ne transforme jamais une hypothèse en résultat commercial garanti.</p>
             <div className="roi-calculation-grid">
               <CalculationLine label="Volume annuel de devis" formula={`${input.monthlyQuotes} × ${formatEuro(input.averageQuoteAmount)} × 12`} value={formatEuro(result.annualQuotedVolume)} />
               <CalculationLine label="Sans réponse / mois" formula={`${input.monthlyQuotes} × ${formatPercent(assumptions.unansweredAfterSevenDaysShare)}`} value={formatNumber(result.unansweredQuotesPerMonth)} />
-              <CalculationLine label="Jamais relancés / mois" formula={`${formatNumber(result.unansweredQuotesPerMonth)} × ${formatPercent(input.followUpHabit)}`} value={formatNumber(result.neverFollowedUpPerMonth)} />
+              <CalculationLine label="Sans relance / mois" formula={`${formatNumber(result.unansweredQuotesPerMonth)} × ${formatPercent(input.followUpHabit)}`} value={formatNumber(result.neverFollowedUpPerMonth)} />
               <CalculationLine label="Ordre de grandeur annuel" formula={`${formatNumber(result.neverFollowedUpPerMonth)} × ${formatPercent(assumptions.additionalFollowUpConversionShare)} × ${formatEuro(input.averageQuoteAmount)} × 12`} value={formatEuro(result.annualQuoteLoss)} />
-              {input.unscheduledJobs > 0 ? <CalculationLine label="Signé sans date" formula={`${input.unscheduledJobs} × ${formatEuro(input.averageQuoteAmount)}`} value={formatEuro(result.signedValueWaitingForDate)} /> : null}
-              {input.overdueInvoices > 0 ? <CalculationLine label="Factures échues" formula="Votre réponse, sans calcul" value={formatEuro(result.overdueInvoices)} /> : null}
+              <CalculationLine label="Signé sans date" formula={`${input.unscheduledJobs} × ${formatEuro(input.averageQuoteAmount)}`} value={formatEuro(result.signedValueWaitingForDate)} />
+              <CalculationLine label="Factures échues" formula="Votre réponse, sans calcul" value={formatEuro(result.overdueInvoices)} />
             </div>
           </details>
 
           <div className="roi-result-actions">
-            <a className="button primary" href="mailto:paul@sesira.fr?subject=Calculatrice%20SESIRA%20-%2020%20minutes">En parler vingt minutes</a>
-            <button className="button ghost" type="button" onClick={printConstat}>Recevoir ce constat en PDF</button>
-            <Link href="/demo">Voir SESIRA en action</Link>
+            <Link className="button primary" href="/signup">Créer mon espace SESIRA</Link>
+            <Link className="button ghost" href="/demo">Voir SESIRA en action</Link>
+            <button className="button ghost" type="button" onClick={printConstat}>Exporter en PDF</button>
           </div>
         </section>
       ) : null}
@@ -412,28 +371,36 @@ function CalculationLine({ label, formula, value }: { label: string; formula: st
   return <div><span>{label}</span><code>{formula}</code><strong>{value}</strong></div>;
 }
 
-function buildMondayQueue(input: LossDiagnosticInput, result: LossDiagnosticResult) {
-  const quoteCount = Math.min(5, Math.max(0, Math.floor(result.neverFollowedUpPerMonth)));
-  const ages = [9, 12, 16, 19, 21];
+function buildAttentionQueue(input: LossDiagnosticInput, result: LossDiagnosticResult) {
   const rows: Array<{ kind: string; title: string; detail: string; action: string }> = [];
-  let usedQuotes = 0;
 
-  const pushQuote = () => {
-    if (usedQuotes >= quoteCount || rows.length >= 5) return;
+  if (result.neverFollowedUpPerMonth > 0) {
     rows.push({
       kind: "DEVIS",
-      title: `${formatEuro(input.averageQuoteAmount)} · parti il y a ${ages[usedQuotes] ?? 21} jours`,
-      detail: "Aucune réponse enregistrée",
+      title: `${formatNumber(result.neverFollowedUpPerMonth)} devis par mois peuvent rester sans relance`,
+      detail: `${formatEuro(result.annualQuoteLoss)} d’ordre de grandeur annuel concerné`,
       action: "Relancer",
     });
-    usedQuotes += 1;
-  };
+  }
 
-  pushQuote();
-  pushQuote();
-  if (input.unscheduledJobs > 0 && rows.length < 5) rows.push({ kind: "PLANNING", title: `Affaire signée ${formatEuro(input.averageQuoteAmount)}`, detail: "Aucune date au planning", action: "Planifier" });
-  if (input.overdueInvoices > 0 && rows.length < 5) rows.push({ kind: "FACTURE", title: formatEuro(input.overdueInvoices), detail: "Échéance dépassée", action: "Décider" });
-  while (usedQuotes < quoteCount && rows.length < 5) pushQuote();
+  if (input.unscheduledJobs > 0) {
+    rows.push({
+      kind: "PLANNING",
+      title: `${input.unscheduledJobs} affaire${input.unscheduledJobs > 1 ? "s" : ""} signée${input.unscheduledJobs > 1 ? "s" : ""} attend${input.unscheduledJobs > 1 ? "ent" : ""} une date`,
+      detail: `${formatEuro(result.signedValueWaitingForDate)} de valeur commerciale concernée`,
+      action: "Planifier",
+    });
+  }
+
+  if (input.overdueInvoices > 0) {
+    rows.push({
+      kind: "ENCAISSEMENT",
+      title: `${formatEuro(result.overdueInvoices)} restent à encaisser`,
+      detail: "Échéance déjà dépassée",
+      action: "Encaisser",
+    });
+  }
+
   return rows;
 }
 

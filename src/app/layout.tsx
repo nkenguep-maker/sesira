@@ -7,6 +7,7 @@ import "./premium-surfaces.css";
 import "./cvc-landing.css";
 import "./landing-native-preview.css";
 import "./cvc-diagnostic.css";
+import "./cvc-diagnostic-v2.css";
 import "./c21-hardening.css";
 import "./app-workspace-dense.css";
 import "./app-surfaces-dense.css";
