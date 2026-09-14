@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
     qualities: [75, 92],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+        pathname: "/photos/**",
+      },
+    ],
   },
   experimental: {
     serverActions: {
