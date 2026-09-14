@@ -1,0 +1,61 @@
+.roi-hero-meta {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roi-hero-meta span {
+  padding: 8px 10px;
+  border: 1px solid var(--roi-line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.62);
+  color: var(--roi-muted);
+  font: 720 10px/1 var(--mono);
+  letter-spacing: .04em;
+}
+
+.roi-result > .roi-output {
+  margin-top: 0;
+}
+
+.roi-method-intro {
+  padding: 20px 28px;
+  display: grid;
+  gap: 5px;
+  border-bottom: 1px solid var(--roi-line);
+  background: var(--roi-paper);
+}
+
+.roi-method-intro strong {
+  color: var(--roi-ink);
+  font-size: 14px;
+}
+
+.roi-method-intro span {
+  color: var(--roi-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.roi-calculation:not([open]) summary {
+  border-bottom: 0;
+}
+
+.roi-result-actions .button {
+  min-height: 46px;
+}
+
+@media (max-width: 700px) {
+  .roi-hero-meta {
+    margin-top: 20px;
+  }
+
+  .roi-hero-meta span {
+    font-size: 9px;
+  }
+
+  .roi-method-intro {
+    padding: 18px 22px;
+  }
+}
