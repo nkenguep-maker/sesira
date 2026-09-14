@@ -8,13 +8,13 @@ import { SesiraLogo } from "@/components/sesira/logo";
 import styles from "./landing-v5.module.css";
 
 export const metadata: Metadata = {
-  title: "SESIRA | Ne ratez plus ce qui compte",
+  title: "SESIRA | Du devis au paiement, ne laissez rien se perdre",
   description:
-    "Devis sans réponse, factures en retard, contrats à renouveler, interventions et contrôles à planifier. SESIRA fait remonter ce qui demande votre attention.",
+    "Devis à relancer, affaires signées sans date, factures en retard et échéances à traiter. SESIRA fait remonter ce qui peut coûter de l’argent ou devenir un problème.",
   openGraph: {
-    title: "SESIRA | Ne ratez plus ce qui compte",
+    title: "SESIRA | Du devis au paiement, ne laissez rien se perdre",
     description:
-      "SESIRA relie planning, terrain, facturation, maintenance et échéances pour faire remonter ce qui doit être repris.",
+      "SESIRA relie vente, planning, terrain, facturation, maintenance et échéances pour faire remonter ce qui demande une action.",
     type: "website",
   },
 };
@@ -64,6 +64,7 @@ export default function HomePage() {
           <a href="#produit">Produit</a>
           <a href="#terrain">Terrain</a>
           <a href="#suivi">Suivi</a>
+          <Link href="/diagnostic">Diagnostic</Link>
           <Link href="/demo">Démo</Link>
           <Link className={styles.navLogin} href="/login">Connexion</Link>
           <Link className={styles.navCta} href="/signup">Créer mon espace</Link>
@@ -72,16 +73,16 @@ export default function HomePage() {
 
       <header className={styles.hero}>
         <div className={styles.heroCopy}>
-          <span className={styles.eyebrow}>POUR LES ENTREPRISES D’INTERVENTION</span>
-          <h1>Ne ratez plus ce qui compte.</h1>
+          <span className={styles.eyebrow}>POUR LES ENTREPRISES TECHNIQUES</span>
+          <h1>Du devis au paiement, ne laissez rien se perdre.</h1>
           <p className={styles.heroLead}>
-            Devis sans réponse, factures en retard, contrats à renouveler, interventions et contrôles à planifier. SESIRA vous montre ce qui demande votre attention.
+            SESIRA fait remonter les devis à relancer, les affaires signées sans date, les factures en retard et les échéances à traiter — avant qu’elles ne vous coûtent de l’argent ou deviennent un problème.
           </p>
           <div className={styles.heroActions}>
-            <Link className={styles.primaryCta} href="/demo">Voir SESIRA en action</Link>
-            <Link className={styles.secondaryCta} href="/signup">Créer un compte entreprise</Link>
+            <Link className={styles.primaryCta} href="/diagnostic">Voir ce que mon entreprise laisse passer</Link>
+            <Link className={styles.secondaryCta} href="/demo">Voir SESIRA en action</Link>
           </div>
-          <span className={styles.heroNote}>Planning, terrain, facturation et maintenance restent reliés dans le même dossier.</span>
+          <span className={styles.heroNote}>Le diagnostic part de vos chiffres. Les hypothèses restent visibles.</span>
         </div>
 
         <div className={styles.heroVisual} aria-label="Technicien sur site et suivi du jour">
@@ -116,18 +117,18 @@ export default function HomePage() {
       </header>
 
       <section className={styles.proof} aria-label="Ce que SESIRA relie">
-        <article><strong>Planning</strong><span>Qui va où, quand et pour quoi.</span></article>
+        <article><strong>Vente</strong><span>Devis, options, réponses et relances.</span></article>
+        <article><strong>Planning</strong><span>Ce qui est signé trouve une date.</span></article>
         <article><strong>Terrain</strong><span>Mission, photos, mesures et rapport.</span></article>
-        <article><strong>Gestion</strong><span>Devis, factures et paiements suivis.</span></article>
-        <article><strong>Maintenance</strong><span>Contrats, équipements et dates à venir.</span></article>
+        <article><strong>Encaissement</strong><span>Le travail reste suivi jusqu’au paiement.</span></article>
       </section>
 
       <section id="produit" className={styles.productSection} aria-labelledby="product-title">
         <div className={styles.sectionHead}>
           <div>
             <span className={styles.sectionEyebrow}>LE PRODUIT</span>
-            <h2 id="product-title">Le matin, vous voyez ce qui mérite votre attention.</h2>
-            <p>Les dossiers à reprendre arrivent en premier. Le reste reste calme.</p>
+            <h2 id="product-title">Ce qui demande une action remonte. Le reste reste calme.</h2>
+            <p>Chaque matin, vous voyez les dossiers qui peuvent perdre du temps, de l’argent ou une échéance.</p>
           </div>
           <Link className={styles.textLink} href="/demo">Ouvrir la démo complète →</Link>
         </div>
@@ -179,21 +180,36 @@ export default function HomePage() {
           </div>
         </div>
         <div className={styles.splitCopy}>
-          <span className={styles.sectionEyebrow}>VENTE + ENCAISSEMENT</span>
-          <h2 id="cash-title">Du devis au paiement, rien ne se perd.</h2>
-          <p>Le client, les échanges, l’intervention et la facture restent reliés au même dossier.</p>
+          <span className={styles.sectionEyebrow}>CHIFFRE D’AFFAIRES</span>
+          <h2 id="cash-title">Les dossiers oubliés coûtent de l’argent.</h2>
+          <p>SESIRA garde le fil entre la proposition, le travail réalisé et l’encaissement.</p>
           <div className={styles.bulletList}>
-            <div><b>01</b><span><strong>Devis sans réponse</strong><span>Vous savez lesquels relancer et depuis combien de temps.</span></span></div>
-            <div><b>02</b><span><strong>Travail terminé</strong><span>Le dossier reste visible tant que la suite n’est pas faite.</span></span></div>
-            <div><b>03</b><span><strong>Facture en retard</strong><span>L’échéance et la prochaine relance restent sous les yeux.</span></span></div>
+            <div><b>01</b><span><strong>Devis à relancer</strong><span>Vous savez lesquels attendent une réponse et depuis combien de temps.</span></span></div>
+            <div><b>02</b><span><strong>Vente sans date</strong><span>Une affaire signée ne disparaît pas entre le commercial et le planning.</span></span></div>
+            <div><b>03</b><span><strong>Travail à encaisser</strong><span>Une facture échue reste visible jusqu’à la prochaine décision.</span></span></div>
           </div>
+          <Link className={styles.textLink} href="/diagnostic">Calculer avec mes chiffres →</Link>
+        </div>
+      </section>
+
+      <section className={styles.importSection} aria-labelledby="options-title">
+        <div className={styles.importCopy}>
+          <span className={styles.sectionEyebrow}>DEVIS À PLUSIEURS OPTIONS</span>
+          <h2 id="options-title">Trois façons de faire. Un choix plus simple pour le client.</h2>
+          <p>Gardez plusieurs variantes dans le même dossier, avec leurs révisions et leurs options. Le client choisit. Votre équipe garde la main.</p>
+          <Link className={styles.textLink} href="/demo/devis">Voir un exemple dans la démo →</Link>
+        </div>
+        <div className={styles.importSteps} aria-label="Exemple de trois niveaux de devis">
+          <div><strong>Essentiel</strong><span>Le nécessaire</span></div>
+          <div><strong>Recommandé</strong><span>Le bon équilibre</span></div>
+          <div><strong>Premium</strong><span>Le plus complet</span></div>
         </div>
       </section>
 
       <section id="suivi" className={styles.watchSection} aria-labelledby="watch-title">
         <div className={styles.watchIntro}>
-          <span className={styles.sectionEyebrow}>CE QUI NE DOIT PAS PASSER À TRAVERS</span>
-          <h2 id="watch-title">Vos échéances remontent avant de devenir un problème.</h2>
+          <span className={styles.sectionEyebrow}>CHIFFRE D’AFFAIRES + ÉCHÉANCES</span>
+          <h2 id="watch-title">Protégez ce qui doit rentrer. Surveillez ce qui doit arriver.</h2>
           <p>Vous voyez la date, la raison et la prochaine action sans parcourir cinq écrans.</p>
         </div>
         <div className={styles.watchGrid}>
@@ -229,35 +245,35 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className={styles.importSection} aria-labelledby="import-title">
+      <section className={styles.importSection} aria-labelledby="data-title">
         <div className={styles.importCopy}>
-          <span className={styles.sectionEyebrow}>VOUS NE REPARTEZ PAS DE ZÉRO</span>
-          <h2 id="import-title">Importez ce que vous avez déjà.</h2>
-          <p>Clients, devis, factures, équipements et contrats peuvent être repris depuis vos fichiers CSV.</p>
+          <span className={styles.sectionEyebrow}>VOS DONNÉES RESTENT LES VÔTRES</span>
+          <h2 id="data-title">Entrez avec vos données. Repartez avec elles.</h2>
+          <p>Importez vos clients, devis, factures, équipements et contrats. SESIRA prévoit aussi l’export complet de votre organisation.</p>
         </div>
-        <div className={styles.importSteps} aria-label="Données importables">
-          <div><strong>Clients</strong><span>CSV</span></div>
-          <div><strong>Devis + factures</strong><span>CSV</span></div>
-          <div><strong>Équipements + contrats</strong><span>CSV</span></div>
+        <div className={styles.importSteps} aria-label="Portabilité des données">
+          <div><strong>Importer</strong><span>CSV</span></div>
+          <div><strong>Exporter</strong><span>Données de l’organisation</span></div>
+          <div><strong>Rester libre</strong><span>Pas de verrou sur vos données</span></div>
         </div>
       </section>
 
       <section className={styles.finalCta} aria-labelledby="final-title">
         <div>
-          <span className={styles.sectionEyebrow}>VOIR AVEC VOTRE ENTREPRISE</span>
-          <h2 id="final-title">Créez votre espace et testez SESIRA pour de vrai.</h2>
-          <p>Votre entreprise garde son propre espace. Commencez avec quelques clients, quelques équipements et vos documents.</p>
+          <span className={styles.sectionEyebrow}>COMMENCEZ PAR VOS CHIFFRES</span>
+          <h2 id="final-title">Voyez d’abord ce que votre entreprise laisse peut-être passer.</h2>
+          <p>Cinq réponses. Un calcul transparent. Ensuite, décidez si SESIRA mérite une place dans votre entreprise.</p>
         </div>
         <div className={styles.finalActions}>
-          <Link className={styles.darkCta} href="/signup">Créer mon compte</Link>
-          <Link className={styles.secondaryCta} href="/demo">Voir la démo</Link>
+          <Link className={styles.darkCta} href="/diagnostic">Faire le diagnostic</Link>
+          <Link className={styles.secondaryCta} href="/signup">Créer mon espace</Link>
         </div>
       </section>
 
       <footer className={styles.footer}>
         <SesiraLogo />
         <span>SESIRA · France</span>
-        <div className={styles.footerLinks}><Link href="/login">Connexion</Link><Link href="/signup">Créer un compte</Link></div>
+        <div className={styles.footerLinks}><Link href="/diagnostic">Diagnostic</Link><Link href="/login">Connexion</Link><Link href="/signup">Créer un compte</Link></div>
       </footer>
     </main>
   );
