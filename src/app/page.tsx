@@ -8,16 +8,23 @@ import { SesiraLogo } from "@/components/sesira/logo";
 import styles from "./landing-v5.module.css";
 
 export const metadata: Metadata = {
-  title: "SESIRA | Le logiciel des entreprises d’intervention",
+  title: "SESIRA | Ne ratez plus ce qui compte",
   description:
-    "Planning, terrain, devis, factures, contrats et échéances dans un seul espace pour les entreprises d’intervention.",
+    "Devis sans réponse, factures en retard, contrats à renouveler, interventions et contrôles à planifier. SESIRA fait remonter ce qui demande votre attention.",
   openGraph: {
-    title: "SESIRA | Le logiciel des entreprises d’intervention",
+    title: "SESIRA | Ne ratez plus ce qui compte",
     description:
-      "Le bureau planifie, les techniciens exécutent et les dossiers restent suivis jusqu’au paiement et au renouvellement.",
+      "SESIRA relie planning, terrain, facturation, maintenance et échéances pour faire remonter ce qui doit être repris.",
     type: "website",
   },
 };
+
+const MEDIA = {
+  hero: "https://images.pexels.com/photos/34938442/pexels-photo-34938442.jpeg?auto=compress&cs=tinysrgb&w=1800",
+  terrain: "https://images.pexels.com/photos/8960944/pexels-photo-8960944.jpeg?auto=compress&cs=tinysrgb&w=1800",
+  office: "https://images.pexels.com/photos/10375970/pexels-photo-10375970.jpeg?auto=compress&cs=tinysrgb&w=1800",
+  documents: "https://images.pexels.com/photos/3856116/pexels-photo-3856116.jpeg?auto=compress&cs=tinysrgb&w=1800",
+} as const;
 
 const WATCH_ITEMS = [
   {
@@ -66,24 +73,24 @@ export default function HomePage() {
       <header className={styles.hero}>
         <div className={styles.heroCopy}>
           <span className={styles.eyebrow}>POUR LES ENTREPRISES D’INTERVENTION</span>
-          <h1>Toute votre activité. Un seul endroit.</h1>
+          <h1>Ne ratez plus ce qui compte.</h1>
           <p className={styles.heroLead}>
-            Planning, interventions, devis, factures, contrats et équipements. SESIRA relie le travail du bureau et du terrain sans ajouter de complexité.
+            Devis sans réponse, factures en retard, contrats à renouveler, interventions et contrôles à planifier. SESIRA vous montre ce qui demande votre attention.
           </p>
           <div className={styles.heroActions}>
             <Link className={styles.primaryCta} href="/demo">Voir SESIRA en action</Link>
             <Link className={styles.secondaryCta} href="/signup">Créer un compte entreprise</Link>
           </div>
-          <span className={styles.heroNote}>Commencez avec vos propres clients et équipements.</span>
+          <span className={styles.heroNote}>Planning, terrain, facturation et maintenance restent reliés dans le même dossier.</span>
         </div>
 
         <div className={styles.heroVisual} aria-label="Technicien sur site et suivi du jour">
           <div className={styles.heroPhoto}>
             <Image
-              src="/images/landing/hero-hvac.webp"
-              alt="Technicien CVC inspectant une installation sur site"
-              width={1448}
-              height={1086}
+              src={MEDIA.hero}
+              alt="Technicien intervenant sur une installation de chauffage"
+              width={1800}
+              height={1350}
               quality={92}
               sizes="(max-width: 1050px) 100vw, 56vw"
               priority
@@ -120,7 +127,7 @@ export default function HomePage() {
           <div>
             <span className={styles.sectionEyebrow}>LE PRODUIT</span>
             <h2 id="product-title">Le matin, vous voyez ce qui mérite votre attention.</h2>
-            <p>Pas un tableau de bord rempli pour faire joli. Les dossiers à reprendre arrivent en premier.</p>
+            <p>Les dossiers à reprendre arrivent en premier. Le reste reste calme.</p>
           </div>
           <Link className={styles.textLink} href="/demo">Ouvrir la démo complète →</Link>
         </div>
@@ -132,15 +139,15 @@ export default function HomePage() {
       <section id="terrain" className={styles.splitSection} aria-labelledby="terrain-title">
         <div className={styles.splitMedia}>
           <Image
-            src="/images/landing/terrain-technician.webp"
-            alt="Technicienne CVC documentant un équipement sur site"
-            width={1448}
-            height={1086}
+            src={MEDIA.terrain}
+            alt="Technicienne sur site utilisant une tablette"
+            width={1800}
+            height={1200}
             quality={92}
             sizes="(max-width: 1050px) 100vw, 52vw"
           />
           <div className={styles.mediaCaption}>
-            <strong>Intervention sur équipement</strong>
+            <strong>Intervention sur site</strong>
             <span>Mission → photo → rapport</span>
           </div>
         </div>
@@ -159,10 +166,10 @@ export default function HomePage() {
       <section className={`${styles.splitSection} ${styles.reverse}`} aria-labelledby="cash-title">
         <div className={styles.splitMedia}>
           <Image
-            src="/images/landing/office-operations.webp"
-            alt="Responsable d’exploitation suivant devis, factures et échéances"
-            width={1448}
-            height={1086}
+            src={MEDIA.office}
+            alt="Responsable d’entreprise suivant ses dossiers depuis le bureau"
+            width={1800}
+            height={1200}
             quality={92}
             sizes="(max-width: 1050px) 100vw, 52vw"
           />
@@ -186,8 +193,8 @@ export default function HomePage() {
       <section id="suivi" className={styles.watchSection} aria-labelledby="watch-title">
         <div className={styles.watchIntro}>
           <span className={styles.sectionEyebrow}>CE QUI NE DOIT PAS PASSER À TRAVERS</span>
-          <h2 id="watch-title">SESIRA garde aussi un œil sur les dates.</h2>
-          <p>Pas besoin de parcourir cinq écrans. Les dossiers qui attendent quelque chose remontent au bon moment.</p>
+          <h2 id="watch-title">Vos échéances remontent avant de devenir un problème.</h2>
+          <p>Vous voyez la date, la raison et la prochaine action sans parcourir cinq écrans.</p>
         </div>
         <div className={styles.watchGrid}>
           {WATCH_ITEMS.map((item) => (
@@ -203,10 +210,10 @@ export default function HomePage() {
         <div className={styles.documentBand}>
           <div className={styles.documentPhoto}>
             <Image
-              src="/images/landing/documents-upload.webp"
-              alt="Technicien téléversant un rapport dans le bon dossier"
-              width={1448}
-              height={1086}
+              src={MEDIA.documents}
+              alt="Technicien consultant son rapport sur tablette dans un atelier"
+              width={1800}
+              height={1200}
               quality={92}
               sizes="(max-width: 1050px) 100vw, 44vw"
             />
