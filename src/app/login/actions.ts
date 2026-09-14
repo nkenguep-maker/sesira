@@ -83,7 +83,7 @@ export async function signupAction(
 
   if (!data.session) {
     return {
-      success: "Votre espace entreprise est prêt. Confirmez votre adresse e-mail avant de vous connecter.",
+      success: "Votre compte a bien été créé. Confirmez maintenant votre adresse e-mail pour activer l’accès à SESIRA.",
     };
   }
 
