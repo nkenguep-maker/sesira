@@ -1,6 +1,13 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
+
+interface StoreDeps {
+  client?: SupabaseClient<Database>;
+}
 
 /**
  * Result shape shared by every replay-safe insert. `created` distinguishes
@@ -168,8 +175,9 @@ export interface RecordOutboundMessageIntentInput {
  */
 export async function recordOutboundMessageIntent(
   input: RecordOutboundMessageIntentInput,
+  deps: StoreDeps = {},
 ): Promise<InsertOnceResult> {
-  const supabase = await createClient();
+  const supabase = deps.client ?? (await createClient());
   const { data, error } = await supabase.rpc("record_outbound_message_intent", {
     target_organization_id: input.organizationId,
     target_idempotency_key: input.idempotencyKey,
@@ -198,8 +206,9 @@ export interface MarkOutboundMessageSentInput {
  */
 export async function markOutboundMessageSent(
   input: MarkOutboundMessageSentInput,
+  deps: StoreDeps = {},
 ): Promise<boolean> {
-  const supabase = await createClient();
+  const supabase = deps.client ?? (await createClient());
   const { data, error } = await supabase.rpc("mark_outbound_message_sent", {
     target_organization_id: input.organizationId,
     target_message_id: input.messageId,
@@ -223,8 +232,9 @@ export interface MarkOutboundMessageFailedInput {
  */
 export async function markOutboundMessageFailed(
   input: MarkOutboundMessageFailedInput,
+  deps: StoreDeps = {},
 ): Promise<boolean> {
-  const supabase = await createClient();
+  const supabase = deps.client ?? (await createClient());
   const { data, error } = await supabase.rpc("mark_outbound_message_failed", {
     target_organization_id: input.organizationId,
     target_message_id: input.messageId,
