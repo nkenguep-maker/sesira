@@ -196,22 +196,48 @@ begin
   select
     q.revision,
     jsonb_build_object(
-      'quote',jsonb_build_object(
-        'id',q.id,'reference',q.reference,'title',q.title,'amount',q.amount,
-        'currency',q.currency,'variant_key',q.variant_key,'revision',q.revision,
-        'expires_at',q.expires_at
+      'proposal',jsonb_build_object(
+        'anchor_quote_id',q.id,
+        'opportunity_id',q.opportunity_id,
+        'reference',q.reference,
+        'title',q.title
       ),
       'customer',jsonb_build_object(
         'id',c.id,'display_name',c.display_name,'company_name',c.company_name,
         'email',c.email,'phone',c.phone
       ),
-      'options',coalesce((
-        select jsonb_agg(jsonb_build_object(
-          'id',o.id,'option_key',o.option_key,'name',o.name,'amount',o.amount,
-          'currency',o.currency,'status',o.status,'ordinal',o.ordinal,'metadata',o.metadata
-        ) order by o.ordinal,o.created_at,o.id)
-        from public.quote_options o
-        where o.organization_id=target_organization_id and o.quote_id=q.id
+      'variants',coalesce((
+        select jsonb_agg(
+          jsonb_build_object(
+            'quote_id',v.id,
+            'reference',v.reference,
+            'title',v.title,
+            'amount',v.amount,
+            'currency',v.currency,
+            'variant_key',v.variant_key,
+            'revision',v.revision,
+            'expires_at',v.expires_at,
+            'order',v.proposal_variant_order,
+            'recommended',v.proposal_is_recommended,
+            'options',coalesce((
+              select jsonb_agg(jsonb_build_object(
+                'id',o.id,'option_key',o.option_key,'name',o.name,'amount',o.amount,
+                'currency',o.currency,'status',o.status,'ordinal',o.ordinal,'metadata',o.metadata
+              ) order by o.ordinal,o.created_at,o.id)
+              from public.quote_options o
+              where o.organization_id=target_organization_id and o.quote_id=v.id
+            ),'[]'::jsonb)
+          )
+          order by v.proposal_variant_order,v.created_at,v.id
+        )
+        from public.quotes v
+        where v.organization_id=target_organization_id
+          and v.customer_id=q.customer_id
+          and v.is_current_revision=true
+          and (
+            (q.opportunity_id is not null and v.opportunity_id=q.opportunity_id)
+            or (q.opportunity_id is null and v.id=q.id)
+          )
       ),'[]'::jsonb),
       'approved_at',to_char(now() at time zone 'utc','YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
     )
