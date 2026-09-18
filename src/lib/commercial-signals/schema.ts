@@ -115,7 +115,6 @@ export const convertSignalToProposalInputSchema = z.object({
   currency: currencySchema.optional(),
   ownerUserId: uuid.optional().nullable(),
   overrideCustomerId: uuid.optional().nullable(),
-  catalogItemId: uuid.optional().nullable(),
 });
 export type ConvertSignalToProposalInput = z.infer<typeof convertSignalToProposalInputSchema>;
 
