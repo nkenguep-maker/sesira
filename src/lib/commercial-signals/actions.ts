@@ -106,7 +106,8 @@ export type ConvertSignalToProposalResult =
  *
  *   * locks the signal FOR UPDATE (no double-conversion race);
  *   * calls `create_opportunity_with_quote` under the hood;
- *   * optionally applies a catalog item to the created quote;
+ *   * leaves catalog application disabled until C51 publishes the
+ *     production catalog contract;
  *   * flips the signal to CONVERTED with provenance;
  *   * writes an audit event.
  *
@@ -129,7 +130,7 @@ export async function convertCommercialSignalToProposal(
       target_currency: input.currency ?? "EUR",
       target_owner_user_id: input.ownerUserId ?? null,
       target_override_customer_id: input.overrideCustomerId ?? null,
-      target_catalog_item_id: input.catalogItemId ?? null,
+      target_catalog_item_id: null,
     } as never,
   );
   if (error) {
