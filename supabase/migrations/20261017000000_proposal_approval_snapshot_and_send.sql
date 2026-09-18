@@ -44,7 +44,7 @@ create table if not exists public.proposal_send_requests (
   outbound_message_id uuid references public.outbound_messages(id) on delete set null,
   provider_message_id text,
   error_class text check (error_class is null or error_class in ('TRANSIENT','PERMANENT','UNKNOWN')),
-  error_message text,
+  error_message text check (error_message is null or length(error_message) <= 4000),
   requested_at timestamptz not null default now(),
   sent_at timestamptz,
   failed_at timestamptz,
@@ -133,9 +133,12 @@ begin
     raise exception 'proposal options are frozen after submission; reopen for editing'
       using errcode='22023';
   end if;
-  return coalesce(new,old);
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
 end;
-$$;
+$;
 
 drop trigger if exists quote_options_proposal_freeze on public.quote_options;
 create trigger quote_options_proposal_freeze
