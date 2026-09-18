@@ -118,10 +118,10 @@ comment on column public.commercial_opportunity_signals.next_action_hint is
   'Non-committal wording ("À examiner avant …", "Préparer le contrôle …"). Never "vous devez", never "conforme".';
 
 comment on column public.commercial_opportunity_signals.suggested_catalog_item_id is
-  'Optional match into service_catalog_items. Never auto-applied: only surfaced. The applied_catalog_item_id column captures a subsequent human choice.';
+  'Reserved for C51 catalog integration. C50 never populates this field and never invents a catalog suggestion.';
 
 comment on column public.commercial_opportunity_signals.applied_catalog_item_id is
-  'Set at conversion time when the operator explicitly picks a catalog item. Never populated by the scanner.';
+  'Reserved for C51 catalog integration. C50 leaves this field null.';
 
 create index commercial_signals_org_status_due_idx
   on public.commercial_opportunity_signals (organization_id, commercial_status, due_at nulls last);
@@ -750,8 +750,8 @@ grant execute on function public.resume_expired_commercial_signals(uuid) to auth
 --   3. Resolve customer (signal.customer_id or override).
 --   4. Call create_opportunity_with_quote (SECURITY DEFINER — reuses its
 --      own membership check and creates opportunity + quote atomically).
---   5. Optionally apply a catalog item to the created quote via
---      apply_catalog_to_proposal_variant.
+--   5. Catalog application is intentionally disabled in C50. C51 owns the
+--      production catalog contract and immutable price/version semantics.
 --   6. UPDATE the signal to CONVERTED with all provenance recorded.
 --   7. Emit audit event.
 --
@@ -799,6 +799,11 @@ begin
   end if;
   if target_quote_title is null or length(trim(target_quote_title)) = 0 then
     raise exception 'convert_commercial_signal_to_proposal: quote_title is required'
+      using errcode = '22023';
+  end if;
+
+  if target_catalog_item_id is not null then
+    raise exception 'convert_commercial_signal_to_proposal: catalog application is not available in C50; wait for C51'
       using errcode = '22023';
   end if;
 
@@ -867,20 +872,9 @@ begin
       using errcode = '22023';
   end if;
 
-  -- Apply catalog item if provided (best-effort — a false return means
-  -- the catalog item is archived or the quote is not eligible, in which
-  -- case we still complete the conversion but mark catalog_applied=false).
-  if target_catalog_item_id is not null then
-    begin
-      select public.apply_catalog_to_proposal_variant(
-        target_organization_id, qte_id, target_catalog_item_id,
-        null::text, null::text, null::numeric
-      ) into applied;
-      applied := coalesce(applied, false);
-    exception when others then
-      applied := false;
-    end;
-  end if;
+  -- C50 does not touch service_catalog_items. The richer catalog schema
+  -- and immutable price/version contract are delivered by C51.
+  applied := false;
 
   -- Flip the signal to CONVERTED. The state trigger allows DETECTED /
   -- REVIEWED / PLANNED → CONVERTED. If another concurrent caller managed
