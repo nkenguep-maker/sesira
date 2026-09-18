@@ -696,6 +696,36 @@ begin
 end;
 $$;
 
+create or replace function public.list_due_proposal_send_requests(
+  target_limit integer default 50
+)
+returns table(
+  request_id uuid,
+  organization_id uuid
+)
+language plpgsql
+security definer
+set search_path=''
+stable
+as $
+begin
+  if (select auth.role()) <> 'service_role' then
+    raise exception 'list_due_proposal_send_requests: service_role required' using errcode='42501';
+  end if;
+  if target_limit < 1 or target_limit > 200 then
+    raise exception 'list_due_proposal_send_requests: limit must be 1..200' using errcode='22023';
+  end if;
+
+  return query
+  select r.id, r.organization_id
+  from public.proposal_send_requests r
+  where r.status='REQUESTED'
+     or (r.status='SENDING' and r.lease_expires_at < now())
+  order by r.requested_at asc
+  limit target_limit;
+end;
+$;
+
 create or replace function public.retry_failed_proposal_send(
   target_organization_id uuid,
   target_quote_id uuid
@@ -739,6 +769,7 @@ revoke all on function public.claim_proposal_send_request(uuid,uuid,text,integer
 revoke all on function public.record_proposal_send_success(uuid,uuid,text,uuid,text) from public,anon,authenticated;
 revoke all on function public.record_proposal_send_failure(uuid,uuid,text,uuid,text,text) from public,anon,authenticated;
 revoke all on function public.reconcile_proposal_send_from_outbound(uuid,uuid,text,uuid) from public,anon,authenticated;
+revoke all on function public.list_due_proposal_send_requests(integer) from public,anon,authenticated;
 revoke all on function public.retry_failed_proposal_send(uuid,uuid) from public,anon;
 
 grant execute on function public.approve_proposal(uuid,uuid) to authenticated;
@@ -747,6 +778,7 @@ grant execute on function public.reopen_proposal_for_editing(uuid,uuid,text) to 
 grant execute on function public.request_proposal_send(uuid,uuid) to authenticated;
 grant execute on function public.retry_failed_proposal_send(uuid,uuid) to authenticated;
 
+grant execute on function public.list_due_proposal_send_requests(integer) to service_role;
 grant execute on function public.claim_proposal_send_request(uuid,uuid,text,integer) to service_role;
 grant execute on function public.record_proposal_send_success(uuid,uuid,text,uuid,text) to service_role;
 grant execute on function public.record_proposal_send_failure(uuid,uuid,text,uuid,text,text) to service_role;
