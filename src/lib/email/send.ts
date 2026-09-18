@@ -2,6 +2,8 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import {
   assertGuardedEmailAllowed,
   type GuardedEmailPolicy,
@@ -12,6 +14,7 @@ import {
   markOutboundMessageSent,
   recordOutboundMessageIntent,
 } from "@/lib/idempotency/store";
+import type { Database } from "@/types/database";
 
 export type SendGuardedEmailInput = {
   organizationId: string;
@@ -32,6 +35,12 @@ export type SendGuardedEmailInput = {
    * live `serverEnv` + `VERCEL_ENV`.
    */
   policy?: GuardedEmailPolicy;
+  /**
+   * Optional trusted DB client. Server workers use a service-role client
+   * so the idempotency ledger remains the same boundary as authenticated
+   * server actions without requiring request cookies.
+   */
+  dbClient?: SupabaseClient<Database>;
 };
 
 export type SendGuardedEmailResult =
@@ -86,7 +95,7 @@ export async function sendGuardedEmail(
     replyTo: input.replyTo ?? null,
     subject: input.subject,
     bodyHash,
-  });
+  }, { client: input.dbClient });
   if (!intent.created) {
     return { status: "REPLAY", messageId: intent.id };
   }
@@ -106,7 +115,7 @@ export async function sendGuardedEmail(
       organizationId: input.organizationId,
       messageId: intent.id,
       providerMessageId: result.providerMessageId,
-    });
+    }, { client: input.dbClient });
     return {
       status: "SENT",
       messageId: intent.id,
@@ -119,7 +128,7 @@ export async function sendGuardedEmail(
     messageId: intent.id,
     errorClass: result.errorClass,
     errorMessage: result.errorMessage,
-  });
+  }, { client: input.dbClient });
   return {
     status: "FAILED",
     messageId: intent.id,
