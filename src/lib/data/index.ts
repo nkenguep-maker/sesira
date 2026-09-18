@@ -76,3 +76,6 @@ export { getLatestVehiclePositions, getDispatchEtaSnapshot } from "./fleet";
 
 export type { DashboardRole, DashboardSnapshot } from "./dashboard-snapshot";
 export { getDashboardSnapshot } from "./dashboard-snapshot";
+
+export type { OpenCommercialSignalRow } from "./commercial-signals";
+export { getOpenCommercialSignals } from "./commercial-signals";

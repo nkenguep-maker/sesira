@@ -4593,6 +4593,299 @@ $$;
 
 reset role;
 
-select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures, C44 transactional SMS, C45 document trust, C46 trackdechets, C47 invoice lifecycle, C48 contract renewals and C49 integration gate assertions passed' as result;
+-- =========================================================================
+-- C50 — commercial opportunity signals
+--
+-- The scanner itself (scan_commercial_equipment_signals) requires a real
+-- regulatory rule + GWP + equipment fixture to exercise end-to-end. That
+-- is not seeded in this file. Here we assert the invariants that do not
+-- depend on the reference data:
+--   * state machine transitions (allowed and blocked)
+--   * terminal immutability (CONVERTED / DISMISSED cannot leave)
+--   * dedupe uniqueness (org, dedupe_key)
+--   * cross-tenant isolation (RPCs from wrong tenant → 42501)
+--   * dismiss reason required
+--   * snooze future-only + max-2-years guard
+--   * double conversion refused (NOT_ELIGIBLE = empty result)
+-- =========================================================================
+
+insert into public.customers (id, organization_id, display_name)
+values ('91410000-0000-4000-8000-000000000001', '91000000-0000-4000-8000-000000000001', 'C50 customer');
+
+insert into public.equipment (
+  id, organization_id, customer_id, label, equipment_category, fluid_code, charge_kg
+) values (
+  '91610000-0000-4000-8000-000000000001',
+  '91000000-0000-4000-8000-000000000001',
+  '91410000-0000-4000-8000-000000000001',
+  'C50 equipment', 'CHILLER', 'R410A', 12
+);
+
+insert into public.commercial_opportunity_signals (
+  id, organization_id, customer_id, equipment_id, source_type,
+  signal_kind, title, dedupe_key
+) values (
+  '91710000-0000-4000-8000-000000000001',
+  '91000000-0000-4000-8000-000000000001',
+  '91410000-0000-4000-8000-000000000001',
+  '91610000-0000-4000-8000-000000000001',
+  'regulatory_leak_check', 'LEAK_CHECK_DUE',
+  'Contrôle d''étanchéité — préparer',
+  'signal:leak_check_due:test:rule:2024-03-11:20261215'
+);
+
+-- Dedupe key uniqueness: a second insert with the same (org, dedupe_key)
+-- must fail (23505).
+do $$
+begin
+  begin
+    insert into public.commercial_opportunity_signals (
+      id, organization_id, customer_id, equipment_id, source_type,
+      signal_kind, title, dedupe_key
+    ) values (
+      '91710000-0000-4000-8000-000000000002',
+      '91000000-0000-4000-8000-000000000001',
+      '91410000-0000-4000-8000-000000000001',
+      '91610000-0000-4000-8000-000000000001',
+      'regulatory_leak_check', 'LEAK_CHECK_DUE',
+      'duplicate',
+      'signal:leak_check_due:test:rule:2024-03-11:20261215'
+    );
+    raise exception 'C50: expected unique-violation on same dedupe_key';
+  exception when unique_violation then
+    null;
+  end;
+end;
+$$;
+
+-- Cross-tenant call: user of tenant B tries to review a signal of tenant A.
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"92100000-0000-4000-8000-000000000002","role":"authenticated"}'::jsonb::text,
+  true
+);
+do $$
+declare
+  captured text;
+begin
+  begin
+    perform public.mark_commercial_signal_reviewed(
+      '91000000-0000-4000-8000-000000000001',
+      '91710000-0000-4000-8000-000000000001'
+    );
+    raise exception 'C50: cross-tenant review must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then raise exception 'C50: expected 42501 cross-tenant review (got %)', captured; end if;
+  end;
+end;
+$$;
+reset role;
+
+-- Same-tenant transitions.
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"91100000-0000-4000-8000-000000000001","role":"authenticated"}'::jsonb::text,
+  true
+);
+do $$
+declare
+  ok boolean;
+  captured text;
+begin
+  ok := public.mark_commercial_signal_reviewed(
+    '91000000-0000-4000-8000-000000000001',
+    '91710000-0000-4000-8000-000000000001'
+  );
+  if not ok then raise exception 'C50: DETECTED → REVIEWED must succeed'; end if;
+
+  ok := public.mark_commercial_signal_planned(
+    '91000000-0000-4000-8000-000000000001',
+    '91710000-0000-4000-8000-000000000001',
+    'attend accord client'
+  );
+  if not ok then raise exception 'C50: REVIEWED → PLANNED must succeed'; end if;
+
+  ok := public.snooze_commercial_signal(
+    '91000000-0000-4000-8000-000000000001',
+    '91710000-0000-4000-8000-000000000001',
+    (now() + interval '10 days')::timestamptz,
+    'wait supplier'
+  );
+  if not ok then raise exception 'C50: PLANNED → SNOOZED must succeed'; end if;
+
+  -- Snooze in the past → 22023
+  begin
+    perform public.snooze_commercial_signal(
+      '91000000-0000-4000-8000-000000000001',
+      '91710000-0000-4000-8000-000000000001',
+      (now() - interval '1 day')::timestamptz,
+      null
+    );
+    raise exception 'C50: snoozing into the past must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C50: expected 22023 for past snooze (got %)', captured; end if;
+  end;
+
+  -- Snooze > 2 years → 22023
+  begin
+    perform public.snooze_commercial_signal(
+      '91000000-0000-4000-8000-000000000001',
+      '91710000-0000-4000-8000-000000000001',
+      (now() + interval '3 years')::timestamptz,
+      null
+    );
+    raise exception 'C50: snooze > 2 years must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C50: expected 22023 for far snooze (got %)', captured; end if;
+  end;
+
+  -- Dismiss requires a non-empty reason
+  begin
+    perform public.dismiss_commercial_signal(
+      '91000000-0000-4000-8000-000000000001',
+      '91710000-0000-4000-8000-000000000001',
+      ''
+    );
+    raise exception 'C50: dismiss with empty reason must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C50: expected 22023 for empty reason (got %)', captured; end if;
+  end;
+
+  ok := public.dismiss_commercial_signal(
+    '91000000-0000-4000-8000-000000000001',
+    '91710000-0000-4000-8000-000000000001',
+    'customer decommissioned'
+  );
+  if not ok then raise exception 'C50: SNOOZED → DISMISSED must succeed'; end if;
+
+  ok := public.dismiss_commercial_signal(
+    '91000000-0000-4000-8000-000000000001',
+    '91710000-0000-4000-8000-000000000001',
+    'again'
+  );
+  if ok then raise exception 'C50: dismissing an already-DISMISSED signal must return false'; end if;
+
+  ok := public.mark_commercial_signal_reviewed(
+    '91000000-0000-4000-8000-000000000001',
+    '91710000-0000-4000-8000-000000000001'
+  );
+  if ok then raise exception 'C50: review of DISMISSED signal must return false (not eligible)'; end if;
+end;
+$$;
+
+-- Terminal state trigger: direct UPDATE from DISMISSED → any other state
+-- must fail (22023).
+reset role;
+do $$
+declare
+  captured text;
+begin
+  begin
+    update public.commercial_opportunity_signals
+      set commercial_status = 'REVIEWED'
+    where id = '91710000-0000-4000-8000-000000000001';
+    raise exception 'C50: DISMISSED → REVIEWED via UPDATE must be blocked';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '22023' then raise exception 'C50: expected 22023 on terminal exit (got %)', captured; end if;
+  end;
+end;
+$$;
+
+-- Double-conversion refusal: convert once, second convert returns 0 rows.
+insert into public.commercial_opportunity_signals (
+  id, organization_id, customer_id, equipment_id, source_type,
+  signal_kind, title, dedupe_key
+) values (
+  '91710000-0000-4000-8000-000000000010',
+  '91000000-0000-4000-8000-000000000001',
+  '91410000-0000-4000-8000-000000000001',
+  '91610000-0000-4000-8000-000000000001',
+  'regulatory_leak_check', 'LEAK_CHECK_DUE',
+  'active convert candidate',
+  'signal:leak_check_due:test:rule:2024-03-11:20270101'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"91100000-0000-4000-8000-000000000001","role":"authenticated"}'::jsonb::text,
+  true
+);
+do $$
+declare
+  rec record;
+  count_rows int;
+begin
+  select opportunity_id, quote_id, signal_id, catalog_applied into rec
+  from public.convert_commercial_signal_to_proposal(
+    '91000000-0000-4000-8000-000000000001',
+    '91710000-0000-4000-8000-000000000010',
+    'Contrôle d''étanchéité — test',
+    'default',
+    null::numeric,
+    'EUR',
+    null::uuid,
+    null::uuid,
+    null::uuid
+  );
+  if rec.opportunity_id is null or rec.quote_id is null then
+    raise exception 'C50: first convert must return ids (got NULL)';
+  end if;
+  if rec.catalog_applied is not false then
+    raise exception 'C50: convert without catalog must return catalog_applied=false';
+  end if;
+
+  -- Second convert on the same signal (now CONVERTED, terminal) must
+  -- return an empty result set = NOT_ELIGIBLE.
+  select count(*) into count_rows
+  from public.convert_commercial_signal_to_proposal(
+    '91000000-0000-4000-8000-000000000001',
+    '91710000-0000-4000-8000-000000000010',
+    'second attempt',
+    'default',
+    null::numeric,
+    'EUR',
+    null::uuid,
+    null::uuid,
+    null::uuid
+  );
+  if count_rows <> 0 then
+    raise exception 'C50: double conversion must return 0 rows (got %)', count_rows;
+  end if;
+end;
+$$;
+
+-- open_commercial_signals cross-tenant call must fail 42501.
+reset role;
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"92100000-0000-4000-8000-000000000002","role":"authenticated"}'::jsonb::text,
+  true
+);
+do $$
+declare
+  captured text;
+begin
+  begin
+    perform public.open_commercial_signals('91000000-0000-4000-8000-000000000001');
+    raise exception 'C50: cross-tenant open_commercial_signals must fail';
+  exception when others then
+    captured := sqlstate;
+    if captured <> '42501' then raise exception 'C50: expected 42501 (got %)', captured; end if;
+  end;
+end;
+$$;
+
+reset role;
+
+select 'core product RLS, event, state-machine, assignment/safety, follow-up scheduling, durable idempotency, Shadow execution, Attention/audit, Retries/incidents, C10 inbound reply, C11 classification, C12 approval, C14 end-to-end, C21 V2 validation, C41 dispatch planning, C42 fleet telemetry, C43 guided procedures, C44 transactional SMS, C45 document trust, C46 trackdechets, C47 invoice lifecycle, C48 contract renewals, C49 integration gate and C50 commercial opportunity signals assertions passed' as result;
 
 rollback;

@@ -356,6 +356,190 @@ export type Database = {
           },
         ]
       }
+      commercial_opportunity_signals: {
+        Row: {
+          applied_catalog_item_id: string | null
+          commercial_status: string
+          converted_at: string | null
+          converted_by_user_id: string | null
+          converted_opportunity_id: string | null
+          converted_quote_id: string | null
+          created_at: string
+          customer_id: string | null
+          dedupe_key: string
+          detected_at: string
+          dismissed_at: string | null
+          dismissed_by_user_id: string | null
+          dismissed_reason: string | null
+          due_at: string | null
+          equipment_id: string
+          explanation: string | null
+          facts: Json
+          id: string
+          metadata: Json
+          next_action_hint: string | null
+          organization_id: string
+          planned_at: string | null
+          planned_by_user_id: string | null
+          planning_note: string | null
+          relevant_from: string | null
+          reviewed_at: string | null
+          reviewed_by_user_id: string | null
+          rule_snapshot: Json
+          severity: string
+          signal_kind: string
+          snoozed_by_user_id: string | null
+          snoozed_reason: string | null
+          snoozed_until: string | null
+          source_reference: string | null
+          source_rule_id: string | null
+          source_rule_version: string | null
+          source_type: string
+          suggested_catalog_item_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          applied_catalog_item_id?: string | null
+          commercial_status?: string
+          converted_at?: string | null
+          converted_by_user_id?: string | null
+          converted_opportunity_id?: string | null
+          converted_quote_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          dedupe_key: string
+          detected_at?: string
+          dismissed_at?: string | null
+          dismissed_by_user_id?: string | null
+          dismissed_reason?: string | null
+          due_at?: string | null
+          equipment_id: string
+          explanation?: string | null
+          facts?: Json
+          id?: string
+          metadata?: Json
+          next_action_hint?: string | null
+          organization_id: string
+          planned_at?: string | null
+          planned_by_user_id?: string | null
+          planning_note?: string | null
+          relevant_from?: string | null
+          reviewed_at?: string | null
+          reviewed_by_user_id?: string | null
+          rule_snapshot?: Json
+          severity?: string
+          signal_kind: string
+          snoozed_by_user_id?: string | null
+          snoozed_reason?: string | null
+          snoozed_until?: string | null
+          source_reference?: string | null
+          source_rule_id?: string | null
+          source_rule_version?: string | null
+          source_type: string
+          suggested_catalog_item_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          applied_catalog_item_id?: string | null
+          commercial_status?: string
+          converted_at?: string | null
+          converted_by_user_id?: string | null
+          converted_opportunity_id?: string | null
+          converted_quote_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          dedupe_key?: string
+          detected_at?: string
+          dismissed_at?: string | null
+          dismissed_by_user_id?: string | null
+          dismissed_reason?: string | null
+          due_at?: string | null
+          equipment_id?: string
+          explanation?: string | null
+          facts?: Json
+          id?: string
+          metadata?: Json
+          next_action_hint?: string | null
+          organization_id?: string
+          planned_at?: string | null
+          planned_by_user_id?: string | null
+          planning_note?: string | null
+          relevant_from?: string | null
+          reviewed_at?: string | null
+          reviewed_by_user_id?: string | null
+          rule_snapshot?: Json
+          severity?: string
+          signal_kind?: string
+          snoozed_by_user_id?: string | null
+          snoozed_reason?: string | null
+          snoozed_until?: string | null
+          source_reference?: string | null
+          source_rule_id?: string | null
+          source_rule_version?: string | null
+          source_type?: string
+          suggested_catalog_item_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_opportunity_signals_customer_id_organization_id_fkey"
+            columns: ["customer_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "commercial_opportunity_signals_equipment_id_organization_id_fkey"
+            columns: ["equipment_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "commercial_opportunity_signals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commercial_watchdog_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          intervention_completed_grace_days: number
+          opportunity_won_grace_days: number
+          organization_id: string
+          quote_expiring_days_ahead: number
+          quote_no_reply_days: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          intervention_completed_grace_days?: number
+          opportunity_won_grace_days?: number
+          organization_id: string
+          quote_expiring_days_ahead?: number
+          quote_no_reply_days?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          intervention_completed_grace_days?: number
+          opportunity_won_grace_days?: number
+          organization_id?: string
+          quote_expiring_days_ahead?: number
+          quote_no_reply_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           company_name: string | null
@@ -1103,6 +1287,78 @@ export type Database = {
           },
         ]
       }
+      quote_approval_snapshots: {
+        Row: {
+          approved_at: string
+          approved_by_user_id: string | null
+          base_amount: number | null
+          created_at: string
+          currency: string
+          customer_id: string
+          id: string
+          invalidated_at: string | null
+          invalidation_reason: string | null
+          is_active: boolean
+          is_recommended: boolean
+          opportunity_id: string | null
+          organization_id: string
+          quote_id: string
+          revision: number
+          snapshot_data: Json
+          submitted_at: string | null
+          submitted_by_user_id: string | null
+          title: string
+          variant_key: string
+          variant_label: string | null
+        }
+        Insert: {
+          approved_at: string
+          approved_by_user_id?: string | null
+          base_amount?: number | null
+          created_at?: string
+          currency: string
+          customer_id: string
+          id?: string
+          invalidated_at?: string | null
+          invalidation_reason?: string | null
+          is_active?: boolean
+          is_recommended?: boolean
+          opportunity_id?: string | null
+          organization_id: string
+          quote_id: string
+          revision: number
+          snapshot_data: Json
+          submitted_at?: string | null
+          submitted_by_user_id?: string | null
+          title: string
+          variant_key: string
+          variant_label?: string | null
+        }
+        Update: {
+          approved_at?: string
+          approved_by_user_id?: string | null
+          base_amount?: number | null
+          created_at?: string
+          currency?: string
+          customer_id?: string
+          id?: string
+          invalidated_at?: string | null
+          invalidation_reason?: string | null
+          is_active?: boolean
+          is_recommended?: boolean
+          opportunity_id?: string | null
+          organization_id?: string
+          quote_id?: string
+          revision?: number
+          snapshot_data?: Json
+          submitted_at?: string | null
+          submitted_by_user_id?: string | null
+          title?: string
+          variant_key?: string
+          variant_label?: string | null
+        }
+        Relationships: []
+      }
       quote_options: {
         Row: {
           amount: number | null
@@ -1158,6 +1414,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      proposal_send_requests: {
+        Row: {
+          attempt_of_id: string | null
+          created_at: string
+          error_class: string | null
+          error_message: string | null
+          failed_at: string | null
+          id: string
+          metadata: Json
+          opportunity_id: string
+          organization_id: string
+          outbound_message_id: string | null
+          provider_message_id: string | null
+          requested_at: string
+          requested_by_user_id: string | null
+          sent_at: string | null
+          snapshot_ids: string[]
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_of_id?: string | null
+          created_at?: string
+          error_class?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          metadata?: Json
+          opportunity_id: string
+          organization_id: string
+          outbound_message_id?: string | null
+          provider_message_id?: string | null
+          requested_at?: string
+          requested_by_user_id?: string | null
+          sent_at?: string | null
+          snapshot_ids: string[]
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_of_id?: string | null
+          created_at?: string
+          error_class?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          metadata?: Json
+          opportunity_id?: string
+          organization_id?: string
+          outbound_message_id?: string | null
+          provider_message_id?: string | null
+          requested_at?: string
+          requested_by_user_id?: string | null
+          sent_at?: string | null
+          snapshot_ids?: string[]
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1426,10 +1742,17 @@ export type Database = {
       service_catalog_items: {
         Row: {
           active: boolean
+          archived_at: string | null
+          base_amount: number | null
           code: string | null
           created_at: string
+          currency: string
+          default_quote_title: string | null
+          default_variant_label: string | null
           description: string | null
+          duration_minutes: number | null
           id: string
+          kind: string
           metadata: Json
           name: string
           organization_id: string
@@ -1437,10 +1760,17 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          archived_at?: string | null
+          base_amount?: number | null
           code?: string | null
           created_at?: string
+          currency?: string
+          default_quote_title?: string | null
+          default_variant_label?: string | null
           description?: string | null
+          duration_minutes?: number | null
           id?: string
+          kind?: string
           metadata?: Json
           name: string
           organization_id: string
@@ -1448,10 +1778,17 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          archived_at?: string | null
+          base_amount?: number | null
           code?: string | null
           created_at?: string
+          currency?: string
+          default_quote_title?: string | null
+          default_variant_label?: string | null
           description?: string | null
+          duration_minutes?: number | null
           id?: string
+          kind?: string
           metadata?: Json
           name?: string
           organization_id?: string
@@ -2883,6 +3220,293 @@ export type Database = {
           target_closed_reason: string | null
         }
         Returns: boolean
+      }
+      submit_proposal_for_review: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+        }
+        Returns: boolean
+      }
+      claim_proposal_review: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+        }
+        Returns: boolean
+      }
+      request_proposal_changes: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+          target_note: string
+        }
+        Returns: boolean
+      }
+      approve_proposal: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+          target_note: string | null
+        }
+        Returns: boolean
+      }
+      reject_proposal: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      mark_proposal_ready_to_send: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+        }
+        Returns: boolean
+      }
+      resume_proposal_draft: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+        }
+        Returns: boolean
+      }
+      create_proposal_variant: {
+        Args: {
+          target_organization_id: string
+          target_opportunity_id: string
+          target_variant_key: string
+          target_variant_label: string | null
+          target_quote_title: string
+          target_amount: number | null
+          target_currency: string
+          target_is_recommended: boolean
+        }
+        Returns: string
+      }
+      update_proposal_variant_draft: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+          target_title: string | null
+          target_variant_label: string | null
+          target_amount: number | null
+          target_currency: string | null
+        }
+        Returns: boolean
+      }
+      remove_proposal_variant: {
+        Args: {
+          target_organization_id: string
+          target_opportunity_id: string
+          target_variant_key: string
+        }
+        Returns: boolean
+      }
+      set_recommended_variant: {
+        Args: {
+          target_organization_id: string
+          target_opportunity_id: string
+          target_variant_key: string
+        }
+        Returns: boolean
+      }
+      add_proposal_option: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+          target_option_key: string
+          target_name: string
+          target_amount: number | null
+          target_currency: string | null
+          target_ordinal: number | null
+        }
+        Returns: string
+      }
+      update_proposal_option: {
+        Args: {
+          target_organization_id: string
+          target_option_id: string
+          target_name: string | null
+          target_amount: number | null
+          target_currency: string | null
+          target_ordinal: number | null
+        }
+        Returns: boolean
+      }
+      remove_proposal_option: {
+        Args: {
+          target_organization_id: string
+          target_option_id: string
+        }
+        Returns: boolean
+      }
+      request_proposal_send: {
+        Args: {
+          target_organization_id: string
+          target_opportunity_id: string
+        }
+        Returns: {
+          send_request_id: string
+          created: boolean
+          quote_ids: string[]
+          snapshot_ids: string[]
+        }[]
+      }
+      mark_proposal_send_sent: {
+        Args: {
+          target_organization_id: string
+          target_send_request_id: string
+          target_outbound_message_id: string
+          target_provider_message_id: string
+        }
+        Returns: boolean
+      }
+      mark_proposal_send_failed: {
+        Args: {
+          target_organization_id: string
+          target_send_request_id: string
+          target_error_class: string
+          target_error_message: string | null
+        }
+        Returns: boolean
+      }
+      resolve_commercial_watchdog_settings: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          quote_no_reply_days: number
+          quote_expiring_days_ahead: number
+          opportunity_won_grace_days: number
+          intervention_completed_grace_days: number
+          enabled: boolean
+          source: string
+        }[]
+      }
+      scan_quote_no_reply_attentions: {
+        Args: {
+          target_organization_id: string
+          target_no_reply_days: number
+        }
+        Returns: {
+          opened: number
+          resolved: number
+        }[]
+      }
+      scan_quote_next_action_attentions: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          opened: number
+          resolved: number
+        }[]
+      }
+      scan_quote_expiring_attentions: {
+        Args: {
+          target_organization_id: string
+          target_expiring_days_ahead: number
+        }
+        Returns: {
+          opened: number
+          resolved: number
+        }[]
+      }
+      scan_opportunity_won_not_scheduled_attentions: {
+        Args: {
+          target_organization_id: string
+          target_grace_days: number
+        }
+        Returns: {
+          opened: number
+          resolved: number
+        }[]
+      }
+      scan_intervention_completed_not_invoiced_attentions: {
+        Args: {
+          target_organization_id: string
+          target_grace_days: number
+        }
+        Returns: {
+          opened: number
+          resolved: number
+        }[]
+      }
+      scan_commercial_pipeline_attentions: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          rule: string
+          opened: number
+          resolved: number
+        }[]
+      }
+      create_service_catalog_item: {
+        Args: {
+          target_organization_id: string
+          target_name: string
+          target_kind: string | null
+          target_code: string | null
+          target_description: string | null
+          target_base_amount: number | null
+          target_currency: string
+          target_duration_minutes: number | null
+          target_default_variant_label: string | null
+          target_default_quote_title: string | null
+          target_metadata: Json
+        }
+        Returns: string
+      }
+      update_service_catalog_item: {
+        Args: {
+          target_organization_id: string
+          target_id: string
+          target_name: string | null
+          target_kind: string | null
+          target_code: string | null
+          target_description: string | null
+          target_base_amount: number | null
+          target_currency: string | null
+          target_duration_minutes: number | null
+          target_default_variant_label: string | null
+          target_default_quote_title: string | null
+          target_metadata: Json | null
+        }
+        Returns: boolean
+      }
+      archive_service_catalog_item: {
+        Args: {
+          target_organization_id: string
+          target_id: string
+        }
+        Returns: boolean
+      }
+      apply_catalog_to_proposal_variant: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+          target_catalog_item_id: string
+          override_title: string | null
+          override_variant_label: string | null
+          override_amount: number | null
+        }
+        Returns: boolean
+      }
+      apply_catalog_to_proposal_option: {
+        Args: {
+          target_organization_id: string
+          target_quote_id: string
+          target_catalog_item_id: string
+          target_option_key: string
+          target_ordinal: number | null
+          override_name: string | null
+          override_amount: number | null
+        }
+        Returns: string
       }
       resolve_value_policy: {
         Args: {
@@ -4915,6 +5539,95 @@ export type Database = {
           target_exported_at: string
         }
         Returns: boolean
+      }
+      scan_commercial_equipment_signals: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          detected_new: number
+          updated: number
+          resolved_by_scan: number
+        }[]
+      }
+      mark_commercial_signal_reviewed: {
+        Args: {
+          target_organization_id: string
+          target_signal_id: string
+        }
+        Returns: boolean
+      }
+      mark_commercial_signal_planned: {
+        Args: {
+          target_organization_id: string
+          target_signal_id: string
+          target_note: string | null
+        }
+        Returns: boolean
+      }
+      snooze_commercial_signal: {
+        Args: {
+          target_organization_id: string
+          target_signal_id: string
+          target_until: string
+          target_reason: string | null
+        }
+        Returns: boolean
+      }
+      dismiss_commercial_signal: {
+        Args: {
+          target_organization_id: string
+          target_signal_id: string
+          target_reason: string
+        }
+        Returns: boolean
+      }
+      resume_expired_commercial_signals: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: number
+      }
+      convert_commercial_signal_to_proposal: {
+        Args: {
+          target_organization_id: string
+          target_signal_id: string
+          target_quote_title: string
+          target_variant_key: string
+          target_estimated_value: number | null
+          target_currency: string
+          target_owner_user_id: string | null
+          target_override_customer_id: string | null
+          target_catalog_item_id: string | null
+        }
+        Returns: {
+          opportunity_id: string
+          quote_id: string
+          signal_id: string
+          catalog_applied: boolean
+        }[]
+      }
+      open_commercial_signals: {
+        Args: {
+          target_organization_id: string
+        }
+        Returns: {
+          signal_id: string
+          customer_id: string | null
+          equipment_id: string
+          signal_kind: string
+          commercial_status: string
+          severity: string
+          title: string
+          explanation: string | null
+          facts: Json
+          next_action_hint: string | null
+          due_at: string | null
+          detected_at: string
+          snoozed_until: string | null
+          suggested_catalog_item_id: string | null
+          rule_snapshot: Json
+        }[]
       }
     }
     Enums: {
