@@ -12,7 +12,6 @@ const ORG = "91000000-0000-4000-8000-000000000001";
 const OTHER_ORG = "91000000-0000-4000-8000-0000000000ff";
 const SIGNAL = "91300000-0000-4000-8000-000000000001";
 const CUSTOMER = "91400000-0000-4000-8000-000000000001";
-const CATALOG_ITEM = "91500000-0000-4000-8000-000000000001";
 const OWNER = "91700000-0000-4000-8000-000000000001";
 
 interface FakeState {
@@ -159,7 +158,7 @@ describe("convertCommercialSignalToProposal", () => {
         opportunity_id: "91800000-0000-4000-8000-000000000001",
         quote_id: "91900000-0000-4000-8000-000000000001",
         signal_id: SIGNAL,
-        catalog_applied: true,
+        catalog_applied: false,
       },
     ];
     const result = await convertCommercialSignalToProposal(
@@ -172,13 +171,12 @@ describe("convertCommercialSignalToProposal", () => {
         currency: "EUR",
         ownerUserId: OWNER,
         overrideCustomerId: CUSTOMER,
-        catalogItemId: CATALOG_ITEM,
       },
       { client: fakeClient() as never },
     );
     expect(result.status).toBe("OK");
     if (result.status === "OK") {
-      expect(result.catalogApplied).toBe(true);
+      expect(result.catalogApplied).toBe(false);
       expect(result.opportunityId).toBe("91800000-0000-4000-8000-000000000001");
       expect(result.quoteId).toBe("91900000-0000-4000-8000-000000000001");
     }
@@ -191,7 +189,7 @@ describe("convertCommercialSignalToProposal", () => {
       target_currency: "EUR",
       target_owner_user_id: OWNER,
       target_override_customer_id: CUSTOMER,
-      target_catalog_item_id: CATALOG_ITEM,
+      target_catalog_item_id: null,
     });
   });
 
